@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: Tala Paints Platform API
+  description: API for the Tala Paints platform, supporting customer and restaurant owner authentication, profile management, product management, and category management.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /health:
+    $ref: "./swagger-products.yaml#/paths/~1health"
+  /products:
+    $ref: "./swagger-products.yaml#/paths/~1products"

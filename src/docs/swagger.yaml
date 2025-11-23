@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: Tala Paints Platform API
+  description: 'API for the Tala Paints platform, supporting customer and restaurant owner authentication, profile management, product management, and category management.'
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:3000'
+    description: Local development server
+paths:
+  /health:
+    get:
+      tags:
+        - Health Check
+      summary: Health check endpoint
+      description: Check if the API server is running and healthy
+      operationId: checkHealth
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-06-22T18:46:00Z'
+                  uptime:
+                    type: number
+                    description: Server uptime in seconds
+                    example: 3600.5
+  /products:
+    post:
+      tags:
+        - Product
+      summary: Add a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+              required:
+                - name
+                - description
+                - category
+                - price
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  category:
+                    type: string
+                  price:
+                    type: number
+                  images:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

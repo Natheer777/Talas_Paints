@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS products (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100),
+    price DECIMAL(10, 2) NOT NULL,
+    images JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
