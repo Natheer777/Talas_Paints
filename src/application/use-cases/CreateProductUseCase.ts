@@ -8,41 +8,51 @@ export interface CreateProductDTO {
     description: string;
     category: string;
     price: number;
-    images?: string[];
+    imageFiles?: Express.Multer.File[];
 }
 
 export class CreateProductUseCase {
     constructor(
-        private productsRepository: IProductsRepository, 
-        private fileStorageService: IFileStorageService) { }
+        private productsRepository: IProductsRepository,
+        private fileStorageService: IFileStorageService
+    ) { }
 
     async execute(data: CreateProductDTO): Promise<Product> {
-        const { name, description, category, price } = data;
-        let images: string | null = null;
-        
-        if (images) {
-            images = await this.fileStorageService.UploadProductImage(images, uuidv4(), 'product');
+        const { name, description, category, price, imageFiles } = data;
+
+        // Check if product already exists
+        await this.checkExistingProduct(name);
+
+        const productId = uuidv4();
+        let imageUrls: string[] = [];
+
+        // Upload images if provided
+        if (imageFiles && imageFiles.length > 0) {
+            imageUrls = await this.fileStorageService.UploadMultipleProductImages(
+                imageFiles,
+                productId,
+                'products'
+            );
         }
 
         const product: Product = {
-            id:uuidv4(),
+            id: productId,
             name,
             description,
             category,
             price,
-            images: images || [],
+            images: imageUrls,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
-        await this.checkExistingProduct(name);
+
         return this.productsRepository.create(product);
     }
 
-    private async checkExistingProduct(name: string): Promise<boolean> {
+    private async checkExistingProduct(name: string): Promise<void> {
         const existingProduct = await this.productsRepository.checkExistingProduct(name);
         if (existingProduct) {
             throw new Error('Product already exists');
         }
-        return true;
     }
 }
