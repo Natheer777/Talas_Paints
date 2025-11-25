@@ -4,5 +4,7 @@ export interface Product {
     description: string;
     category: string;
     price: number;
-    images?: string[]; // Supports multiple image URLs
+    images?: string[] | null; 
+    createdAt: Date;
+    updatedAt: Date;
 }

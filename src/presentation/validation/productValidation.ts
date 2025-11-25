@@ -9,6 +9,9 @@ export const validateCreateProduct: ValidationChain[] = [
     body('images').optional().isArray(),
     body('images.*').optional().isURL(),
 ];
+export const vliadateDeleteProduct: ValidationChain[]=[
+    body('id').isUUID()
+]
 
 export function handleValidationResult(req: Request, res: Response, next: NextFunction) {
     const errors = validationResult(req);
@@ -16,4 +19,5 @@ export function handleValidationResult(req: Request, res: Response, next: NextFu
         return res.status(400).json({ errors: errors.array() });
     }
     next();
+    
 }
