@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { IFileStorageService } from '@/application/interface/IFileStorageService';
 import sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
 
 export class FileStorageService implements IFileStorageService {
   private s3Client: S3Client;
@@ -15,7 +16,7 @@ export class FileStorageService implements IFileStorageService {
       },
     });
 
-    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'testbucketalaspaints';
+    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'talas-paints-dev';
   }
 
   private extractKeyFromS3Url(url: string): { key: string; isValid: boolean } {
@@ -50,23 +51,14 @@ export class FileStorageService implements IFileStorageService {
     }
   }
 
- 
-
   async UploadProductImage(
     file: Express.Multer.File,
     id: string,
-    existingUrl?: string
+    folder: string
   ): Promise<string> {
     const fileBuffer = await this.convertToJPGIfNeeded(file);
-
-    let key = `products/${id}`;
-    if (existingUrl) {
-      const { key: existingKey, isValid } = this.extractKeyFromS3Url(existingUrl);
-      if (!isValid) {
-        throw new Error('Invalid existing S3 URL format');
-      }
-      key = existingKey;
-    }
+    const uniqueId = uuidv4();
+    const key = `${folder}/${id}/${uniqueId}.jpg`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -80,6 +72,22 @@ export class FileStorageService implements IFileStorageService {
       return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
     } catch (error: any) {
       throw new Error(`Failed to upload product image to S3: ${error.message}`);
+    }
+  }
+
+  async UploadMultipleProductImages(
+    files: Express.Multer.File[],
+    productId: string,
+    folder: string
+  ): Promise<string[]> {
+    const uploadPromises = files.map(file =>
+      this.UploadProductImage(file, productId, folder)
+    );
+
+    try {
+      return await Promise.all(uploadPromises);
+    } catch (error: any) {
+      throw new Error(`Failed to upload multiple images: ${error.message}`);
     }
   }
 

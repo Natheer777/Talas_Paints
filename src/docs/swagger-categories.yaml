@@ -1,0 +1,265 @@
+
+paths:
+  /categories:
+    post:
+      tags:
+        - Categories
+      summary: Create a new category
+      description: Create a category with an image upload (single image). Image is stored in S3 under `categories/{categoryId}/...`.
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - image
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: "Interior Paint"
+                image:
+                  type: string
+                  format: binary
+                  description: Category image (JPEG/PNG/WebP, max 5 MB)
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Category'
+                  message:
+                    type: string
+                    example: "Category created successfully"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags:
+        - Categories
+      summary: Get all categories
+      operationId: getAllCategories
+      responses:
+        "200":
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  count:
+                    type: integer
+                    example: 12
+        "500":
+          $ref: '#/components/responses/ServerError'
+  /categories/{id}:
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        "200":
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Category'
+        "404":
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Categories
+      summary: Update category
+      description: Update category name and/or replace its image. Set `keepExistingImage` to `true` to retain the current image.
+      operationId: updateCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: "Exterior Paint"
+                image:
+                  type: string
+                  format: binary
+                  description: New category image
+                keepExistingImage:
+                  type: string
+                  enum: ["true", "false"]
+                  description: Keep the current image (default false)
+                  example: "true"
+      responses:
+        "200":
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Category'
+                  message:
+                    type: string
+                    example: "Category updated successfully"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Categories
+      summary: Delete category
+      operationId: deleteCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        "200":
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Category deleted successfully"
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Category:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Interior Paint"
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Category image URLs (normally a single element)
+          example:
+            - "https://bucket.s3.us-east-1.amazonaws.com/categories/550e8400.../uuid.jpg"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-11-25T09:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-11-25T09:15:00.000Z"
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+        errors:
+          type: array
+          description: Detailed validation errors (if applicable)
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Name is required and must be a string"
+              param:
+                type: string
+                example: "name"
+              location:
+                type: string
+                example: "body"
+  responses:
+    BadRequest:
+      description: Validation error or malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

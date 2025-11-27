@@ -7,11 +7,12 @@ export class DatabaseConnection {
 
   private constructor() {
     const connectionString = process.env.DATABASE_URL;
+    console.log('Attempting to connect with DATABASE_URL:', connectionString ? connectionString.replace(/:[^:@]+@/, ':****@') : 'undefined');
 
     this.pool = new Pool({
       connectionString,
       ssl: {
-        rejectUnauthorized: false 
+        rejectUnauthorized: false
       }
     });
 

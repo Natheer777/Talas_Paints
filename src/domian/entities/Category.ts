@@ -1,9 +1,6 @@
-export interface Product {
+export interface Category {
     id?: string;
     name: string;
-    description: string;
-    category_id: string;
-    price: number;
     images?: string[] | null;
     createdAt: Date;
     updatedAt: Date;

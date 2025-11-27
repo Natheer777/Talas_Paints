@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import dotenv from 'dotenv';
 
-const nodeEnv = process.env.NODE_ENV || 'development';
+const nodeEnv = process.env.NODE_ENV || 'development';  
 const envFilePath = `.env.${nodeEnv}`;
 
 const result = dotenv.config({ path: envFilePath });
@@ -13,7 +13,7 @@ import { App } from './app';
 const app = new App();
 const port = parseInt(process.env.PORT || '3000', 10);
 
-
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
 
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');

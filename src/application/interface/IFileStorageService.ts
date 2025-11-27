@@ -1,8 +1,15 @@
-export interface IFileStorageService{
+export interface IFileStorageService {
     UploadProductImage(
-        file:Express.Multer.File,
+        file: Express.Multer.File,
         id: string,
-        existingUrl?: string
-    ):Promise<String>
+        folder: string
+    ): Promise<string>;
+
+    UploadMultipleProductImages(
+        files: Express.Multer.File[],
+        productId: string,
+        folder: string
+    ): Promise<string[]>;
+
     DeleteOldImage(fileUrl: string): Promise<void>;
 }

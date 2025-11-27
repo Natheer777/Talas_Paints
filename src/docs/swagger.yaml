@@ -1,13 +1,22 @@
 openapi: 3.0.3
 info:
   title: Tala Paints Platform API
-  description: 'API for the Tala Paints platform, supporting customer and restaurant owner authentication, profile management, product management, and category management.'
   version: 1.0.0
+  contact:
+    name: API Support
+    email: support@talapaints.com
 servers:
   - url: 'http://localhost:3000'
     description: Local development server
+tags:
+  - name: Health Check
+    description: Server health monitoring
+  - name: Products
+    description: Product management operations (CRUD)
+  - name: Categories
+    description: Category management operations (CRUD)
 paths:
-  /health:
+  /api/health:
     get:
       tags:
         - Health Check
@@ -33,37 +42,51 @@ paths:
                     type: number
                     description: Server uptime in seconds
                     example: 3600.5
-  /products:
+  /api/products:
     post:
       tags:
-        - Product
-      summary: Add a new product
+        - Products
+      summary: Create a new product
+      description: 'Create a new product with optional image uploads. Supports multiple images (max 10, 5MB each). Images are automatically converted to JPEG and uploaded to AWS S3.'
+      operationId: createProduct
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-                category:
-                  type: string
-                price:
-                  type: number
-                  format: float
-                images:
-                  type: array
-                  items:
-                    type: string
-                    format: uri
               required:
                 - name
                 - description
                 - category
                 - price
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  example: Premium Interior Paint
+                description:
+                  type: string
+                  minLength: 10
+                  example: High-quality latex paint perfect for interior walls and ceilings
+                category:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Interior Paint
+                price:
+                  type: number
+                  format: float
+                  minimum: 0.01
+                  example: 45.99
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 'Product images (JPEG, PNG, or WebP, max 10 files, 5MB each)'
+                  maxItems: 10
       responses:
         '201':
           description: Product created successfully
@@ -72,27 +95,577 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: Unique product identifier
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      name:
+                        type: string
+                        description: Product name
+                        example: Premium Interior Paint
+                      description:
+                        type: string
+                        description: Product description
+                        example: High-quality latex paint perfect for interior walls and ceilings
+                      category:
+                        type: string
+                        description: Product category
+                        example: Interior Paint
+                      price:
+                        type: number
+                        format: float
+                        description: Product price
+                        example: 45.99
+                      images:
+                        type: array
+                        items:
+                          type: string
+                          format: uri
+                        description: Array of image URLs stored in AWS S3
+                        example:
+                          - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid1.jpg'
+                          - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid2.jpg'
+                      createdAt:
+                        type: string
+                        format: date-time
+                        description: Product creation timestamp
+                        example: '2025-11-25T10:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        description: Product last update timestamp
+                        example: '2025-11-25T10:30:00.000Z'
+                    required:
+                      - id
+                      - name
+                      - description
+                      - category
+                      - price
+                      - createdAt
+                      - updatedAt
+                  message:
                     type: string
-                  name:
-                    type: string
-                  description:
-                    type: string
-                  category:
-                    type: string
-                  price:
-                    type: number
-                  images:
-                    type: array
-                    items:
-                      type: string
-                      format: uri
+                    example: Product created successfully
         '400':
-          description: Validation error
+          description: Validation error or product already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+              examples:
+                validationError:
+                  value:
+                    success: false
+                    errors:
+                      - msg: Name is required and must be a string
+                        param: name
+                        location: body
+                duplicateProduct:
+                  value:
+                    success: false
+                    message: Product already exists
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      description: Retrieve a list of all products ordered by creation date (newest first)
+      operationId: getAllProducts
+      responses:
+        '200':
+          description: Products retrieved successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+                  count:
+                    type: integer
+                    description: Total number of products
+                    example: 5
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
                   message:
                     type: string
+                    description: Error message
+                    example: An error occurred
+                  errors:
+                    type: array
+                    description: Detailed validation errors (if applicable)
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                          description: Error message
+                          example: Name is required and must be a string
+                        param:
+                          type: string
+                          description: Parameter that caused the error
+                          example: name
+                        location:
+                          type: string
+                          description: Location of the parameter
+                          example: body
+  '/api/products/{id}':
+    get:
+      tags:
+        - Products
+      summary: Get product by ID
+      description: Retrieve a single product by its unique identifier
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+        '400':
+          description: Invalid product ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Product not found
+    put:
+      tags:
+        - Products
+      summary: Update product
+      description: Update an existing product. All fields are optional. Supports image management with options to keep or replace existing images.
+      operationId: updateProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  description: Updated product name
+                  example: Updated Premium Paint
+                description:
+                  type: string
+                  description: Updated product description
+                  example: Updated description with new features
+                category:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  description: Updated product category
+                  example: Exterior Paint
+                price:
+                  type: number
+                  format: float
+                  minimum: 0.01
+                  description: Updated product price
+                  example: 49.99
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 'New product images (JPEG, PNG, or WebP, max 10 files, 5MB each)'
+                  maxItems: 10
+                keepExistingImages:
+                  type: string
+                  enum:
+                    - 'true'
+                    - 'false'
+                  description: Whether to keep existing images when uploading new ones (default is false - replaces all images)
+                  example: 'true'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+                  message:
+                    type: string
+                    example: Product updated successfully
+        '400':
+          description: Validation error or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Product not found
+    delete:
+      tags:
+        - Products
+      summary: Delete product
+      description: Delete a product and all its associated images from AWS S3
+      operationId: deleteProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Product deleted successfully
+        '400':
+          description: Invalid product ID or deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Product not found
+  /api/categories:
+    post:
+      tags:
+        - Categories
+      summary: Create a new category
+      description: 'Create a category with an image upload (single image). Image is stored in S3 under `categories/{categoryId}/...`.'
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - image
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Interior Paint
+                image:
+                  type: string
+                  format: binary
+                  description: 'Category image (JPEG/PNG/WebP, max 5 MB)'
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - id
+                      - name
+                      - createdAt
+                      - updatedAt
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      name:
+                        type: string
+                        example: Interior Paint
+                      images:
+                        type: array
+                        items:
+                          type: string
+                          format: uri
+                        description: Category image URLs (normally a single element)
+                        example:
+                          - 'https://bucket.s3.us-east-1.amazonaws.com/categories/550e8400.../uuid.jpg'
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2025-11-25T09:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2025-11-25T09:15:00.000Z'
+                  message:
+                    type: string
+                    example: Category created successfully
+        '400':
+          description: Validation error or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1categories/get/responses/500/content/application~1json/schema'
+    get:
+      tags:
+        - Categories
+      summary: Get all categories
+      operationId: getAllCategories
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/paths/~1api~1categories/post/responses/201/content/application~1json/schema/properties/data'
+                  count:
+                    type: integer
+                    example: 12
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: An error occurred
+                  errors:
+                    type: array
+                    description: Detailed validation errors (if applicable)
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                          example: Name is required and must be a string
+                        param:
+                          type: string
+                          example: name
+                        location:
+                          type: string
+                          example: body
+  '/api/categories/{id}':
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/paths/~1api~1categories/post/responses/201/content/application~1json/schema/properties/data'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1categories/get/responses/500/content/application~1json/schema'
+    put:
+      tags:
+        - Categories
+      summary: Update category
+      description: Update category name and/or replace its image. Set `keepExistingImage` to `true` to retain the current image.
+      operationId: updateCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Exterior Paint
+                image:
+                  type: string
+                  format: binary
+                  description: New category image
+                keepExistingImage:
+                  type: string
+                  enum:
+                    - 'true'
+                    - 'false'
+                  description: Keep the current image (default false)
+                  example: 'true'
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/paths/~1api~1categories/post/responses/201/content/application~1json/schema/properties/data'
+                  message:
+                    type: string
+                    example: Category updated successfully
+        '400':
+          $ref: '#/paths/~1api~1categories/post/responses/400'
+        '404':
+          $ref: '#/paths/~1api~1categories~1%7Bid%7D/get/responses/404'
+    delete:
+      tags:
+        - Categories
+      summary: Delete category
+      operationId: deleteCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Category deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Category deleted successfully
+        '400':
+          $ref: '#/paths/~1api~1categories/post/responses/400'
+        '404':
+          $ref: '#/paths/~1api~1categories~1%7Bid%7D/get/responses/404'
