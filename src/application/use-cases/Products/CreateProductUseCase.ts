@@ -1,6 +1,7 @@
-import { Product } from '../../domian/entities/Products';
-import { IProductsRepository } from '../../domian/repository/IProductsRepository';
-import { IFileStorageService } from '../interface/IFileStorageService';
+import { Product } from '@/domian/entities/Products';
+import { IProductsRepository } from '@/domian/repository/IProductsRepository';
+import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
+import { IFileStorageService } from '@/application/interface/IFileStorageService';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface CreateProductDTO {
@@ -14,6 +15,7 @@ export interface CreateProductDTO {
 export class CreateProductUseCase {
     constructor(
         private productsRepository: IProductsRepository,
+        private categoriesRepository: ICategoriesRepository,
         private fileStorageService: IFileStorageService
     ) { }
 
@@ -22,6 +24,13 @@ export class CreateProductUseCase {
 
         // Check if product already exists
         await this.checkExistingProduct(name);
+
+        // Look up category by name and get its ID
+        const categoryEntity = await this.categoriesRepository.findByName(category);
+        if (!categoryEntity || !categoryEntity.id) {
+            throw new Error('Category not found');
+        }
+        const category_id = categoryEntity.id;
 
         const productId = uuidv4();
         let imageUrls: string[] = [];
@@ -39,7 +48,7 @@ export class CreateProductUseCase {
             id: productId,
             name,
             description,
-            category,
+            category_id,
             price,
             images: imageUrls,
             createdAt: new Date(),

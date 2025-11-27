@@ -1,48 +1,45 @@
 import { Request, Response } from "express";
-import { CreateProductUseCase, DeleteProductUseCase, GetProductUseCase, GetAllProductsUseCase, UpdateProductUseCase } from "@/application/use-cases/Products/index";
+import { CreateCategoryUseCase, GetCategoryUseCase, GetAllCategoriesUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase } from "@/application/use-cases/Category/index";
 
 
-export class ProductsController {
+export class CategoriesController {
     constructor(
-        private createProductUseCase: CreateProductUseCase,
-        private getProductUseCase: GetProductUseCase,
-        private getAllProductsUseCase: GetAllProductsUseCase,
-        private updateProductUseCase: UpdateProductUseCase,
-        private deleteProductUseCase: DeleteProductUseCase
+        private createCategoryUseCase: CreateCategoryUseCase,
+        private getCategoryUseCase: GetCategoryUseCase,
+        private getAllCategoriesUseCase: GetAllCategoriesUseCase,
+        private updateCategoryUseCase: UpdateCategoryUseCase,
+        private deleteCategoryUseCase: DeleteCategoryUseCase
     ) { }
 
     async create(req: Request, res: Response) {
         try {
-            const { name, description, category, price } = req.body;
-            const imageFiles = req.files as Express.Multer.File[];
+            const { name } = req.body;
+            const imageFile = req.file as Express.Multer.File;
+            const imageFiles = imageFile ? [imageFile] : [];
 
-            const result = await this.createProductUseCase.execute({
+            const result = await this.createCategoryUseCase.execute({
                 name,
-                description,
-                category,
-                price: parseFloat(price),
                 imageFiles,
             });
 
             return res.status(201).json({
                 success: true,
                 data: result,
-                message: "Product created successfully",
+                message: "Category created successfully",
             });
         } catch (error: any) {
-            console.error('Create Product Error:', error);
             return res.status(400).json({
                 success: false,
-                message: error.message || "Could not create product",
+                message: error.message || "Could not create category",
             });
         }
-    } 
+    }
 
     async getById(req: Request, res: Response) {
         try {
             const { id } = req.params;
 
-            const result = await this.getProductUseCase.execute({ id });
+            const result = await this.getCategoryUseCase.execute({ id });
 
             return res.status(200).json({
                 success: true,
@@ -51,14 +48,14 @@ export class ProductsController {
         } catch (error: any) {
             return res.status(404).json({
                 success: false,
-                message: error.message || "Product not found",
+                message: error.message || "Category not found",
             });
         }
     }
 
     async getAll(req: Request, res: Response) {
         try {
-            const result = await this.getAllProductsUseCase.execute();
+            const result = await this.getAllCategoriesUseCase.execute();
 
             return res.status(200).json({
                 success: true,
@@ -68,7 +65,7 @@ export class ProductsController {
         } catch (error: any) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Could not retrieve products",
+                message: error.message || "Could not retrieve categories",
             });
         }
     }
@@ -76,28 +73,24 @@ export class ProductsController {
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const { name, description, category, price, keepExistingImages } = req.body;
-            const imageFiles = req.files as Express.Multer.File[];
+            const { name } = req.body;
+            const imageFile = req.file as Express.Multer.File;
 
-            const result = await this.updateProductUseCase.execute({
+            const result = await this.updateCategoryUseCase.execute({
                 id,
                 name,
-                description,
-                category,
-                price: price ? parseFloat(price) : undefined,
-                imageFiles,
-                keepExistingImages: keepExistingImages === 'true',
+                imageFile,
             });
 
             return res.status(200).json({
                 success: true,
                 data: result,
-                message: "Product updated successfully",
+                message: "Category updated successfully",
             });
         } catch (error: any) {
             return res.status(400).json({
                 success: false,
-                message: error.message || "Could not update product",
+                message: error.message || "Could not update category",
             });
         }
     }
@@ -106,11 +99,11 @@ export class ProductsController {
         try {
             const { id } = req.params;
 
-            await this.deleteProductUseCase.execute({ id });
+            await this.deleteCategoryUseCase.execute({ id });
 
             return res.status(200).json({
                 success: true,
-                message: "Product deleted successfully",
+                message: "Category deleted successfully",
             });
         } catch (error: any) {
             return res.status(400).json({
@@ -118,7 +111,7 @@ export class ProductsController {
                 message:
                     error instanceof Error
                         ? error.message
-                        : "Failed to delete product",
+                        : "Failed to delete category",
             });
         }
     }

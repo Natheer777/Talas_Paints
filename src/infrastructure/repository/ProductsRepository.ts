@@ -7,7 +7,7 @@ export class ProductsRepository implements IProductsRepository {
 
     async create(product: Product): Promise<Product> {
         const query = `
-        INSERT INTO products (id, name, description, category, price, images, created_at, updated_at)
+        INSERT INTO products (id, name, description, category_id, price, images, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         `;
@@ -15,7 +15,7 @@ export class ProductsRepository implements IProductsRepository {
             product.id,
             product.name,
             product.description,
-            product.category,
+            product.category_id,
             product.price,
             JSON.stringify(product.images || []),
             product.createdAt,
@@ -49,7 +49,7 @@ export class ProductsRepository implements IProductsRepository {
             UPDATE products 
             SET name = $1, 
                 description = $2, 
-                category = $3, 
+                category_id = $3, 
                 price = $4, 
                 images = $5, 
                 updated_at = $6
@@ -59,7 +59,7 @@ export class ProductsRepository implements IProductsRepository {
         const values = [
             product.name,
             product.description,
-            product.category,
+            product.category_id,
             product.price,
             JSON.stringify(product.images || []),
             new Date(),
@@ -102,7 +102,7 @@ export class ProductsRepository implements IProductsRepository {
             description: row.description,
             price: parseFloat(row.price),
             images: row.images || null,
-            category: row.category,
+            category_id: row.category_id,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)
         };

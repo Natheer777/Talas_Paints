@@ -13,7 +13,6 @@ import { uploadMultiple } from "../middleware/UploadMiddleware";
 export function createProductRouter(productsController: ProductsController) {
     const router = Router();
 
-    // Create product
     router.post(
         "/products",
         uploadMultiple,
@@ -23,13 +22,11 @@ export function createProductRouter(productsController: ProductsController) {
         (req: Request, res: Response) => productsController.create(req, res)
     );
 
-    // Get all products
     router.get(
         "/products",
         (req: Request, res: Response) => productsController.getAll(req, res)
     );
 
-    // Get product by ID
     router.get(
         "/products/:id",
         validateGetProduct,
@@ -38,7 +35,6 @@ export function createProductRouter(productsController: ProductsController) {
         (req: Request, res: Response) => productsController.getById(req, res)
     );
 
-    // Update product
     router.put(
         "/products/:id",
         uploadMultiple,
@@ -48,7 +44,6 @@ export function createProductRouter(productsController: ProductsController) {
         (req: Request, res: Response) => productsController.update(req, res)
     );
 
-    // Delete product
     router.delete(
         "/products/:id",
         validateDeleteProduct,

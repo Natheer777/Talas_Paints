@@ -49,23 +49,20 @@ paths:
                   type: string
                   minLength: 2
                   maxLength: 255
-                  description: Product name (must be unique)
                   example: "Premium Interior Paint"
                 description:
                   type: string
-                  description: Detailed product description
+                  minLength: 10
                   example: "High-quality latex paint perfect for interior walls and ceilings"
                 category:
                   type: string
                   minLength: 2
                   maxLength: 100
-                  description: Product category
                   example: "Interior Paint"
                 price:
                   type: number
                   format: float
                   minimum: 0.01
-                  description: Product price (must be greater than 0)
                   example: 45.99
                 images:
                   type: array

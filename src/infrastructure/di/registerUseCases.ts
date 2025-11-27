@@ -1,18 +1,17 @@
-import { CreateProductUseCase } from '@/application/use-cases/CreateProductUseCase';
-import { GetProductUseCase } from '@/application/use-cases/GetProductUseCase';
-import { GetAllProductsUseCase } from '@/application/use-cases/GetAllProductsUseCase';
-import { UpdateProductUseCase } from '@/application/use-cases/UpdateProductUseCase';
-import { DeleteProductUseCase } from '@/application/use-cases/DeleteProductUseCase';
+import { CreateProductUseCase , GetProductUseCase , GetAllProductsUseCase , UpdateProductUseCase , DeleteProductUseCase } from '@/application/use-cases/Products/index';
+import { CreateCategoryUseCase , DeleteCategoryUseCase , UpdateCategoryUseCase , GetAllCategoriesUseCase , GetCategoryUseCase  } from '@/application/use-cases/Category';
+import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
 import { IFileStorageService } from '@/application/interface/IFileStorageService';
 
 export function registerUseCases(container: any) {
     const productsRepository = container.productsRepository as IProductsRepository;
     const fileStorageService = container.fileStorageService as IFileStorageService;
+    const categoryRepository = container.categoriesRepository as ICategoriesRepository;
 
     container.createProductUseCase = new CreateProductUseCase(
         productsRepository,
-        fileStorageService
+        fileStorageService,
     );
 
     container.getProductUseCase = new GetProductUseCase(productsRepository);
@@ -28,4 +27,19 @@ export function registerUseCases(container: any) {
         productsRepository,
         fileStorageService
     );
+
+
+    container.getCategoryUseCase = new GetCategoryUseCase(categoryRepository);
+
+    container.getAllCategoriesUseCase = new GetAllCategoriesUseCase(categoryRepository);
+
+    container.updateCategoryUseCase = new UpdateCategoryUseCase(
+        categoryRepository,
+        fileStorageService
+    )
+
+    container.DeleteCategoryUseCase = new DeleteCategoryUseCase(
+        categoryRepository,
+        fileStorageService
+    )
 }

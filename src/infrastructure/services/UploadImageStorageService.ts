@@ -16,7 +16,7 @@ export class FileStorageService implements IFileStorageService {
       },
     });
 
-    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'testbucketalaspaints';
+    this.bucketName = process.env.AWS_S3_BUCKET_NAME || 'talas-paints-dev';
   }
 
   private extractKeyFromS3Url(url: string): { key: string; isValid: boolean } {

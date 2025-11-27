@@ -1,22 +1,23 @@
 import { DatabaseConnection } from '../databases/DataBaseConnection';
 import { ProductsRepository } from '../repository/ProductsRepository';
+import { CategoriesRepository } from '../repository/CategoriesRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
-import { CreateProductUseCase } from '@/application/use-cases/CreateProductUseCase';
-import { GetProductUseCase } from '@/application/use-cases/GetProductUseCase';
-import { GetAllProductsUseCase } from '@/application/use-cases/GetAllProductsUseCase';
-import { UpdateProductUseCase } from '@/application/use-cases/UpdateProductUseCase';
-import { DeleteProductUseCase } from '@/application/use-cases/DeleteProductUseCase';
+import { CreateProductUseCase, UpdateProductUseCase, DeleteProductUseCase, GetProductUseCase, GetAllProductsUseCase } from '@/application/use-cases/Products/index';
+import { CreateCategoryUseCase, GetCategoryUseCase, GetAllCategoriesUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase } from '@/application/use-cases/Category/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
+import { CategoriesController } from '@/presentation/controller/CategoriesController';
 
 class Container {
     // Infrastructure layer
     private static db = DatabaseConnection.getInstance();
     private static productsRepository = new ProductsRepository(Container.db.getPool());
+    private static categoriesRepository = new CategoriesRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
-    // Application layer - Use Cases
+    // Application layer - Product Use Cases
     private static createProductUseCase = new CreateProductUseCase(
         Container.productsRepository,
+        Container.categoriesRepository,
         Container.fileStorageService
     );
 
@@ -30,11 +31,36 @@ class Container {
 
     private static updateProductUseCase = new UpdateProductUseCase(
         Container.productsRepository,
+        Container.categoriesRepository,
         Container.fileStorageService
     );
 
     private static deleteProductUseCase = new DeleteProductUseCase(
         Container.productsRepository,
+        Container.fileStorageService
+    );
+
+    // Application layer - Category Use Cases
+    private static createCategoryUseCase = new CreateCategoryUseCase(
+        Container.categoriesRepository,
+        Container.fileStorageService
+    );
+
+    private static getCategoryUseCase = new GetCategoryUseCase(
+        Container.categoriesRepository
+    );
+
+    private static getAllCategoriesUseCase = new GetAllCategoriesUseCase(
+        Container.categoriesRepository
+    );
+
+    private static updateCategoryUseCase = new UpdateCategoryUseCase(
+        Container.categoriesRepository,
+        Container.fileStorageService
+    );
+
+    private static deleteCategoryUseCase = new DeleteCategoryUseCase(
+        Container.categoriesRepository,
         Container.fileStorageService
     );
 
@@ -47,8 +73,20 @@ class Container {
         Container.deleteProductUseCase
     );
 
+    private static categoriesController = new CategoriesController(
+        Container.createCategoryUseCase,
+        Container.getCategoryUseCase,
+        Container.getAllCategoriesUseCase,
+        Container.updateCategoryUseCase,
+        Container.deleteCategoryUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
+    }
+
+    static getCategoriesController(): CategoriesController {
+        return Container.categoriesController;
     }
 }
 

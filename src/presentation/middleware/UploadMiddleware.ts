@@ -1,10 +1,8 @@
 import multer from 'multer';
 import { Request } from 'express';
 
-// Configure multer for memory storage
 const storage = multer.memoryStorage();
 
-// File filter to accept only images
 const fileFilter = (
     req: Request,
     file: Express.Multer.File,
@@ -19,7 +17,6 @@ const fileFilter = (
     }
 };
 
-// Configure multer
 export const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
@@ -29,8 +26,6 @@ export const upload = multer({
     },
 });
 
-// Middleware for single image upload
 export const uploadSingle = upload.single('image');
 
-// Middleware for multiple image uploads
 export const uploadMultiple = upload.array('images', 10);

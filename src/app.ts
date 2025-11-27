@@ -2,9 +2,10 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import swaggerUI from 'swagger-ui-express';
 import http from 'http';
 import YAML from 'yamljs';
-import path from 'path'
+import path from 'path'; 
 import { createProductRouter } from './presentation/router/ProductRouter';
-import Container from "./infrastructure/di/container";
+import { createCategoryRouter } from './presentation/router/CategoryRouter';
+import Container from './infrastructure/di/container';
 
 export class App {
   private app: Application;
@@ -14,8 +15,14 @@ export class App {
     const swaggerDocument = YAML.load(path.join(__dirname, './docs/swagger.yaml'));
     this.app = express();
     this.app.use(express.json());
+
+    // Controllers via DI container
     const productsController = Container.getProductsController();
+    const categoriesController = Container.getCategoriesController();
+
+    // Register routers
     this.app.use('/api', createProductRouter(productsController));
+    this.app.use('/api', createCategoryRouter(categoriesController));
 
     const swaggerOptions = {
       swaggerOptions: {
@@ -26,8 +33,8 @@ export class App {
         },
         persistAuthorization: true,
         displayOperationId: false,
-        tryItOutEnabled: true
-      }
+        tryItOutEnabled: true,
+      },
     };
 
     this.app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument, swaggerOptions));
@@ -40,7 +47,7 @@ export class App {
       res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
       });
     });
   }
@@ -51,7 +58,7 @@ export class App {
       res.status(500).json({
         success: false,
         message: 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { error: error.message })
+        ...(process.env.NODE_ENV === 'development' && { error: error.message }),
       });
     });
   }
@@ -63,7 +70,6 @@ export class App {
   public async start(port: number = 3000): Promise<void> {
     try {
       this.server = http.createServer(this.app);
-
       this.server.listen(port, '0.0.0.0', () => {
         const env = process.env.NODE_ENV || 'development';
         console.log(`🚀 Server is running (env: ${env}) on http://localhost:${port}`);

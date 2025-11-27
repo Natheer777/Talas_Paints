@@ -1,5 +1,5 @@
 import { IProductsRepository } from "@/domian/repository/IProductsRepository";
-import {IFileStorageService} from "../interface/IFileStorageService";
+import {IFileStorageService} from "@/application/interface/IFileStorageService";
 
 export interface DeleteProductRequest{
     id: string;

@@ -1,6 +1,7 @@
 import { Product } from '@/domian/entities/Products';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
-import { IFileStorageService } from '../interface/IFileStorageService';
+import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
+import { IFileStorageService } from '@/application/interface/IFileStorageService';
 
 export interface UpdateProductDTO {
     id: string;
@@ -15,6 +16,7 @@ export interface UpdateProductDTO {
 export class UpdateProductUseCase {
     constructor(
         private productsRepository: IProductsRepository,
+        private categoriesRepository: ICategoriesRepository,
         private fileStorageService: IFileStorageService
     ) { }
 
@@ -33,6 +35,16 @@ export class UpdateProductUseCase {
             if (nameExists) {
                 throw new Error('Product with this name already exists');
             }
+        }
+
+        // Look up category by name if provided
+        let category_id = existingProduct.category_id;
+        if (category) {
+            const categoryEntity = await this.categoriesRepository.findByName(category);
+            if (!categoryEntity || !categoryEntity.id) {
+                throw new Error('Category not found');
+            }
+            category_id = categoryEntity.id;
         }
 
         let imageUrls: string[] = [];
@@ -70,7 +82,7 @@ export class UpdateProductUseCase {
             ...existingProduct,
             name: name || existingProduct.name,
             description: description || existingProduct.description,
-            category: category || existingProduct.category,
+            category_id: category_id || existingProduct.category_id,
             price: price !== undefined ? price : existingProduct.price,
             images: imageUrls,
             updatedAt: new Date(),
