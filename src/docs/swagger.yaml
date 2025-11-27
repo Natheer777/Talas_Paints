@@ -7,7 +7,9 @@ info:
     email: support@talapaints.com
 servers:
   - url: 'http://localhost:3000'
-    description: Local development server
+    description: Local  server
+  - url: 'https://talas-paints.onrender.com'
+    description: development server
 tags:
   - name: Health Check
     description: Server health monitoring
