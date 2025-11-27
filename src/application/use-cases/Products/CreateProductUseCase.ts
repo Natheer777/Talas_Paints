@@ -50,7 +50,7 @@ export class CreateProductUseCase {
             description,
             category_id,
             price,
-            images: imageUrls,
+            images: imageUrls.length > 0 ? imageUrls : null,
             createdAt: new Date(),
             updatedAt: new Date(),
         };

@@ -1,5 +1,5 @@
-import { CreateProductUseCase , GetProductUseCase , GetAllProductsUseCase , UpdateProductUseCase , DeleteProductUseCase } from '@/application/use-cases/Products/index';
-import { CreateCategoryUseCase , DeleteCategoryUseCase , UpdateCategoryUseCase , GetAllCategoriesUseCase , GetCategoryUseCase  } from '@/application/use-cases/Category';
+import { CreateProductUseCase, GetProductUseCase, GetAllProductsUseCase, UpdateProductUseCase, DeleteProductUseCase } from '@/application/use-cases/Products/index';
+import { CreateCategoryUseCase, DeleteCategoryUseCase, UpdateCategoryUseCase, GetAllCategoriesUseCase, GetCategoryUseCase } from '@/application/use-cases/Category';
 import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
 import { IFileStorageService } from '@/application/interface/IFileStorageService';
@@ -11,6 +11,7 @@ export function registerUseCases(container: any) {
 
     container.createProductUseCase = new CreateProductUseCase(
         productsRepository,
+        categoryRepository,
         fileStorageService,
     );
 
@@ -20,6 +21,7 @@ export function registerUseCases(container: any) {
 
     container.updateProductUseCase = new UpdateProductUseCase(
         productsRepository,
+        categoryRepository,
         fileStorageService
     );
 
@@ -32,6 +34,11 @@ export function registerUseCases(container: any) {
     container.getCategoryUseCase = new GetCategoryUseCase(categoryRepository);
 
     container.getAllCategoriesUseCase = new GetAllCategoriesUseCase(categoryRepository);
+
+    container.createCategoryUseCase = new CreateCategoryUseCase(
+        categoryRepository,
+        fileStorageService
+    );
 
     container.updateCategoryUseCase = new UpdateCategoryUseCase(
         categoryRepository,
