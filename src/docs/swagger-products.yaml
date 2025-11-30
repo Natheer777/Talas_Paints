@@ -44,6 +44,7 @@ paths:
                 - description
                 - category
                 - price
+                - quantity
               properties:
                 name:
                   type: string
@@ -64,6 +65,11 @@ paths:
                   format: float
                   minimum: 0.01
                   example: 45.99
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: Available stock quantity
+                  example: 100
                 images:
                   type: array
                   items:
@@ -131,6 +137,123 @@ paths:
                     type: integer
                     description: Total number of products
                     example: 5
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/search:
+    get:
+      tags:
+        - Products
+      summary: Search products by name
+      description: Search for products by name with case-insensitive partial matching
+      operationId: searchProducts
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Search term for product name
+          schema:
+            type: string
+          example: "paint"
+      responses:
+        '200':
+          description: Products found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+                    description: Number of products found
+                    example: 3
+        '400':
+          description: Missing search term
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/filter:
+    get:
+      tags:
+        - Products
+      summary: Filter products
+      description: Filter products by categories and/or price range
+      operationId: filterProducts
+      parameters:
+        - name: categories
+          in: query
+          required: false
+          description: Array of category IDs to filter by
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          style: form
+          explode: true
+          example: ["650e8400-e29b-41d4-a716-446655440001", "650e8400-e29b-41d4-a716-446655440002"]
+        - name: minPrice
+          in: query
+          required: false
+          description: Minimum price filter
+          schema:
+            type: number
+            format: float
+            minimum: 0
+          example: 10.00
+        - name: maxPrice
+          in: query
+          required: false
+          description: Maximum price filter
+          schema:
+            type: number
+            format: float
+            minimum: 0
+          example: 100.00
+      responses:
+        '200':
+          description: Filtered products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+                    description: Number of products found
+                    example: 7
+        '400':
+          description: Invalid filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Server error
           content:
@@ -231,6 +354,11 @@ paths:
                   minimum: 0.01
                   description: Updated product price
                   example: 49.99
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: Updated stock quantity
+                  example: 150
                 images:
                   type: array
                   items:
@@ -346,15 +474,21 @@ components:
           type: string
           description: Product description
           example: "High-quality latex paint perfect for interior walls and ceilings"
-        category:
+        category_id:
           type: string
-          description: Product category
-          example: "Interior Paint"
+          format: uuid
+          description: Product category ID
+          example: "650e8400-e29b-41d4-a716-446655440001"
         price:
           type: number
           format: float
           description: Product price
           example: 45.99
+        quantity:
+          type: integer
+          minimum: 0
+          description: Available stock quantity
+          example: 100
         images:
           type: array
           items:
@@ -378,8 +512,9 @@ components:
         - id
         - name
         - description
-        - category
+        - category_id
         - price
+        - quantity
         - createdAt
         - updatedAt
 

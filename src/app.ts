@@ -2,9 +2,10 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import swaggerUI from 'swagger-ui-express';
 import http from 'http';
 import YAML from 'yamljs';
-import path from 'path'; 
+import path from 'path';
 import { createProductRouter } from './presentation/router/ProductRouter';
 import { createCategoryRouter } from './presentation/router/CategoryRouter';
+import { createCartRouter } from './presentation/router/CartRouter';
 import Container from './infrastructure/di/container';
 
 export class App {
@@ -19,10 +20,12 @@ export class App {
     // Controllers via DI container
     const productsController = Container.getProductsController();
     const categoriesController = Container.getCategoriesController();
+    const cartController = Container.getCartController();
 
     // Register routers
     this.app.use('/api', createProductRouter(productsController));
     this.app.use('/api', createCategoryRouter(categoriesController));
+    this.app.use('/api', createCartRouter(cartController));
 
     const swaggerOptions = {
       swaggerOptions: {

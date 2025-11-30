@@ -1,5 +1,13 @@
 import { Request, Response } from "express";
-import { CreateProductUseCase, DeleteProductUseCase, GetProductUseCase, GetAllProductsUseCase, UpdateProductUseCase } from "@/application/use-cases/Products/index";
+import {
+    CreateProductUseCase,
+    DeleteProductUseCase,
+    GetProductUseCase,
+    GetAllProductsUseCase,
+    UpdateProductUseCase,
+    SearchProductsUseCase,
+    FilterProductsUseCase
+} from "@/application/use-cases/Products/index";
 
 
 export class ProductsController {
@@ -8,12 +16,14 @@ export class ProductsController {
         private getProductUseCase: GetProductUseCase,
         private getAllProductsUseCase: GetAllProductsUseCase,
         private updateProductUseCase: UpdateProductUseCase,
-        private deleteProductUseCase: DeleteProductUseCase
+        private deleteProductUseCase: DeleteProductUseCase,
+        private searchProductsUseCase: SearchProductsUseCase,
+        private filterProductsUseCase: FilterProductsUseCase
     ) { }
 
     async create(req: Request, res: Response) {
         try {
-            const { name, description, category, price } = req.body;
+            const { name, description, category, price, quantity } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
 
             const result = await this.createProductUseCase.execute({
@@ -21,6 +31,7 @@ export class ProductsController {
                 description,
                 category,
                 price: parseFloat(price),
+                quantity: parseInt(quantity),
                 imageFiles,
             });
 
@@ -36,7 +47,7 @@ export class ProductsController {
                 message: error.message || "Could not create product",
             });
         }
-    } 
+    }
 
     async getById(req: Request, res: Response) {
         try {
@@ -76,7 +87,7 @@ export class ProductsController {
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const { name, description, category, price, keepExistingImages } = req.body;
+            const { name, description, category, price, quantity, keepExistingImages } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
 
             const result = await this.updateProductUseCase.execute({
@@ -85,6 +96,7 @@ export class ProductsController {
                 description,
                 category,
                 price: price ? parseFloat(price) : undefined,
+                quantity: quantity ? parseInt(quantity) : undefined,
                 imageFiles,
                 keepExistingImages: keepExistingImages === 'true',
             });
@@ -119,6 +131,55 @@ export class ProductsController {
                     error instanceof Error
                         ? error.message
                         : "Failed to delete product",
+            });
+        }
+    }
+
+    async search(req: Request, res: Response) {
+        try {
+            const { name } = req.query;
+
+            if (!name || typeof name !== 'string') {
+                return res.status(400).json({
+                    success: false,
+                    message: "Search term is required",
+                });
+            }
+
+            const result = await this.searchProductsUseCase.execute({ name });
+
+            return res.status(200).json({
+                success: true,
+                data: result,
+                count: result.length,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not search products",
+            });
+        }
+    }
+
+    async filter(req: Request, res: Response) {
+        try {
+            const { categories, minPrice, maxPrice } = req.query;
+
+            const result = await this.filterProductsUseCase.execute({
+                categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
+                minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
+                maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: result,
+                count: result.length,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not filter products",
             });
         }
     }

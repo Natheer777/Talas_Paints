@@ -29,6 +29,12 @@ export const validateCreateProduct: ValidationChain[] = [
         .withMessage('Price is required')
         .isFloat({ gt: 0 })
         .withMessage('Price must be a positive number'),
+
+    body('quantity')
+        .notEmpty()
+        .withMessage('Quantity is required')
+        .isInt({ min: 0 })
+        .withMessage('Quantity must be a non-negative integer'),
 ];
 
 export const validateUpdateProduct: ValidationChain[] = [
@@ -59,6 +65,11 @@ export const validateUpdateProduct: ValidationChain[] = [
         .optional()
         .isFloat({ gt: 0 })
         .withMessage('Price must be a positive number'),
+
+    body('quantity')
+        .optional()
+        .isInt({ min: 0 })
+        .withMessage('Quantity must be a non-negative integer'),
 
     body('keepExistingImages')
         .optional()

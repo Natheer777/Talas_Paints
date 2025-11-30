@@ -1,17 +1,41 @@
 import { DatabaseConnection } from '../databases/DataBaseConnection';
 import { ProductsRepository } from '../repository/ProductsRepository';
 import { CategoriesRepository } from '../repository/CategoriesRepository';
+import { CartRepository } from '../repository/CartRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
-import { CreateProductUseCase, UpdateProductUseCase, DeleteProductUseCase, GetProductUseCase, GetAllProductsUseCase } from '@/application/use-cases/Products/index';
-import { CreateCategoryUseCase, GetCategoryUseCase, GetAllCategoriesUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase } from '@/application/use-cases/Category/index';
+import {
+    CreateProductUseCase,
+    UpdateProductUseCase,
+    DeleteProductUseCase,
+    GetProductUseCase,
+    GetAllProductsUseCase,
+    SearchProductsUseCase,
+    FilterProductsUseCase
+} from '@/application/use-cases/Products/index';
+import {
+    CreateCategoryUseCase,
+    GetCategoryUseCase,
+    GetAllCategoriesUseCase,
+    UpdateCategoryUseCase,
+    DeleteCategoryUseCase
+} from '@/application/use-cases/Category/index';
+import {
+    AddToCartUseCase,
+    GetCartUseCase,
+    UpdateCartItemUseCase,
+    RemoveFromCartUseCase,
+    ClearCartUseCase
+} from '@/application/use-cases/Cart/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
+import { CartController } from '@/presentation/controller/CartController';
 
 class Container {
     // Infrastructure layer
     private static db = DatabaseConnection.getInstance();
     private static productsRepository = new ProductsRepository(Container.db.getPool());
     private static categoriesRepository = new CategoriesRepository(Container.db.getPool());
+    private static cartRepository = new CartRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Application layer - Product Use Cases
@@ -40,6 +64,14 @@ class Container {
         Container.fileStorageService
     );
 
+    private static searchProductsUseCase = new SearchProductsUseCase(
+        Container.productsRepository
+    );
+
+    private static filterProductsUseCase = new FilterProductsUseCase(
+        Container.productsRepository
+    );
+
     // Application layer - Category Use Cases
     private static createCategoryUseCase = new CreateCategoryUseCase(
         Container.categoriesRepository,
@@ -64,13 +96,38 @@ class Container {
         Container.fileStorageService
     );
 
+    // Application layer - Cart Use Cases
+    private static addToCartUseCase = new AddToCartUseCase(
+        Container.cartRepository,
+        Container.productsRepository
+    );
+
+    private static getCartUseCase = new GetCartUseCase(
+        Container.cartRepository
+    );
+
+    private static updateCartItemUseCase = new UpdateCartItemUseCase(
+        Container.cartRepository,
+        Container.productsRepository
+    );
+
+    private static removeFromCartUseCase = new RemoveFromCartUseCase(
+        Container.cartRepository
+    );
+
+    private static clearCartUseCase = new ClearCartUseCase(
+        Container.cartRepository
+    );
+
     // Presentation layer - Controllers
     private static productsController = new ProductsController(
         Container.createProductUseCase,
         Container.getProductUseCase,
         Container.getAllProductsUseCase,
         Container.updateProductUseCase,
-        Container.deleteProductUseCase
+        Container.deleteProductUseCase,
+        Container.searchProductsUseCase,
+        Container.filterProductsUseCase
     );
 
     private static categoriesController = new CategoriesController(
@@ -81,12 +138,24 @@ class Container {
         Container.deleteCategoryUseCase
     );
 
+    private static cartController = new CartController(
+        Container.addToCartUseCase,
+        Container.getCartUseCase,
+        Container.updateCartItemUseCase,
+        Container.removeFromCartUseCase,
+        Container.clearCartUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
     }
 
     static getCategoriesController(): CategoriesController {
         return Container.categoriesController;
+    }
+
+    static getCartController(): CartController {
+        return Container.cartController;
     }
 }
 

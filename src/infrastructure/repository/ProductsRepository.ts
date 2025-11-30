@@ -1,5 +1,5 @@
 import { Product } from '@/domian/entities/Products';
-import { IProductsRepository } from '@/domian/repository/IProductsRepository';
+import { IProductsRepository, ProductFilterOptions } from '@/domian/repository/IProductsRepository';
 import { Pool } from 'pg';
 
 export class ProductsRepository implements IProductsRepository {
@@ -7,8 +7,8 @@ export class ProductsRepository implements IProductsRepository {
 
     async create(product: Product): Promise<Product> {
         const query = `
-        INSERT INTO products (id, name, description, category_id, price, images, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO products (id, name, description, category_id, price, quantity, images, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
         `;
         const values = [
@@ -17,6 +17,7 @@ export class ProductsRepository implements IProductsRepository {
             product.description,
             product.category_id,
             product.price,
+            product.quantity,
             JSON.stringify(product.images || []),
             product.createdAt,
             product.updatedAt,
@@ -44,6 +45,50 @@ export class ProductsRepository implements IProductsRepository {
         return result.rows.map(row => this.mapToProduct(row));
     }
 
+    async searchByName(name: string): Promise<Product[]> {
+        const query = `
+            SELECT * FROM products 
+            WHERE LOWER(name) LIKE LOWER($1)
+            ORDER BY created_at DESC
+        `;
+        const searchPattern = `%${name}%`;
+        const result = await this.db.query(query, [searchPattern]);
+
+        return result.rows.map(row => this.mapToProduct(row));
+    }
+
+    async filterProducts(options: ProductFilterOptions): Promise<Product[]> {
+        let query = `SELECT * FROM products WHERE 1=1`;
+        const values: any[] = [];
+        let paramCounter = 1;
+
+        // Filter by categories
+        if (options.categories && options.categories.length > 0) {
+            query += ` AND category_id = ANY($${paramCounter})`;
+            values.push(options.categories);
+            paramCounter++;
+        }
+
+        // Filter by minimum price
+        if (options.minPrice !== undefined) {
+            query += ` AND price >= $${paramCounter}`;
+            values.push(options.minPrice);
+            paramCounter++;
+        }
+
+        // Filter by maximum price
+        if (options.maxPrice !== undefined) {
+            query += ` AND price <= $${paramCounter}`;
+            values.push(options.maxPrice);
+            paramCounter++;
+        }
+
+        query += ` ORDER BY created_at DESC`;
+
+        const result = await this.db.query(query, values);
+        return result.rows.map(row => this.mapToProduct(row));
+    }
+
     async update(id: string, product: Product): Promise<Product> {
         const query = `
             UPDATE products 
@@ -51,9 +96,10 @@ export class ProductsRepository implements IProductsRepository {
                 description = $2, 
                 category_id = $3, 
                 price = $4, 
-                images = $5, 
-                updated_at = $6
-            WHERE id = $7
+                quantity = $5,
+                images = $6, 
+                updated_at = $7
+            WHERE id = $8
             RETURNING *
         `;
         const values = [
@@ -61,6 +107,7 @@ export class ProductsRepository implements IProductsRepository {
             product.description,
             product.category_id,
             product.price,
+            product.quantity,
             JSON.stringify(product.images || []),
             new Date(),
             id,
@@ -101,6 +148,7 @@ export class ProductsRepository implements IProductsRepository {
             name: row.name,
             description: row.description,
             price: parseFloat(row.price),
+            quantity: parseInt(row.quantity),
             images: row.images || null,
             category_id: row.category_id,
             createdAt: new Date(row.created_at),

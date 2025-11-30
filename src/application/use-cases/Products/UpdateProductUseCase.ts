@@ -9,6 +9,7 @@ export interface UpdateProductDTO {
     description?: string;
     category?: string;
     price?: number;
+    quantity?: number;
     imageFiles?: Express.Multer.File[];
     keepExistingImages?: boolean;
 }
@@ -21,7 +22,7 @@ export class UpdateProductUseCase {
     ) { }
 
     async execute(data: UpdateProductDTO): Promise<Product> {
-        const { id, name, description, category, price, imageFiles, keepExistingImages } = data;
+        const { id, name, description, category, price, quantity, imageFiles, keepExistingImages } = data;
 
         // Get existing product
         const existingProduct = await this.productsRepository.findById(id);
@@ -84,6 +85,7 @@ export class UpdateProductUseCase {
             description: description || existingProduct.description,
             category_id: category_id || existingProduct.category_id,
             price: price !== undefined ? price : existingProduct.price,
+            quantity: quantity !== undefined ? quantity : existingProduct.quantity,
             images: imageUrls,
             updatedAt: new Date(),
         };

@@ -9,6 +9,7 @@ export interface CreateProductDTO {
     description: string;
     category: string;
     price: number;
+    quantity: number;
     imageFiles?: Express.Multer.File[];
 }
 
@@ -20,7 +21,7 @@ export class CreateProductUseCase {
     ) { }
 
     async execute(data: CreateProductDTO): Promise<Product> {
-        const { name, description, category, price, imageFiles } = data;
+        const { name, description, category, price, quantity, imageFiles } = data;
 
         // Check if product already exists
         await this.checkExistingProduct(name);
@@ -50,6 +51,7 @@ export class CreateProductUseCase {
             description,
             category_id,
             price,
+            quantity,
             images: imageUrls.length > 0 ? imageUrls : null,
             createdAt: new Date(),
             updatedAt: new Date(),

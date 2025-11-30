@@ -11,8 +11,9 @@ class MigrationRunner {
   private db: DatabaseConnection;
  
   private readonly migrationPaths = [
-    'create_products_table.sql',
     'create_categories_table.sql',
+    'create_products_table.sql',
+    'create_cart_tables.sql'
   ].map(file => path.join(__dirname, 'migrations', file));
 
   private readonly dangerousKeywords = [

@@ -1,0 +1,331 @@
+paths:
+  /cart/{phoneNumber}:
+    get:
+      tags:
+        - Cart
+      summary: Get user's cart
+      description: Retrieve the user's shopping cart by phone number
+      operationId: getCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: "+1234567890"
+      responses:
+        '200':
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartWithItems'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Cart
+      summary: Clear cart
+      description: Remove all items from the user's cart
+      operationId: clearCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: "+1234567890"
+      responses:
+        '200':
+          description: Cart cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cart cleared successfully"
+        '400':
+          description: Error clearing cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cart/{phoneNumber}/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      description: Add a product to the cart. If product exists, quantity is updated.
+      operationId: addToCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: "+1234567890"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                  description: Product UUID to add to cart
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Quantity to add
+                  example: 2
+      responses:
+        '201':
+          description: Product added to cart successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+                  message:
+                    type: string
+                    example: "Product added to cart successfully"
+        '400':
+          description: Validation error or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cart/{phoneNumber}/items/{cartItemId}:
+    put:
+      tags:
+        - Cart
+      summary: Update cart item quantity
+      description: Update the quantity of a specific item in the cart
+      operationId: updateCartItem
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: "+1234567890"
+        - name: cartItemId
+          in: path
+          required: true
+          description: Cart item UUID
+          schema:
+            type: string
+            format: uuid
+          example: "item-550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: New quantity for the cart item
+                  example: 3
+      responses:
+        '200':
+          description: Cart item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+                  message:
+                    type: string
+                    example: "Cart item updated successfully"
+        '400':
+          description: Validation error or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Cart
+      summary: Remove item from cart
+      description: Remove a specific item from the user's cart
+      operationId: removeFromCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: "+1234567890"
+        - name: cartItemId
+          in: path
+          required: true
+          description: Cart item UUID
+          schema:
+            type: string
+            format: uuid
+          example: "item-550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Item removed from cart successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Item removed from cart successfully"
+        '400':
+          description: Error removing item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          description: User's phone number
+          example: "+1234567890"
+        totalAmount:
+          type: number
+          format: float
+          description: Total amount of all items in the cart
+          example: 91.98
+      required:
+        - phone_number
+        - totalAmount
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique cart item identifier
+          example: "item-550e8400-e29b-41d4-a716-446655440000"
+        phone_number:
+          type: string
+          description: User's phone number
+          example: "+1234567890"
+        product_id:
+          type: string
+          format: uuid
+          description: Product identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of the product in cart
+          example: 2
+        price:
+          type: number
+          format: float
+          description: Price snapshot at time of adding to cart
+          example: 45.99
+        createdAt:
+          type: string
+          format: date-time
+          description: Cart item creation timestamp
+          example: "2025-11-29T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Cart item last update timestamp
+          example: "2025-11-29T10:30:00.000Z"
+      required:
+        - id
+        - phone_number
+        - product_id
+        - quantity
+        - price
+        - createdAt
+        - updatedAt
+
+    CartWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Cart'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CartItem'
+              description: List of items in the cart
+          required:
+            - items
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "An error occurred"

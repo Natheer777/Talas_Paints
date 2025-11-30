@@ -28,6 +28,16 @@ export function createProductRouter(productsController: ProductsController) {
     );
 
     router.get(
+        "/products/search",
+        (req: Request, res: Response) => productsController.search(req, res)
+    );
+
+    router.get(
+        "/products/filter",
+        (req: Request, res: Response) => productsController.filter(req, res)
+    );
+
+    router.get(
         "/products/:id",
         validateGetProduct,
         handleValidationResult,
