@@ -23,6 +23,8 @@ tags:
     description: Category management operations (CRUD)
   - name: Cart
     description: Shopping cart operations
+  - name: Offers
+    description: Product offers and discounts management
 
 paths:
   # Health Check
@@ -61,6 +63,19 @@ paths:
   /api/cart/{phoneNumber}/items/{cartItemId}:
     $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}~1items~1{cartItemId}"
 
+  # Offers
+  /api/offers:
+    $ref: "./swagger-offers.yaml#/paths/~1offers"
+
+  /api/offers/{id}:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"
+
+  /api/offers/product/{productId}:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1product~1{productId}"
+
+  /api/offers/calculate:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1calculate"
+
 components:
   schemas:
     # Product schemas
@@ -76,6 +91,25 @@ components:
     
     CartWithItems:
       $ref: "./swagger-cart.yaml#/components/schemas/CartWithItems"
+    
+    # Offer schemas
+    Offer:
+      $ref: "./swagger-offers.yaml#/components/schemas/Offer"
+    
+    OfferType:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferType"
+    
+    OfferStatus:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferStatus"
+    
+    OfferCalculationResult:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferCalculationResult"
+    
+    CreateOfferRequest:
+      $ref: "./swagger-offers.yaml#/components/schemas/CreateOfferRequest"
+    
+    UpdateOfferRequest:
+      $ref: "./swagger-offers.yaml#/components/schemas/UpdateOfferRequest"
     
     # Common schemas
     Error:

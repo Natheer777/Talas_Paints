@@ -2,6 +2,7 @@ import { DatabaseConnection } from '../databases/DataBaseConnection';
 import { ProductsRepository } from '../repository/ProductsRepository';
 import { CategoriesRepository } from '../repository/CategoriesRepository';
 import { CartRepository } from '../repository/CartRepository';
+import { OfferRepository } from '../repository/OfferRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
 import {
     CreateProductUseCase,
@@ -26,9 +27,19 @@ import {
     RemoveFromCartUseCase,
     ClearCartUseCase
 } from '@/application/use-cases/Cart/index';
+import {
+    CreateOfferUseCase,
+    UpdateOfferUseCase,
+    DeleteOfferUseCase,
+    GetAllOffersUseCase,
+    GetOfferByIdUseCase,
+    GetActiveOffersByProductIdUseCase,
+    CalculateProductOfferUseCase
+} from '@/application/use-cases/Offers/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
 import { CartController } from '@/presentation/controller/CartController';
+import { OffersController } from '@/presentation/controller/OffersController';
 
 class Container {
     // Infrastructure layer
@@ -36,6 +47,7 @@ class Container {
     private static productsRepository = new ProductsRepository(Container.db.getPool());
     private static categoriesRepository = new CategoriesRepository(Container.db.getPool());
     private static cartRepository = new CartRepository(Container.db.getPool());
+    private static offerRepository = new OfferRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Application layer - Product Use Cases
@@ -119,6 +131,35 @@ class Container {
         Container.cartRepository
     );
 
+    // Application layer - Offer Use Cases
+    private static createOfferUseCase = new CreateOfferUseCase(
+        Container.offerRepository
+    );
+
+    private static updateOfferUseCase = new UpdateOfferUseCase(
+        Container.offerRepository
+    );
+
+    private static deleteOfferUseCase = new DeleteOfferUseCase(
+        Container.offerRepository
+    );
+
+    private static getAllOffersUseCase = new GetAllOffersUseCase(
+        Container.offerRepository
+    );
+
+    private static getOfferByIdUseCase = new GetOfferByIdUseCase(
+        Container.offerRepository
+    );
+
+    private static getActiveOffersByProductIdUseCase = new GetActiveOffersByProductIdUseCase(
+        Container.offerRepository
+    );
+
+    private static calculateProductOfferUseCase = new CalculateProductOfferUseCase(
+        Container.offerRepository
+    );
+
     // Presentation layer - Controllers
     private static productsController = new ProductsController(
         Container.createProductUseCase,
@@ -146,6 +187,16 @@ class Container {
         Container.clearCartUseCase
     );
 
+    private static offersController = new OffersController(
+        Container.createOfferUseCase,
+        Container.updateOfferUseCase,
+        Container.deleteOfferUseCase,
+        Container.getAllOffersUseCase,
+        Container.getOfferByIdUseCase,
+        Container.getActiveOffersByProductIdUseCase,
+        Container.calculateProductOfferUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
     }
@@ -156,6 +207,10 @@ class Container {
 
     static getCartController(): CartController {
         return Container.cartController;
+    }
+
+    static getOffersController(): OffersController {
+        return Container.offersController;
     }
 }
 
