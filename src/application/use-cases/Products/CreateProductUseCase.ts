@@ -1,4 +1,4 @@
-import { Product } from '@/domian/entities/Products';
+import { Product, ProductSize, ProductStatus } from '@/domian/entities/Products';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
 import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
 import { IFileStorageService } from '@/application/interface/IFileStorageService';
@@ -8,7 +8,9 @@ export interface CreateProductDTO {
     name: string;
     description: string;
     category: string;
-    price: number;
+    colors?: string[];
+    sizes: ProductSize[];
+    status: ProductStatus;
     imageFiles?: Express.Multer.File[];
 }
 
@@ -20,12 +22,10 @@ export class CreateProductUseCase {
     ) { }
 
     async execute(data: CreateProductDTO): Promise<Product> {
-        const { name, description, category, price, imageFiles } = data;
+        const { name, description, category, colors, sizes, status, imageFiles } = data;
 
-        // Check if product already exists
         await this.checkExistingProduct(name);
 
-        // Look up category by name and get its ID
         const categoryEntity = await this.categoriesRepository.findByName(category);
         if (!categoryEntity || !categoryEntity.id) {
             throw new Error('Category not found');
@@ -35,7 +35,6 @@ export class CreateProductUseCase {
         const productId = uuidv4();
         let imageUrls: string[] = [];
 
-        // Upload images if provided
         if (imageFiles && imageFiles.length > 0) {
             imageUrls = await this.fileStorageService.UploadMultipleProductImages(
                 imageFiles,
@@ -49,7 +48,10 @@ export class CreateProductUseCase {
             name,
             description,
             category_id,
-            price,
+           
+            colors,
+            sizes,
+            status,
             images: imageUrls.length > 0 ? imageUrls : null,
             createdAt: new Date(),
             updatedAt: new Date(),

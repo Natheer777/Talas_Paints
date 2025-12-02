@@ -1,22 +1,28 @@
 openapi: 3.0.3
 info:
   title: Tala Paints Platform API
+  description: |
+    Complete API documentation for Tala Paints e-commerce platform.
   version: 1.0.0
   contact:
     name: API Support
     email: support@talapaints.com
 servers:
   - url: 'http://localhost:3000'
-    description: Local  server
+    description: Local development server
   - url: 'https://talas-paints.onrender.com'
-    description: development server
+    description: Production server
 tags:
   - name: Health Check
     description: Server health monitoring
   - name: Products
-    description: Product management operations (CRUD)
+    description: 'Product management operations (CRUD, search, filter)'
   - name: Categories
     description: Category management operations (CRUD)
+  - name: Cart
+    description: Shopping cart operations
+  - name: Offers
+    description: Product offers and discounts management
 paths:
   /api/health:
     get:
@@ -49,7 +55,7 @@ paths:
       tags:
         - Products
       summary: Create a new product
-      description: 'Create a new product with optional image uploads. Supports multiple images (max 10, 5MB each). Images are automatically converted to JPEG and uploaded to AWS S3.'
+      description: Create a new product with optional image uploads.
       operationId: createProduct
       requestBody:
         required: true
@@ -61,7 +67,8 @@ paths:
                 - name
                 - description
                 - category
-                - price
+                - sizes
+                - status
               properties:
                 name:
                   type: string
@@ -74,14 +81,45 @@ paths:
                   example: High-quality latex paint perfect for interior walls and ceilings
                 category:
                   type: string
-                  minLength: 2
-                  maxLength: 100
-                  example: Interior Paint
-                price:
-                  type: number
-                  format: float
-                  minimum: 0.01
-                  example: 45.99
+                  description: Category name (not category_id)
+                  example: Interior Paints
+                colors:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of color names (optional)
+                  example:
+                    - Red
+                    - Blue
+                    - Green
+                sizes:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - size
+                      - price
+                    properties:
+                      size:
+                        type: string
+                        example: 1L
+                      price:
+                        type: number
+                        format: float
+                        example: 34.99
+                  description: Array of available sizes and prices
+                  example:
+                    - size: 1L
+                      price: 34.99
+                    - size: 5L
+                      price: 149.99
+                status:
+                  type: string
+                  enum:
+                    - visible
+                    - hidden
+                  description: Product visibility status
+                  example: visible
                 images:
                   type: array
                   items:
@@ -101,57 +139,7 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        description: Unique product identifier
-                        example: 550e8400-e29b-41d4-a716-446655440000
-                      name:
-                        type: string
-                        description: Product name
-                        example: Premium Interior Paint
-                      description:
-                        type: string
-                        description: Product description
-                        example: High-quality latex paint perfect for interior walls and ceilings
-                      category:
-                        type: string
-                        description: Product category
-                        example: Interior Paint
-                      price:
-                        type: number
-                        format: float
-                        description: Product price
-                        example: 45.99
-                      images:
-                        type: array
-                        items:
-                          type: string
-                          format: uri
-                        description: Array of image URLs stored in AWS S3
-                        example:
-                          - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid1.jpg'
-                          - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid2.jpg'
-                      createdAt:
-                        type: string
-                        format: date-time
-                        description: Product creation timestamp
-                        example: '2025-11-25T10:00:00.000Z'
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        description: Product last update timestamp
-                        example: '2025-11-25T10:30:00.000Z'
-                    required:
-                      - id
-                      - name
-                      - description
-                      - category
-                      - price
-                      - createdAt
-                      - updatedAt
+                    $ref: '#/components/schemas/Product'
                   message:
                     type: string
                     example: Product created successfully
@@ -160,7 +148,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+                $ref: '#/components/schemas/Error'
               examples:
                 validationError:
                   value:
@@ -193,7 +181,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+                      $ref: '#/components/schemas/Product'
                   count:
                     type: integer
                     description: Total number of products
@@ -203,39 +191,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    description: Error message
-                    example: An error occurred
-                  errors:
-                    type: array
-                    description: Detailed validation errors (if applicable)
-                    items:
-                      type: object
-                      properties:
-                        msg:
-                          type: string
-                          description: Error message
-                          example: Name is required and must be a string
-                        param:
-                          type: string
-                          description: Parameter that caused the error
-                          example: name
-                        location:
-                          type: string
-                          description: Location of the parameter
-                          example: body
+                $ref: '#/components/schemas/Error'
   '/api/products/{id}':
     get:
       tags:
         - Products
       summary: Get product by ID
-      description: Retrieve a single product by its unique identifier
+      description: Retrieve a single product by unique identifier
       operationId: getProductById
       parameters:
         - name: id
@@ -258,13 +220,13 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+                    $ref: '#/components/schemas/Product'
         '400':
           description: Invalid product ID format
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+                $ref: '#/components/schemas/Error'
         '404':
           description: Product not found
           content:
@@ -282,7 +244,7 @@ paths:
       tags:
         - Products
       summary: Update product
-      description: Update an existing product. All fields are optional. Supports image management with options to keep or replace existing images.
+      description: Update an existing product. All fields optional.
       operationId: updateProduct
       parameters:
         - name: id
@@ -302,39 +264,58 @@ paths:
               properties:
                 name:
                   type: string
-                  minLength: 2
-                  maxLength: 255
-                  description: Updated product name
                   example: Updated Premium Paint
                 description:
                   type: string
-                  description: Updated product description
                   example: Updated description with new features
                 category:
                   type: string
-                  minLength: 2
-                  maxLength: 100
-                  description: Updated product category
-                  example: Exterior Paint
-                price:
-                  type: number
-                  format: float
-                  minimum: 0.01
-                  description: Updated product price
-                  example: 49.99
+                  description: Category name (not category_id)
+                  example: Interior Paints
+                colors:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - Red
+                    - Blue
+                    - Green
+                    - Yellow
+                sizes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      size:
+                        type: string
+                        example: 1L
+                      price:
+                        type: number
+                        format: float
+                        example: 34.99
+                  example:
+                    - size: 1L
+                      price: 34.99
+                    - size: 5L
+                      price: 149.99
+                status:
+                  type: string
+                  enum:
+                    - visible
+                    - hidden
+                  example: visible
                 images:
                   type: array
                   items:
                     type: string
                     format: binary
-                  description: 'New product images (JPEG, PNG, or WebP, max 10 files, 5MB each)'
                   maxItems: 10
                 keepExistingImages:
                   type: string
                   enum:
                     - 'true'
                     - 'false'
-                  description: Whether to keep existing images when uploading new ones (default is false - replaces all images)
+                  description: Whether to keep existing images when uploading new ones
                   example: 'true'
       responses:
         '200':
@@ -348,16 +329,16 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    $ref: '#/paths/~1api~1products/post/responses/201/content/application~1json/schema/properties/data'
+                    $ref: '#/components/schemas/Product'
                   message:
                     type: string
                     example: Product updated successfully
         '400':
-          description: Validation error or invalid request
+          description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+                $ref: '#/components/schemas/Error'
         '404':
           description: Product not found
           content:
@@ -375,7 +356,7 @@ paths:
       tags:
         - Products
       summary: Delete product
-      description: Delete a product and all its associated images from AWS S3
+      description: Delete a product and its associated images from AWS S3
       operationId: deleteProduct
       parameters:
         - name: id
@@ -405,7 +386,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1products/get/responses/500/content/application~1json/schema'
+                $ref: '#/components/schemas/Error'
         '404':
           description: Product not found
           content:
@@ -419,6 +400,119 @@ paths:
                   message:
                     type: string
                     example: Product not found
+  /api/products/search:
+    get:
+      tags:
+        - Products
+      summary: Search products by name
+      description: Search for products by name (partial matching)
+      operationId: searchProducts
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Search term for product name
+          schema:
+            type: string
+          example: paint
+      responses:
+        '200':
+          description: Products found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+                    description: Number of products found
+                    example: 3
+        '400':
+          description: Missing search term
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/products/filter:
+    get:
+      tags:
+        - Products
+      summary: Filter products
+      description: Filter by categories and/or price range (filters products where at least one size price is within the range)
+      operationId: filterProducts
+      parameters:
+        - name: categories
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          required: false
+          style: form
+          explode: true
+          example:
+            - 650e8400-e29b-41d4-a716-446655440001
+          description: Array of category IDs to filter by
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: float
+          required: false
+          example: 10
+          description: Minimum price filter (matches products with at least one size price >= minPrice)
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: float
+          required: false
+          example: 100
+          description: Maximum price filter (matches products with at least one size price <= maxPrice)
+      responses:
+        '200':
+          description: Filtered products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+                    example: 7
+        '400':
+          description: Invalid filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/categories:
     post:
       tags:
@@ -671,3 +765,820 @@ paths:
           $ref: '#/paths/~1api~1categories/post/responses/400'
         '404':
           $ref: '#/paths/~1api~1categories~1%7Bid%7D/get/responses/404'
+  '/api/cart/{phoneNumber}':
+    get:
+      tags:
+        - Cart
+      summary: Get user's cart
+      description: Retrieve the user's shopping cart by phone number
+      operationId: getCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: '+1234567890'
+      responses:
+        '200':
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartWithItems'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    description: Error message
+                    example: An error occurred
+    delete:
+      tags:
+        - Cart
+      summary: Clear cart
+      description: Remove all items from the user's cart
+      operationId: clearCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: '+1234567890'
+      responses:
+        '200':
+          description: Cart cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cart cleared successfully
+        '400':
+          description: Error clearing cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+  '/api/cart/{phoneNumber}/items':
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      description: 'Add a product to the cart. If product exists, quantity is updated.'
+      operationId: addToCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: '+1234567890'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                  description: Product UUID to add to cart
+                  example: 550e8400-e29b-41d4-a716-446655440000
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Quantity to add
+                  example: 2
+      responses:
+        '201':
+          description: Product added to cart successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+                  message:
+                    type: string
+                    example: Product added to cart successfully
+        '400':
+          description: Validation error or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+  '/api/cart/{phoneNumber}/items/{cartItemId}':
+    put:
+      tags:
+        - Cart
+      summary: Update cart item quantity
+      description: Update the quantity of a specific item in the cart
+      operationId: updateCartItem
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: '+1234567890'
+        - name: cartItemId
+          in: path
+          required: true
+          description: Cart item UUID
+          schema:
+            type: string
+            format: uuid
+          example: item-550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: New quantity for the cart item
+                  example: 3
+      responses:
+        '200':
+          description: Cart item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+                  message:
+                    type: string
+                    example: Cart item updated successfully
+        '400':
+          description: Validation error or insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+    delete:
+      tags:
+        - Cart
+      summary: Remove item from cart
+      description: Remove a specific item from the user's cart
+      operationId: removeFromCart
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+          example: '+1234567890'
+        - name: cartItemId
+          in: path
+          required: true
+          description: Cart item UUID
+          schema:
+            type: string
+            format: uuid
+          example: item-550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Item removed from cart successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Item removed from cart successfully
+        '400':
+          description: Error removing item
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+  /api/offers:
+    post:
+      tags:
+        - Offers
+      summary: Create a new offer
+      description: Create a new promotional offer (Percentage Discount or Buy 2 Get 1 Free)
+      operationId: createOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+      responses:
+        '201':
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+                  message:
+                    type: string
+                    example: Offer created successfully
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  errors:
+                    type: array
+                    items:
+                      type: object
+    get:
+      tags:
+        - Offers
+      summary: Get all offers
+      description: Retrieve a list of all offers
+      operationId: getAllOffers
+      responses:
+        '200':
+          description: Offers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                  count:
+                    type: integer
+                    example: 5
+  '/api/offers/{id}':
+    get:
+      tags:
+        - Offers
+      summary: Get offer by ID
+      description: Retrieve a specific offer by its ID
+      operationId: getOfferById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Offer retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+        '404':
+          description: Offer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1offers/post/responses/400/content/application~1json/schema'
+    put:
+      tags:
+        - Offers
+      summary: Update offer
+      description: Update an existing offer
+      operationId: updateOffer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOfferRequest'
+      responses:
+        '200':
+          description: Offer updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+                  message:
+                    type: string
+                    example: Offer updated successfully
+        '404':
+          description: Offer not found
+    delete:
+      tags:
+        - Offers
+      summary: Delete offer
+      description: Delete an offer by its ID
+      operationId: deleteOffer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Offer deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Offer deleted successfully
+        '404':
+          description: Offer not found
+  '/api/offers/product/{productId}':
+    get:
+      tags:
+        - Offers
+      summary: Get active offers for product
+      description: Retrieve all active offers for a specific product
+      operationId: getActiveOffersByProductId
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active offers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                  count:
+                    type: integer
+                    example: 2
+  /api/offers/calculate:
+    post:
+      tags:
+        - Offers
+      summary: Calculate best offer
+      description: Calculate the best applicable offer for a product based on price and quantity
+      operationId: calculateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - price
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                price:
+                  type: number
+                  minimum: 0
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Calculation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OfferCalculationResult'
+                  message:
+                    type: string
+                    example: Offer calculated successfully
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique product identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Product name
+          example: Premium Interior Paint
+        description:
+          type: string
+          description: Product description
+          example: High-quality latex paint perfect for interior walls and ceilings
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: 650e8400-e29b-41d4-a716-446655440001
+        colors:
+          type: array
+          items:
+            type: string
+          description: Available color options (optional)
+          example:
+            - Red
+            - Blue
+            - Green
+        sizes:
+          type: array
+          items:
+            type: object
+            properties:
+              size:
+                type: string
+                example: 1L
+              price:
+                type: number
+                format: float
+                example: 29.99
+          description: Array of size objects
+          example:
+            - size: 1L
+              price: 29.99
+            - size: 5L
+              price: 129.99
+            - size: 10L
+              price: 239.99
+        status:
+          type: string
+          enum:
+            - visible
+            - hidden
+          description: Product visibility status
+          example: visible
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Array of image URLs stored in AWS S3
+          example:
+            - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid1.jpg'
+            - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid2.jpg'
+        createdAt:
+          type: string
+          format: date-time
+          description: Product creation timestamp
+          example: '2025-11-25T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Product last update timestamp
+          example: '2025-11-25T10:30:00.000Z'
+      required:
+        - id
+        - name
+        - description
+        - category_id
+        - sizes
+        - status
+        - createdAt
+        - updatedAt
+    Cart:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          description: User's phone number
+          example: '+1234567890'
+        totalAmount:
+          type: number
+          format: float
+          description: Total amount of all items in the cart
+          example: 91.98
+      required:
+        - phone_number
+        - totalAmount
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique cart item identifier
+          example: item-550e8400-e29b-41d4-a716-446655440000
+        phone_number:
+          type: string
+          description: User's phone number
+          example: '+1234567890'
+        product_id:
+          type: string
+          format: uuid
+          description: Product identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of the product in cart
+          example: 2
+        price:
+          type: number
+          format: float
+          description: Price snapshot at time of adding to cart
+          example: 45.99
+        createdAt:
+          type: string
+          format: date-time
+          description: Cart item creation timestamp
+          example: '2025-11-29T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Cart item last update timestamp
+          example: '2025-11-29T10:30:00.000Z'
+      required:
+        - id
+        - phone_number
+        - product_id
+        - quantity
+        - price
+        - createdAt
+        - updatedAt
+    CartWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Cart'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CartItem'
+              description: List of items in the cart
+          required:
+            - items
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+        buy_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        get_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OfferType:
+      type: string
+      enum:
+        - PERCENTAGE_DISCOUNT
+        - BUY_X_GET_Y_FREE
+      description: Type of the offer
+    OfferStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - EXPIRED
+      description: Status of the offer
+    OfferCalculationResult:
+      type: object
+      properties:
+        original_price:
+          type: number
+        discount_amount:
+          type: number
+        final_price:
+          type: number
+        offer_applied:
+          type: boolean
+        offer_details:
+          type: object
+          properties:
+            offer_id:
+              type: string
+              format: uuid
+            offer_name:
+              type: string
+            offer_type:
+              $ref: '#/components/schemas/OfferType'
+    CreateOfferRequest:
+      type: object
+      required:
+        - name
+        - description
+        - type
+        - product_id
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          minimum: 0.01
+          maximum: 100
+          description: Required if type is PERCENTAGE_DISCOUNT
+        buy_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
+        get_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+    UpdateOfferRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          minimum: 0.01
+          maximum: 100
+        buy_quantity:
+          type: integer
+          minimum: 1
+        get_quantity:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: An error occurred
+        errors:
+          type: array
+          description: Detailed validation errors (if applicable)
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+                description: Error message
+                example: Name is required and must be a string
+              param:
+                type: string
+                description: Parameter that caused the error
+                example: name
+              location:
+                type: string
+                description: Location of the parameter
+                example: body
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication

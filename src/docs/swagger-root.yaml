@@ -1,37 +1,127 @@
 openapi: 3.0.3
 info:
   title: Tala Paints Platform API
+  description: |
+    Complete API documentation for Tala Paints e-commerce platform.
   version: 1.0.0
   contact:
     name: API Support
     email: support@talapaints.com
+
 servers:
   - url: http://localhost:3000
-    description: Local  server
+    description: Local development server
   - url: https://talas-paints.onrender.com
-    description:  development server
-
+    description: Production server
 
 tags:
   - name: Health Check
     description: Server health monitoring
   - name: Products
-    description: Product management operations (CRUD)
+    description: Product management operations (CRUD, search, filter)
   - name: Categories
     description: Category management operations (CRUD)
+  - name: Cart
+    description: Shopping cart operations
+  - name: Offers
+    description: Product offers and discounts management
 
 paths:
+  # Health Check
   /api/health:
     $ref: "./swagger-products.yaml#/paths/~1health"
 
+  # Products - CRUD
   /api/products:
     $ref: "./swagger-products.yaml#/paths/~1products"
 
   /api/products/{id}:
     $ref: "./swagger-products.yaml#/paths/~1products~1{id}"
 
+  # Products - Search & Filter
+  /api/products/search:
+    $ref: "./swagger-products.yaml#/paths/~1products~1search"
+
+  /api/products/filter:
+    $ref: "./swagger-products.yaml#/paths/~1products~1filter"
+
+  # Categories
   /api/categories:
     $ref: "./swagger-categories.yaml#/paths/~1categories"
 
   /api/categories/{id}:
     $ref: "./swagger-categories.yaml#/paths/~1categories~1{id}"
+
+  # Cart - Main operations
+  /api/cart/{phoneNumber}:
+    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}"
+
+  # Cart - Item operations
+  /api/cart/{phoneNumber}/items:
+    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}~1items"
+
+  /api/cart/{phoneNumber}/items/{cartItemId}:
+    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}~1items~1{cartItemId}"
+
+  # Offers
+  /api/offers:
+    $ref: "./swagger-offers.yaml#/paths/~1offers"
+
+  /api/offers/{id}:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"
+
+  /api/offers/product/{productId}:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1product~1{productId}"
+
+  /api/offers/calculate:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1calculate"
+
+components:
+  schemas:
+    # Product schemas
+    Product:
+      $ref: "./swagger-products.yaml#/components/schemas/Product"
+    
+    # Cart schemas
+    Cart:
+      $ref: "./swagger-cart.yaml#/components/schemas/Cart"
+    
+    CartItem:
+      $ref: "./swagger-cart.yaml#/components/schemas/CartItem"
+    
+    CartWithItems:
+      $ref: "./swagger-cart.yaml#/components/schemas/CartWithItems"
+    
+    # Offer schemas
+    Offer:
+      $ref: "./swagger-offers.yaml#/components/schemas/Offer"
+    
+    OfferType:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferType"
+    
+    OfferStatus:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferStatus"
+    
+    OfferCalculationResult:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferCalculationResult"
+    
+    CreateOfferRequest:
+      $ref: "./swagger-offers.yaml#/components/schemas/CreateOfferRequest"
+    
+    UpdateOfferRequest:
+      $ref: "./swagger-offers.yaml#/components/schemas/UpdateOfferRequest"
+    
+    # Common schemas
+    Error:
+      $ref: "./swagger-products.yaml#/components/schemas/Error"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+# Global security (can be overridden per endpoint)
+# security:
+#   - BearerAuth: []

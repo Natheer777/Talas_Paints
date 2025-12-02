@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Offers API
+  version: 1.0.0
+paths:
+  /offers:
+    post:
+      tags:
+        - Offers
+      summary: Create a new offer
+      description: Create a new promotional offer (Percentage Discount or Buy 2 Get 1 Free)
+      operationId: createOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+      responses:
+        '201':
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+                  message:
+                    type: string
+                    example: Offer created successfully
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Offers
+      summary: Get all offers
+      description: Retrieve a list of all offers
+      operationId: getAllOffers
+      responses:
+        '200':
+          description: Offers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                  count:
+                    type: integer
+                    example: 5
+
+  /offers/{id}:
+    get:
+      tags:
+        - Offers
+      summary: Get offer by ID
+      description: Retrieve a specific offer by its ID
+      operationId: getOfferById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Offer retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+        '404':
+          description: Offer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Offers
+      summary: Update offer
+      description: Update an existing offer
+      operationId: updateOffer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOfferRequest'
+      responses:
+        '200':
+          description: Offer updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Offer'
+                  message:
+                    type: string
+                    example: Offer updated successfully
+        '404':
+          description: Offer not found
+
+    delete:
+      tags:
+        - Offers
+      summary: Delete offer
+      description: Delete an offer by its ID
+      operationId: deleteOffer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Offer UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Offer deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Offer deleted successfully
+        '404':
+          description: Offer not found
+
+  /offers/product/{productId}:
+    get:
+      tags:
+        - Offers
+      summary: Get active offers for product
+      description: Retrieve all active offers for a specific product
+      operationId: getActiveOffersByProductId
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active offers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                  count:
+                    type: integer
+                    example: 2
+
+  /offers/calculate:
+    post:
+      tags:
+        - Offers
+      summary: Calculate best offer
+      description: Calculate the best applicable offer for a product based on price and quantity
+      operationId: calculateOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - price
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                price:
+                  type: number
+                  minimum: 0
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Calculation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OfferCalculationResult'
+                  message:
+                    type: string
+                    example: Offer calculated successfully
+
+components:
+  schemas:
+    OfferType:
+      type: string
+      enum:
+        - PERCENTAGE_DISCOUNT
+        - BUY_X_GET_Y_FREE
+      description: Type of the offer
+
+    OfferStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - EXPIRED
+      description: Status of the offer
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+        buy_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        get_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOfferRequest:
+      type: object
+      required:
+        - name
+        - description
+        - type
+        - product_id
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          minimum: 0.01
+          maximum: 100
+          description: Required if type is PERCENTAGE_DISCOUNT
+        buy_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
+        get_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+
+    UpdateOfferRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          minimum: 0.01
+          maximum: 100
+        buy_quantity:
+          type: integer
+          minimum: 1
+        get_quantity:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+
+    OfferCalculationResult:
+      type: object
+      properties:
+        original_price:
+          type: number
+        discount_amount:
+          type: number
+        final_price:
+          type: number
+        offer_applied:
+          type: boolean
+        offer_details:
+          type: object
+          properties:
+            offer_id:
+              type: string
+              format: uuid
+            offer_name:
+              type: string
+            offer_type:
+              $ref: '#/components/schemas/OfferType'
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
