@@ -253,7 +253,7 @@ components:
       type: string
       enum:
         - PERCENTAGE_DISCOUNT
-        - BUY_TWO_GET_ONE_FREE
+        - BUY_X_GET_Y_FREE
       description: Type of the offer
 
     OfferStatus:
@@ -284,12 +284,14 @@ components:
           nullable: true
           minimum: 0
           maximum: 100
-        start_date:
-          type: string
-          format: date-time
-        end_date:
-          type: string
-          format: date-time
+        buy_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        get_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
         status:
           $ref: '#/components/schemas/OfferStatus'
         createdAt:
@@ -306,8 +308,6 @@ components:
         - description
         - type
         - product_id
-        - start_date
-        - end_date
         - status
       properties:
         name:
@@ -326,12 +326,14 @@ components:
           minimum: 0.01
           maximum: 100
           description: Required if type is PERCENTAGE_DISCOUNT
-        start_date:
-          type: string
-          format: date-time
-        end_date:
-          type: string
-          format: date-time
+        buy_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
+        get_quantity:
+          type: integer
+          minimum: 1
+          description: Required if type is BUY_X_GET_Y_FREE
         status:
           $ref: '#/components/schemas/OfferStatus'
 
@@ -353,12 +355,12 @@ components:
           type: number
           minimum: 0.01
           maximum: 100
-        start_date:
-          type: string
-          format: date-time
-        end_date:
-          type: string
-          format: date-time
+        buy_quantity:
+          type: integer
+          minimum: 1
+        get_quantity:
+          type: integer
+          minimum: 1
         status:
           $ref: '#/components/schemas/OfferStatus'
 

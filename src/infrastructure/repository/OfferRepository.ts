@@ -2,6 +2,11 @@ import { Offer, OfferStatus } from '@/domian/entities/Offer';
 import { IOfferRepository } from '@/domian/repository/IOfferRepository';
 import { Pool } from 'pg';
 
+/**
+ * Offer Repository Implementation
+ * Handles data persistence for offers using PostgreSQL
+ * Following Repository Pattern and Dependency Inversion Principle
+ */
 export class OfferRepository implements IOfferRepository {
     constructor(private db: Pool) { }
 
@@ -10,9 +15,9 @@ export class OfferRepository implements IOfferRepository {
             INSERT INTO offers (
                 id, name, description, type, product_id, 
                 discount_percentage, buy_quantity, get_quantity,
-                start_date, end_date, status, created_at, updated_at
+                status, created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
 
@@ -25,8 +30,6 @@ export class OfferRepository implements IOfferRepository {
             offer.discount_percentage || null,
             offer.buy_quantity || null,
             offer.get_quantity || null,
-            offer.start_date,
-            offer.end_date,
             offer.status,
             offer.createdAt,
             offer.updatedAt
@@ -75,16 +78,6 @@ export class OfferRepository implements IOfferRepository {
         if (offer.get_quantity !== undefined) {
             updateFields.push(`get_quantity = $${paramCounter++}`);
             values.push(offer.get_quantity);
-        }
-
-        if (offer.start_date !== undefined) {
-            updateFields.push(`start_date = $${paramCounter++}`);
-            values.push(offer.start_date);
-        }
-
-        if (offer.end_date !== undefined) {
-            updateFields.push(`end_date = $${paramCounter++}`);
-            values.push(offer.end_date);
         }
 
         if (offer.status !== undefined) {
@@ -143,8 +136,6 @@ export class OfferRepository implements IOfferRepository {
             SELECT * FROM offers 
             WHERE product_id = $1 
             AND status = $2
-            AND start_date <= NOW()
-            AND end_date >= NOW()
             ORDER BY created_at DESC
         `;
 
@@ -156,8 +147,6 @@ export class OfferRepository implements IOfferRepository {
         const query = `
             SELECT * FROM offers 
             WHERE status = $1
-            AND start_date <= NOW()
-            AND end_date >= NOW()
             ORDER BY created_at DESC
         `;
 
@@ -178,8 +167,6 @@ export class OfferRepository implements IOfferRepository {
             discount_percentage: row.discount_percentage ? parseFloat(row.discount_percentage) : undefined,
             buy_quantity: row.buy_quantity ? parseInt(row.buy_quantity) : undefined,
             get_quantity: row.get_quantity ? parseInt(row.get_quantity) : undefined,
-            start_date: new Date(row.start_date),
-            end_date: new Date(row.end_date),
             status: row.status,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)

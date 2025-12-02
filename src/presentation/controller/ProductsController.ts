@@ -23,15 +23,35 @@ export class ProductsController {
 
     async create(req: Request, res: Response) {
         try {
-            const { name, description, category, price, quantity } = req.body;
+            const { name, description, category, colors, sizes, status } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
+
+            // Parse colors if it's still a string (fallback)
+            let parsedColors = colors;
+            if (colors && typeof colors === 'string') {
+                try {
+                    parsedColors = JSON.parse(colors);
+                } catch {
+                    // If JSON parsing fails, try comma-separated
+                    parsedColors = colors.includes(',')
+                        ? colors.split(',').map((c: string) => c.trim()).filter((c: string) => c)
+                        : [colors.trim()];
+                }
+            }
+
+            // Parse sizes if it's still a string (fallback)
+            let parsedSizes = sizes;
+            if (typeof sizes === 'string') {
+                parsedSizes = JSON.parse(sizes);
+            }
 
             const result = await this.createProductUseCase.execute({
                 name,
                 description,
                 category,
-                price: parseFloat(price),
-                quantity: parseInt(quantity),
+                colors: parsedColors,
+                sizes: parsedSizes,
+                status,
                 imageFiles,
             });
 
@@ -52,9 +72,7 @@ export class ProductsController {
     async getById(req: Request, res: Response) {
         try {
             const { id } = req.params;
-
             const result = await this.getProductUseCase.execute({ id });
-
             return res.status(200).json({
                 success: true,
                 data: result,
@@ -70,7 +88,6 @@ export class ProductsController {
     async getAll(req: Request, res: Response) {
         try {
             const result = await this.getAllProductsUseCase.execute();
-
             return res.status(200).json({
                 success: true,
                 data: result,
@@ -87,16 +104,33 @@ export class ProductsController {
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const { name, description, category, price, quantity, keepExistingImages } = req.body;
+            const { name, description, category, colors, sizes, status, keepExistingImages } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
+
+            let parsedColors = colors;
+            if (colors && typeof colors === 'string') {
+                try {
+                    parsedColors = JSON.parse(colors);
+                } catch {
+                    parsedColors = colors.includes(',')
+                        ? colors.split(',').map((c: string) => c.trim()).filter((c: string) => c)
+                        : [colors.trim()];
+                }
+            }
+
+            let parsedSizes = sizes;
+            if (sizes && typeof sizes === 'string') {
+                parsedSizes = JSON.parse(sizes);
+            }
 
             const result = await this.updateProductUseCase.execute({
                 id,
                 name,
                 description,
                 category,
-                price: price ? parseFloat(price) : undefined,
-                quantity: quantity ? parseInt(quantity) : undefined,
+                colors: parsedColors,
+                sizes: parsedSizes,
+                status,
                 imageFiles,
                 keepExistingImages: keepExistingImages === 'true',
             });
@@ -138,16 +172,13 @@ export class ProductsController {
     async search(req: Request, res: Response) {
         try {
             const { name } = req.query;
-
             if (!name || typeof name !== 'string') {
                 return res.status(400).json({
                     success: false,
                     message: "Search term is required",
                 });
             }
-
             const result = await this.searchProductsUseCase.execute({ name });
-
             return res.status(200).json({
                 success: true,
                 data: result,
@@ -164,13 +195,11 @@ export class ProductsController {
     async filter(req: Request, res: Response) {
         try {
             const { categories, minPrice, maxPrice } = req.query;
-
             const result = await this.filterProductsUseCase.execute({
                 categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
                 minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                 maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
             });
-
             return res.status(200).json({
                 success: true,
                 data: result,

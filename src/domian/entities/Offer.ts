@@ -24,10 +24,6 @@ export interface Offer {
     buy_quantity?: number;
     get_quantity?: number;
 
-    // Validity period
-    start_date: Date;
-    end_date: Date;
-
     // Status
     status: OfferStatus;
 

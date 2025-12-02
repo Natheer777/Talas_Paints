@@ -19,8 +19,6 @@ CREATE TABLE IF NOT EXISTS offers (
     buy_quantity INTEGER CHECK (buy_quantity > 0),
     get_quantity INTEGER CHECK (get_quantity > 0),
 
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
 
     status VARCHAR(20) NOT NULL CHECK (status IN (
         'ACTIVE',
@@ -33,7 +31,6 @@ CREATE TABLE IF NOT EXISTS offers (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
 
-    CONSTRAINT valid_dates CHECK (end_date > start_date),
 
 
     CONSTRAINT offer_type_validation CHECK (
@@ -49,9 +46,8 @@ CREATE TABLE IF NOT EXISTS offers (
     )
 );
 
--- Indexات
 CREATE INDEX IF NOT EXISTS idx_offers_product_id
 ON offers(product_id);
 
-CREATE INDEX IF NOT EXISTS idx_offers_status_dates
-ON offers(status, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_offers_status
+ON offers(status);

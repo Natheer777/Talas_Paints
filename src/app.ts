@@ -18,13 +18,11 @@ export class App {
     this.app = express();
     this.app.use(express.json());
 
-    // Controllers via DI container
     const productsController = Container.getProductsController();
     const categoriesController = Container.getCategoriesController();
     const cartController = Container.getCartController();
     const offersController = Container.getOffersController();
 
-    // Register routers
     this.app.use('/api', createProductRouter(productsController));
     this.app.use('/api', createCategoryRouter(categoriesController));
     this.app.use('/api', createCartRouter(cartController));
@@ -49,7 +47,7 @@ export class App {
   }
 
   private setupRoutes(): void {
-    this.app.get('/health', (req: Request, res: Response) => {
+    this.app.get('/api/health', (req: Request, res: Response) => {
       res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),

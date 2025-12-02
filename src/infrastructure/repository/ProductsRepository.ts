@@ -7,8 +7,8 @@ export class ProductsRepository implements IProductsRepository {
 
     async create(product: Product): Promise<Product> {
         const query = `
-        INSERT INTO products (id, name, description, category_id, price, quantity, images, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO products (id, name, description, category_id, colors, sizes, status, images, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
         `;
         const values = [
@@ -16,8 +16,9 @@ export class ProductsRepository implements IProductsRepository {
             product.name,
             product.description,
             product.category_id,
-            product.price,
-            product.quantity,
+            JSON.stringify(product.colors || []),
+            JSON.stringify(product.sizes),
+            product.status,
             JSON.stringify(product.images || []),
             product.createdAt,
             product.updatedAt,
@@ -69,18 +70,35 @@ export class ProductsRepository implements IProductsRepository {
             paramCounter++;
         }
 
-        // Filter by minimum price
-        if (options.minPrice !== undefined) {
-            query += ` AND price >= $${paramCounter}`;
-            values.push(options.minPrice);
-            paramCounter++;
-        }
-
-        // Filter by maximum price
-        if (options.maxPrice !== undefined) {
-            query += ` AND price <= $${paramCounter}`;
-            values.push(options.maxPrice);
-            paramCounter++;
+        // Filter by price range in sizes JSON
+        // Products are included if at least one size has a price within the specified range
+        if (options.minPrice !== undefined || options.maxPrice !== undefined) {
+            if (options.minPrice !== undefined && options.maxPrice !== undefined) {
+                // Both min and max: find sizes where price is between min and max
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter} 
+                    AND (size->>'price')::numeric <= $${paramCounter + 1}
+                )`;
+                values.push(options.minPrice, options.maxPrice);
+                paramCounter += 2;
+            } else if (options.minPrice !== undefined) {
+                // Only min: find sizes where price >= min
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                )`;
+                values.push(options.minPrice);
+                paramCounter++;
+            } else if (options.maxPrice !== undefined) {
+                // Only max: find sizes where price <= max
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric <= $${paramCounter}
+                )`;
+                values.push(options.maxPrice);
+                paramCounter++;
+            }
         }
 
         query += ` ORDER BY created_at DESC`;
@@ -95,19 +113,21 @@ export class ProductsRepository implements IProductsRepository {
             SET name = $1, 
                 description = $2, 
                 category_id = $3, 
-                price = $4, 
-                quantity = $5,
-                images = $6, 
-                updated_at = $7
-            WHERE id = $8
+                colors = $4,
+                sizes = $5,
+                status = $6,
+                images = $7, 
+                updated_at = $8
+            WHERE id = $9
             RETURNING *
         `;
         const values = [
             product.name,
             product.description,
             product.category_id,
-            product.price,
-            product.quantity,
+            JSON.stringify(product.colors || []),
+            JSON.stringify(product.sizes),
+            product.status,
             JSON.stringify(product.images || []),
             new Date(),
             id,
@@ -147,8 +167,9 @@ export class ProductsRepository implements IProductsRepository {
             id: row.id,
             name: row.name,
             description: row.description,
-            price: parseFloat(row.price),
-            quantity: parseInt(row.quantity),
+            colors: row.colors || undefined,
+            sizes: row.sizes || [],
+            status: row.status,
             images: row.images || null,
             category_id: row.category_id,
             createdAt: new Date(row.created_at),

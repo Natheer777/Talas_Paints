@@ -34,9 +34,7 @@ export class UpdateCartItemUseCase {
             throw new Error("Product not found");
         }
 
-        if (product.quantity < quantity) {
-            throw new Error(`Insufficient stock. Only ${product.quantity} items available`);
-        }
+     
 
         // 4. Update quantity
         return this.cartRepository.updateItemQuantity(cartItemId, quantity);

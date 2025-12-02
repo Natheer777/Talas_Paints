@@ -5,7 +5,8 @@ import {
     validateUpdateProduct,
     validateGetProduct,
     validateDeleteProduct,
-    handleValidationResult
+    handleValidationResult,
+    parseMultipartArrays
 } from "../validation/productValidation";
 import { ValidationMiddleware } from "../middleware/ValidationMiddleware";
 import { uploadMultiple } from "../middleware/UploadMiddleware";
@@ -16,6 +17,7 @@ export function createProductRouter(productsController: ProductsController) {
     router.post(
         "/products",
         uploadMultiple,
+        parseMultipartArrays,
         validateCreateProduct,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),
@@ -48,6 +50,7 @@ export function createProductRouter(productsController: ProductsController) {
     router.put(
         "/products/:id",
         uploadMultiple,
+        parseMultipartArrays,
         validateUpdateProduct,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

@@ -1,4 +1,4 @@
-import { Product } from '@/domian/entities/Products';
+import { Product, ProductSize, ProductStatus } from '@/domian/entities/Products';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
 import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
 import { IFileStorageService } from '@/application/interface/IFileStorageService';
@@ -8,8 +8,9 @@ export interface UpdateProductDTO {
     name?: string;
     description?: string;
     category?: string;
-    price?: number;
-    quantity?: number;
+    colors?: string[];
+    sizes?: ProductSize[];
+    status?: ProductStatus;
     imageFiles?: Express.Multer.File[];
     keepExistingImages?: boolean;
 }
@@ -22,15 +23,13 @@ export class UpdateProductUseCase {
     ) { }
 
     async execute(data: UpdateProductDTO): Promise<Product> {
-        const { id, name, description, category, price, quantity, imageFiles, keepExistingImages } = data;
+        const { id, name, description, category, colors, sizes, status, imageFiles, keepExistingImages } = data;
 
-        // Get existing product
         const existingProduct = await this.productsRepository.findById(id);
         if (!existingProduct) {
             throw new Error('Product not found');
         }
 
-        // Check if name is being changed and if new name already exists
         if (name && name !== existingProduct.name) {
             const nameExists = await this.productsRepository.checkExistingProduct(name);
             if (nameExists) {
@@ -38,7 +37,6 @@ export class UpdateProductUseCase {
             }
         }
 
-        // Look up category by name if provided
         let category_id = existingProduct.category_id;
         if (category) {
             const categoryEntity = await this.categoriesRepository.findByName(category);
@@ -50,9 +48,7 @@ export class UpdateProductUseCase {
 
         let imageUrls: string[] = [];
 
-        // Handle image updates
         if (imageFiles && imageFiles.length > 0) {
-            // Delete old images if not keeping them
             if (!keepExistingImages && existingProduct.images) {
                 for (const imageUrl of existingProduct.images) {
                     try {
@@ -63,19 +59,16 @@ export class UpdateProductUseCase {
                 }
             }
 
-            // Upload new images
             const newImageUrls = await this.fileStorageService.UploadMultipleProductImages(
                 imageFiles,
                 id,
                 'products'
             );
 
-            // Combine with existing images if keeping them
             imageUrls = keepExistingImages && existingProduct.images
                 ? [...existingProduct.images, ...newImageUrls]
                 : newImageUrls;
         } else {
-            // Keep existing images if no new images provided
             imageUrls = existingProduct.images || [];
         }
 
@@ -84,8 +77,9 @@ export class UpdateProductUseCase {
             name: name || existingProduct.name,
             description: description || existingProduct.description,
             category_id: category_id || existingProduct.category_id,
-            price: price !== undefined ? price : existingProduct.price,
-            quantity: quantity !== undefined ? quantity : existingProduct.quantity,
+            colors: colors !== undefined ? colors : existingProduct.colors,
+            sizes: sizes || existingProduct.sizes,
+            status: status || existingProduct.status,
             images: imageUrls,
             updatedAt: new Date(),
         };
