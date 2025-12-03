@@ -2,11 +2,7 @@ import { Offer, OfferStatus } from '@/domian/entities/Offer';
 import { IOfferRepository } from '@/domian/repository/IOfferRepository';
 import { Pool } from 'pg';
 
-/**
- * Offer Repository Implementation
- * Handles data persistence for offers using PostgreSQL
- * Following Repository Pattern and Dependency Inversion Principle
- */
+
 export class OfferRepository implements IOfferRepository {
     constructor(private db: Pool) { }
 
@@ -128,29 +124,6 @@ export class OfferRepository implements IOfferRepository {
     async getAll(): Promise<Offer[]> {
         const query = `SELECT * FROM offers ORDER BY created_at DESC`;
         const result = await this.db.query(query);
-        return result.rows.map(row => this.mapToOffer(row));
-    }
-
-    async getActiveOffersByProductId(productId: string): Promise<Offer[]> {
-        const query = `
-            SELECT * FROM offers 
-            WHERE product_id = $1 
-            AND status = $2
-            ORDER BY created_at DESC
-        `;
-
-        const result = await this.db.query(query, [productId, OfferStatus.ACTIVE]);
-        return result.rows.map(row => this.mapToOffer(row));
-    }
-
-    async getActiveOffers(): Promise<Offer[]> {
-        const query = `
-            SELECT * FROM offers 
-            WHERE status = $1
-            ORDER BY created_at DESC
-        `;
-
-        const result = await this.db.query(query, [OfferStatus.ACTIVE]);
         return result.rows.map(row => this.mapToOffer(row));
     }
 

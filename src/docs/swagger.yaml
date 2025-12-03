@@ -1021,7 +1021,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/CreateOfferRequest'
       responses:
@@ -1131,7 +1131,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/UpdateOfferRequest'
       responses:
@@ -1182,82 +1182,7 @@ paths:
                     example: Offer deleted successfully
         '404':
           description: Offer not found
-  '/api/offers/product/{productId}':
-    get:
-      tags:
-        - Offers
-      summary: Get active offers for product
-      description: Retrieve all active offers for a specific product
-      operationId: getActiveOffersByProductId
-      parameters:
-        - name: productId
-          in: path
-          required: true
-          description: Product UUID
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Active offers retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Offer'
-                  count:
-                    type: integer
-                    example: 2
-  /api/offers/calculate:
-    post:
-      tags:
-        - Offers
-      summary: Calculate best offer
-      description: Calculate the best applicable offer for a product based on price and quantity
-      operationId: calculateOffer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - productId
-                - price
-                - quantity
-              properties:
-                productId:
-                  type: string
-                  format: uuid
-                price:
-                  type: number
-                  minimum: 0
-                quantity:
-                  type: integer
-                  minimum: 1
-      responses:
-        '200':
-          description: Calculation successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/OfferCalculationResult'
-                  message:
-                    type: string
-                    example: Offer calculated successfully
+  # /api/offers/product/{productId} and /api/offers/calculate endpoints removed on request
 components:
   schemas:
     Product:
@@ -1462,10 +1387,9 @@ components:
     OfferStatus:
       type: string
       enum:
-        - ACTIVE
-        - INACTIVE
-        - EXPIRED
-      description: Status of the offer
+        - VISIBLE
+        - HIDDEN
+      description: 'Offer visibility status (VISIBLE = shown & applied, HIDDEN = not shown / not applied)'
     OfferCalculationResult:
       type: object
       properties:

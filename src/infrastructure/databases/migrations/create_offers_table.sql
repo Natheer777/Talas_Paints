@@ -21,9 +21,8 @@ CREATE TABLE IF NOT EXISTS offers (
 
 
     status VARCHAR(20) NOT NULL CHECK (status IN (
-        'ACTIVE',
-        'INACTIVE',
-        'EXPIRED'
+        'VISIBLE',
+        'HIDDEN'
     )),
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

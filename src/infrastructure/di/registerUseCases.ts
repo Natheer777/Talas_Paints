@@ -6,8 +6,6 @@ import {
     DeleteOfferUseCase,
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
-    GetActiveOffersByProductIdUseCase,
-    CalculateProductOfferUseCase
 } from '@/application/use-cases/Offers';
 import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
@@ -67,6 +65,4 @@ export function registerUseCases(container: any) {
     container.deleteOfferUseCase = new DeleteOfferUseCase(offerRepository);
     container.getAllOffersUseCase = new GetAllOffersUseCase(offerRepository);
     container.getOfferByIdUseCase = new GetOfferByIdUseCase(offerRepository);
-    container.getActiveOffersByProductIdUseCase = new GetActiveOffersByProductIdUseCase(offerRepository);
-    container.calculateProductOfferUseCase = new CalculateProductOfferUseCase(offerRepository);
 }

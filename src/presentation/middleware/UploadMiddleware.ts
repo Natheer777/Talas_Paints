@@ -29,3 +29,5 @@ export const upload = multer({
 export const uploadSingle = upload.single('image');
 
 export const uploadMultiple = upload.array('images', 10);
+
+export const uploadNone = upload.none();

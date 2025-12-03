@@ -7,6 +7,4 @@ export interface IOfferRepository {
     delete(id: string): Promise<boolean>;
     getById(id: string): Promise<Offer | null>;
     getAll(): Promise<Offer[]>;
-    getActiveOffersByProductId(productId: string): Promise<Offer[]>;
-    getActiveOffers(): Promise<Offer[]>;
 }
