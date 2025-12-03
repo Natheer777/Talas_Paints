@@ -4,9 +4,7 @@ import {
     UpdateOfferUseCase,
     DeleteOfferUseCase,
     GetAllOffersUseCase,
-    GetOfferByIdUseCase,
-    GetActiveOffersByProductIdUseCase,
-    CalculateProductOfferUseCase
+    GetOfferByIdUseCase
 } from '@/application/use-cases/Offers/index';
 
 
@@ -16,9 +14,7 @@ export class OffersController {
         private updateOfferUseCase: UpdateOfferUseCase,
         private deleteOfferUseCase: DeleteOfferUseCase,
         private getAllOffersUseCase: GetAllOffersUseCase,
-        private getOfferByIdUseCase: GetOfferByIdUseCase,
-        private getActiveOffersByProductIdUseCase: GetActiveOffersByProductIdUseCase,
-        private calculateProductOfferUseCase: CalculateProductOfferUseCase
+        private getOfferByIdUseCase: GetOfferByIdUseCase
     ) { }
 
     async create(req: Request, res: Response) {
@@ -119,63 +115,4 @@ export class OffersController {
         }
     }
 
-  
-    async getActiveOffersByProductId(req: Request, res: Response) {
-        try {
-            const { productId } = req.params;
-            const result = await this.getActiveOffersByProductIdUseCase.execute(productId);
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-                count: result.length
-            });
-        } catch (error: any) {
-            console.error('Get Active Offers By Product ID Error:', error);
-            return res.status(400).json({
-                success: false,
-                message: error.message || 'Could not retrieve active offers'
-            });
-        }
-    }
-
-   
-    async calculateOffer(req: Request, res: Response) {
-        try {
-            const { productId, price, quantity } = req.body;
-
-            if (!productId || !price || !quantity) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Product ID, price, and quantity are required'
-                });
-            }
-
-            const result = await this.calculateProductOfferUseCase.execute(
-                productId,
-                parseFloat(price),
-                parseInt(quantity)
-            );
-
-            if (!result) {
-                return res.status(200).json({
-                    success: true,
-                    data: null,
-                    message: 'No active offers available for this product'
-                });
-            }
-
-            return res.status(200).json({
-                success: true,
-                data: result,
-                message: 'Offer calculated successfully'
-            });
-        } catch (error: any) {
-            console.error('Calculate Offer Error:', error);
-            return res.status(400).json({
-                success: false,
-                message: error.message || 'Could not calculate offer'
-            });
-        }
-    }
 }

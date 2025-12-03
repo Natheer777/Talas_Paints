@@ -2,14 +2,12 @@ import { body, param, ValidationChain, validationResult } from 'express-validato
 import { Request, Response, NextFunction } from 'express';
 import { OfferType, OfferStatus } from '@/domian/entities/Offer';
 
-/**
- * Validation for creating an offer
- */
+
 export const validateCreateOffer: ValidationChain[] = [
     body('name')
         .isString()
         .notEmpty()
-        .withMessage('Name is required and must be a string')
+        .withMessage('Name is required')
         .trim()
         .isLength({ min: 2, max: 255 })
         .withMessage('Name must be between 2 and 255 characters'),
@@ -152,35 +150,6 @@ export const validateDeleteOffer: ValidationChain[] = [
     param('id')
         .isUUID()
         .withMessage('Invalid offer ID format')
-];
-
-
-export const validateGetActiveOffersByProductId: ValidationChain[] = [
-    param('productId')
-        .isUUID()
-        .withMessage('Invalid product ID format')
-];
-
-
-export const validateCalculateOffer: ValidationChain[] = [
-    body('productId')
-        .isString()
-        .notEmpty()
-        .withMessage('Product ID is required')
-        .isUUID()
-        .withMessage('Product ID must be a valid UUID'),
-
-    body('price')
-        .notEmpty()
-        .withMessage('Price is required')
-        .isFloat({ gt: 0 })
-        .withMessage('Price must be a positive number'),
-
-    body('quantity')
-        .notEmpty()
-        .withMessage('Quantity is required')
-        .isInt({ min: 1 })
-        .withMessage('Quantity must be a positive integer')
 ];
 
 

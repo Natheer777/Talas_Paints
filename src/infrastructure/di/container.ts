@@ -33,8 +33,7 @@ import {
     DeleteOfferUseCase,
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
-    GetActiveOffersByProductIdUseCase,
-    CalculateProductOfferUseCase
+
 } from '@/application/use-cases/Offers/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
@@ -152,14 +151,6 @@ class Container {
         Container.offerRepository
     );
 
-    private static getActiveOffersByProductIdUseCase = new GetActiveOffersByProductIdUseCase(
-        Container.offerRepository
-    );
-
-    private static calculateProductOfferUseCase = new CalculateProductOfferUseCase(
-        Container.offerRepository
-    );
-
     // Presentation layer - Controllers
     private static productsController = new ProductsController(
         Container.createProductUseCase,
@@ -193,8 +184,7 @@ class Container {
         Container.deleteOfferUseCase,
         Container.getAllOffersUseCase,
         Container.getOfferByIdUseCase,
-        Container.getActiveOffersByProductIdUseCase,
-        Container.calculateProductOfferUseCase
+    
     );
 
     static getProductsController(): ProductsController {
