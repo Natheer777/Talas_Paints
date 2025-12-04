@@ -23,6 +23,8 @@ tags:
     description: Shopping cart operations
   - name: Offers
     description: Product offers and discounts management
+  - name: Ads Cards
+    description: Advertisement card management operations (CRUD)
 paths:
   /api/health:
     get:
@@ -1182,7 +1184,327 @@ paths:
                     example: Offer deleted successfully
         '404':
           description: Offer not found
-  # /api/offers/product/{productId} and /api/offers/calculate endpoints removed on request
+  /api/ads-cards:
+    post:
+      tags:
+        - Ads Cards
+      summary: Create a new ads card
+      description: 'Create a new advertisement card with title, text, and image upload.'
+      operationId: createAdsCard
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - text
+                - image
+              properties:
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  example: Special Paint Offer
+                text:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  example: Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home.
+                image:
+                  type: string
+                  format: binary
+                  description: 'Ads card image (JPEG, PNG, or WebP, max 5MB)'
+                status:
+                  $ref: '#/components/schemas/AdsCardStatus'
+      responses:
+        '201':
+          description: Ads card created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdsCard'
+                  message:
+                    type: string
+                    example: Ads card created successfully
+        '400':
+          description: Validation error or creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1ads-cards/get/responses/500/content/application~1json/schema'
+    get:
+      tags:
+        - Ads Cards
+      summary: Get all ads cards
+      description: Retrieve a list of all ads cards ordered by creation date (newest first)
+      operationId: getAllAdsCards
+      responses:
+        '200':
+          description: Ads cards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdsCard'
+                  count:
+                    type: integer
+                    description: Total number of ads cards
+                    example: 5
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    description: Error message
+                    example: An error occurred
+                  errors:
+                    type: array
+                    description: Detailed validation errors (if applicable)
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                          description: Error message
+                          example: Title is required and must be a string
+                        param:
+                          type: string
+                          description: Parameter that caused the error
+                          example: title
+                        location:
+                          type: string
+                          description: Location of the parameter
+                          example: body
+  /api/ads-cards/active:
+    get:
+      tags:
+        - Ads Cards
+      summary: Get active ads cards
+      description: Retrieve a list of all active ads cards ordered by creation date (newest first)
+      operationId: getActiveAdsCards
+      responses:
+        '200':
+          description: Active ads cards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdsCard'
+                  count:
+                    type: integer
+                    description: Number of active ads cards
+                    example: 3
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1ads-cards/get/responses/500/content/application~1json/schema'
+  '/api/ads-cards/{id}':
+    get:
+      tags:
+        - Ads Cards
+      summary: Get ads card by ID
+      description: Retrieve a single ads card by unique identifier
+      operationId: getAdsCardById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ads card UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Ads card retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdsCard'
+        '400':
+          description: Invalid ads card ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1ads-cards/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Ads card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Ads card not found
+    put:
+      tags:
+        - Ads Cards
+      summary: Update ads card
+      description: Update an existing ads card. All fields optional.
+      operationId: updateAdsCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ads card UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  example: Updated Special Paint Offer
+                text:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  example: 'Updated offer: Get 25% off on all interior paints this weekend!'
+                image:
+                  type: string
+                  format: binary
+                  description: 'New ads card image (JPEG, PNG, or WebP, max 5MB)'
+                status:
+                  $ref: '#/components/schemas/AdsCardStatus'
+                keepExistingImage:
+                  type: string
+                  enum:
+                    - 'true'
+                    - 'false'
+                  description: Keep the current image (default false)
+                  example: 'true'
+      responses:
+        '200':
+          description: Ads card updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdsCard'
+                  message:
+                    type: string
+                    example: Ads card updated successfully
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1ads-cards/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Ads card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Ads card not found
+    delete:
+      tags:
+        - Ads Cards
+      summary: Delete ads card
+      description: Delete an ads card by its ID
+      operationId: deleteAdsCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Ads card UUID
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Ads card deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Ads card deleted successfully
+        '400':
+          description: Invalid ads card ID or deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1ads-cards/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Ads card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Ads card not found
 components:
   schemas:
     Product:
@@ -1472,6 +1794,96 @@ components:
           minimum: 1
         status:
           $ref: '#/components/schemas/OfferStatus'
+    AdsCard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique ads card identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        title:
+          type: string
+          description: Ads card title
+          example: Special Paint Offer
+        text:
+          type: string
+          description: Ads card description text
+          example: Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home.
+        imageUrl:
+          type: string
+          format: uri
+          description: URL of the ads card image
+          example: 'https://example.com/ads/special-offer.jpg'
+        status:
+          $ref: '#/components/schemas/AdsCardStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Ads card creation timestamp
+          example: '2025-11-25T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Ads card last update timestamp
+          example: '2025-11-25T10:30:00.000Z'
+      required:
+        - id
+        - title
+        - text
+        - imageUrl
+        - status
+        - createdAt
+        - updatedAt
+    AdsCardStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+      description: Ads card status
+      example: ACTIVE
+    CreateAdsCardRequest:
+      type: object
+      required:
+        - title
+        - text
+        - imageUrl
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Special Paint Offer
+        text:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home.
+        imageUrl:
+          type: string
+          format: uri
+          example: 'https://example.com/ads/special-offer.jpg'
+        status:
+          $ref: '#/components/schemas/AdsCardStatus'
+    UpdateAdsCardRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Updated Special Paint Offer
+        text:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: 'Updated offer: Get 25% off on all interior paints this weekend!'
+        imageUrl:
+          type: string
+          format: uri
+          example: 'https://example.com/ads/updated-special-offer.jpg'
+        status:
+          $ref: '#/components/schemas/AdsCardStatus'
     Error:
       type: object
       properties:

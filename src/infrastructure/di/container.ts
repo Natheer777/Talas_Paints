@@ -3,6 +3,7 @@ import { ProductsRepository } from '../repository/ProductsRepository';
 import { CategoriesRepository } from '../repository/CategoriesRepository';
 import { CartRepository } from '../repository/CartRepository';
 import { OfferRepository } from '../repository/OfferRepository';
+import { AdsCardRepository } from '../repository/AdsCardRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
 import {
     CreateProductUseCase,
@@ -35,10 +36,19 @@ import {
     GetOfferByIdUseCase,
 
 } from '@/application/use-cases/Offers/index';
+import {
+    CreateAdsCardUseCase,
+    UpdateAdsCardUseCase,
+    DeleteAdsCardUseCase,
+    GetAllAdsCardsUseCase,
+    GetAdsCardByIdUseCase,
+    GetActiveAdsCardsUseCase
+} from '@/application/use-cases/AdsCard/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
 import { CartController } from '@/presentation/controller/CartController';
 import { OffersController } from '@/presentation/controller/OffersController';
+import { AdsCardController } from '@/presentation/controller/AdsCardController';
 
 class Container {
     // Infrastructure layer
@@ -47,6 +57,7 @@ class Container {
     private static categoriesRepository = new CategoriesRepository(Container.db.getPool());
     private static cartRepository = new CartRepository(Container.db.getPool());
     private static offerRepository = new OfferRepository(Container.db.getPool());
+    private static adsCardRepository = new AdsCardRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Application layer - Product Use Cases
@@ -151,6 +162,33 @@ class Container {
         Container.offerRepository
     );
 
+    private static createAdsCardUseCase = new CreateAdsCardUseCase(
+        Container.adsCardRepository,
+        Container.fileStorageService
+    );
+
+    private static updateAdsCardUseCase = new UpdateAdsCardUseCase(
+        Container.adsCardRepository,
+        Container.fileStorageService
+    );
+
+    private static deleteAdsCardUseCase = new DeleteAdsCardUseCase(
+        Container.adsCardRepository,
+        Container.fileStorageService
+    );
+
+    private static getAllAdsCardsUseCase = new GetAllAdsCardsUseCase(
+        Container.adsCardRepository
+    );
+
+    private static getAdsCardByIdUseCase = new GetAdsCardByIdUseCase(
+        Container.adsCardRepository
+    );
+
+    private static getActiveAdsCardsUseCase = new GetActiveAdsCardsUseCase(
+        Container.adsCardRepository
+    );
+
     // Presentation layer - Controllers
     private static productsController = new ProductsController(
         Container.createProductUseCase,
@@ -184,7 +222,16 @@ class Container {
         Container.deleteOfferUseCase,
         Container.getAllOffersUseCase,
         Container.getOfferByIdUseCase,
-    
+
+    );
+
+    private static adsCardController = new AdsCardController(
+        Container.createAdsCardUseCase,
+        Container.updateAdsCardUseCase,
+        Container.deleteAdsCardUseCase,
+        Container.getAllAdsCardsUseCase,
+        Container.getAdsCardByIdUseCase,
+        Container.getActiveAdsCardsUseCase
     );
 
     static getProductsController(): ProductsController {
@@ -201,6 +248,10 @@ class Container {
 
     static getOffersController(): OffersController {
         return Container.offersController;
+    }
+
+    static getAdsCardController(): AdsCardController {
+        return Container.adsCardController;
     }
 }
 

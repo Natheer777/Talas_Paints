@@ -9,12 +9,13 @@ dotenv.config({ path: envFilePath });
 
 class MigrationRunner {
   private db: DatabaseConnection;
- 
+
   private readonly migrationPaths = [
     'create_categories_table.sql',
     'create_products_table.sql',
     'create_cart_tables.sql',
-    'create_offers_table.sql'
+    'create_offers_table.sql',
+    'create_ads_cards_table.sql'
   ].map(file => path.join(__dirname, 'migrations', file));
 
   private readonly dangerousKeywords = [
@@ -78,7 +79,7 @@ class MigrationRunner {
     await this.executeMigration(migrationId, fileName, sql);
   }
 
-    private async shouldSkip(migrationId: string, sql: string): Promise<boolean> {
+  private async shouldSkip(migrationId: string, sql: string): Promise<boolean> {
 
     // Check for any table creation
     const tableMatches = [...sql.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?(\w+)/gi)];
@@ -127,7 +128,7 @@ class MigrationRunner {
       console.error(`❌ Failed: ${name}`, error);
       throw error;
     }
-  } 
+  }
 
   private async showDatabaseInfo(): Promise<void> {
     const result = await this.db.query('SELECT current_database(), current_user, version()');
