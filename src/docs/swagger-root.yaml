@@ -25,6 +25,8 @@ tags:
     description: Shopping cart operations
   - name: Offers
     description: Product offers and discounts management
+  - name: Ads Cards
+    description: Advertisement card management operations (CRUD)
 
 paths:
   # Health Check
@@ -34,6 +36,9 @@ paths:
   # Products - CRUD
   /api/products:
     $ref: "./swagger-products.yaml#/paths/~1products"
+
+  /api/products/all:
+    $ref: "./swagger-products.yaml#/paths/~1products~1all"
 
   /api/products/{id}:
     $ref: "./swagger-products.yaml#/paths/~1products~1{id}"
@@ -70,11 +75,16 @@ paths:
   /api/offers/{id}:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"
 
-  /api/offers/product/{productId}:
-    $ref: "./swagger-offers.yaml#/paths/~1offers~1product~1{productId}"
 
-  /api/offers/calculate:
-    $ref: "./swagger-offers.yaml#/paths/~1offers~1calculate"
+  # Ads Cards
+  /api/ads-cards:
+    $ref: "./swagger-ads-card.yaml#/paths/~1ads-cards"
+
+  /api/ads-cards/active:
+    $ref: "./swagger-ads-card.yaml#/paths/~1ads-cards~1active"
+
+  /api/ads-cards/{id}:
+    $ref: "./swagger-ads-card.yaml#/paths/~1ads-cards~1{id}"
 
 components:
   schemas:
@@ -110,7 +120,20 @@ components:
     
     UpdateOfferRequest:
       $ref: "./swagger-offers.yaml#/components/schemas/UpdateOfferRequest"
-    
+
+    # Ads Card schemas
+    AdsCard:
+      $ref: "./swagger-ads-card.yaml#/components/schemas/AdsCard"
+
+    AdsCardStatus:
+      $ref: "./swagger-ads-card.yaml#/components/schemas/AdsCardStatus"
+
+    CreateAdsCardRequest:
+      $ref: "./swagger-ads-card.yaml#/components/schemas/CreateAdsCardRequest"
+
+    UpdateAdsCardRequest:
+      $ref: "./swagger-ads-card.yaml#/components/schemas/UpdateAdsCardRequest"
+
     # Common schemas
     Error:
       $ref: "./swagger-products.yaml#/components/schemas/Error"

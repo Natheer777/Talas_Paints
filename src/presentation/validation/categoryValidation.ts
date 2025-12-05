@@ -5,35 +5,35 @@ export const validateCreateCategory: ValidationChain[] = [
     body('name')
         .isString()
         .notEmpty()
-        .withMessage('Name is required and must be a string')
+        .withMessage('الاسم مطلوب ويجب أن يكون نصاً')
         .trim()
         .isLength({ min: 2, max: 100 })
-        .withMessage('Name must be between 2 and 100 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 100 حرفاً'),
 ];
 
 export const validateUpdateCategory: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid category ID format'),
+        .withMessage('تنسيق معرف الفئة غير صحيح'),
 
     body('name')
         .optional()
         .isString()
         .trim()
         .isLength({ min: 2, max: 100 })
-        .withMessage('Name must be between 2 and 100 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 100 حرفاً'),
 ];
 
 export const validateGetCategory: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid category ID format'),
+        .withMessage('تنسيق معرف الفئة غير صحيح'),
 ];
 
 export const validateDeleteCategory: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid category ID format'),
+        .withMessage('تنسيق معرف الفئة غير صحيح'),
 ];
 
 export function handleValidationResult(req: Request, res: Response, next: NextFunction) {

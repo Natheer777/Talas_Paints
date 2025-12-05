@@ -1,6 +1,7 @@
 export * from './CreateProductUseCase'
 export * from './DeleteProductUseCase'
 export * from './GetAllProductsUseCase'
+export * from './GetAllProductsPaginatedUseCase'
 export * from './GetProductUseCase'
 export * from './UpdateProductUseCase'
 export * from './SearchProductsUseCase'

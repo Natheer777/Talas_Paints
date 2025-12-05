@@ -1,5 +1,5 @@
 import { Product } from '@/domian/entities/Products';
-import { IProductsRepository, ProductFilterOptions } from '@/domian/repository/IProductsRepository';
+import { IProductsRepository, ProductFilterOptions, PaginationOptions, PaginatedResult } from '@/domian/repository/IProductsRepository';
 import { Pool } from 'pg';
 
 export class ProductsRepository implements IProductsRepository {
@@ -46,9 +46,40 @@ export class ProductsRepository implements IProductsRepository {
         return result.rows.map(row => this.mapToProduct(row));
     }
 
+    async findAllPaginated(options: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+        const page = Math.max(1, options.page || 1);
+        const limit = Math.min(100, Math.max(1, options.limit || 10));
+        const offset = (page - 1) * limit;
+
+        // Get total count
+        const countQuery = `SELECT COUNT(*) as total FROM products`;
+        const countResult = await this.db.query(countQuery);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Get paginated data
+        const dataQuery = `
+            SELECT * FROM products
+            ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
+        `;
+        const dataResult = await this.db.query(dataQuery, [limit, offset]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToProduct(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
+    }
+
     async searchByName(name: string): Promise<Product[]> {
         const query = `
-            SELECT * FROM products 
+            SELECT * FROM products
             WHERE LOWER(name) LIKE LOWER($1)
             ORDER BY created_at DESC
         `;
@@ -56,6 +87,39 @@ export class ProductsRepository implements IProductsRepository {
         const result = await this.db.query(query, [searchPattern]);
 
         return result.rows.map(row => this.mapToProduct(row));
+    }
+
+    async searchByNamePaginated(name: string, options: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+        const page = Math.max(1, options.page || 1);
+        const limit = Math.min(100, Math.max(1, options.limit || 10));
+        const offset = (page - 1) * limit;
+        const searchPattern = `%${name}%`;
+
+        // Get total count for filtered results
+        const countQuery = `SELECT COUNT(*) as total FROM products WHERE LOWER(name) LIKE LOWER($1)`;
+        const countResult = await this.db.query(countQuery, [searchPattern]);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Get paginated filtered data
+        const dataQuery = `
+            SELECT * FROM products
+            WHERE LOWER(name) LIKE LOWER($1)
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+        `;
+        const dataResult = await this.db.query(dataQuery, [searchPattern, limit, offset]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToProduct(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
     }
 
     async filterProducts(options: ProductFilterOptions): Promise<Product[]> {
@@ -105,6 +169,86 @@ export class ProductsRepository implements IProductsRepository {
 
         const result = await this.db.query(query, values);
         return result.rows.map(row => this.mapToProduct(row));
+    }
+
+    async filterProductsPaginated(filterOptions: ProductFilterOptions, paginationOptions: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+        const page = Math.max(1, paginationOptions.page || 1);
+        const limit = Math.min(100, Math.max(1, paginationOptions.limit || 10));
+        const offset = (page - 1) * limit;
+
+        let countQuery = `SELECT COUNT(*) as total FROM products WHERE 1=1`;
+        let dataQuery = `SELECT * FROM products WHERE 1=1`;
+        const values: any[] = [];
+        let paramCounter = 1;
+
+        // Filter by categories
+        if (filterOptions.categories && filterOptions.categories.length > 0) {
+            countQuery += ` AND category_id = ANY($${paramCounter})`;
+            dataQuery += ` AND category_id = ANY($${paramCounter})`;
+            values.push(filterOptions.categories);
+            paramCounter++;
+        }
+
+        // Filter by price range in sizes JSON
+        if (filterOptions.minPrice !== undefined || filterOptions.maxPrice !== undefined) {
+            if (filterOptions.minPrice !== undefined && filterOptions.maxPrice !== undefined) {
+                countQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                    AND (size->>'price')::numeric <= $${paramCounter + 1}
+                )`;
+                dataQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                    AND (size->>'price')::numeric <= $${paramCounter + 1}
+                )`;
+                values.push(filterOptions.minPrice, filterOptions.maxPrice);
+                paramCounter += 2;
+            } else if (filterOptions.minPrice !== undefined) {
+                countQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                )`;
+                dataQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                )`;
+                values.push(filterOptions.minPrice);
+                paramCounter++;
+            } else if (filterOptions.maxPrice !== undefined) {
+                countQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric <= $${paramCounter}
+                )`;
+                dataQuery += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric <= $${paramCounter}
+                )`;
+                values.push(filterOptions.maxPrice);
+                paramCounter++;
+            }
+        }
+
+        // Get total count for filtered results
+        const countResult = await this.db.query(countQuery, values);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Add pagination to data query
+        dataQuery += ` ORDER BY created_at DESC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
+        values.push(limit, offset);
+
+        const dataResult = await this.db.query(dataQuery, values);
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToProduct(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
     }
 
     async update(id: string, product: Product): Promise<Product> {

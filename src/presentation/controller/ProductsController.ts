@@ -4,6 +4,7 @@ import {
     DeleteProductUseCase,
     GetProductUseCase,
     GetAllProductsUseCase,
+    GetAllProductsPaginatedUseCase,
     UpdateProductUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase
@@ -15,6 +16,7 @@ export class ProductsController {
         private createProductUseCase: CreateProductUseCase,
         private getProductUseCase: GetProductUseCase,
         private getAllProductsUseCase: GetAllProductsUseCase,
+        private getAllProductsPaginatedUseCase: GetAllProductsPaginatedUseCase,
         private updateProductUseCase: UpdateProductUseCase,
         private deleteProductUseCase: DeleteProductUseCase,
         private searchProductsUseCase: SearchProductsUseCase,
@@ -26,20 +28,17 @@ export class ProductsController {
             const { name, description, category, colors, sizes, status } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
 
-            // Parse colors if it's still a string (fallback)
             let parsedColors = colors;
             if (colors && typeof colors === 'string') {
                 try {
                     parsedColors = JSON.parse(colors);
                 } catch {
-                    // If JSON parsing fails, try comma-separated
                     parsedColors = colors.includes(',')
                         ? colors.split(',').map((c: string) => c.trim()).filter((c: string) => c)
                         : [colors.trim()];
                 }
             }
 
-            // Parse sizes if it's still a string (fallback)
             let parsedSizes = sizes;
             if (typeof sizes === 'string') {
                 parsedSizes = JSON.parse(sizes);
@@ -86,6 +85,63 @@ export class ProductsController {
     }
 
     async getAll(req: Request, res: Response) {
+        try {
+            const { page, limit } = req.query;
+
+            const hasPagination = page !== undefined || limit !== undefined;
+
+            if (hasPagination) {
+                const pageNum = page ? parseInt(page as string, 10) : undefined;
+                const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+                if (pageNum !== undefined && (isNaN(pageNum) || pageNum < 1)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Page must be a positive integer",
+                    });
+                }
+
+                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 100)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Limit must be a positive integer between 1 and 100",
+                    });
+                }
+
+                const result = await this.getAllProductsPaginatedUseCase.execute({
+                    page: pageNum,
+                    limit: limitNum
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: result.data,
+                    pagination: {
+                        page: result.page,
+                        limit: result.limit,
+                        total: result.total,
+                        totalPages: result.totalPages,
+                        hasNextPage: result.hasNextPage,
+                        hasPrevPage: result.hasPrevPage
+                    }
+                });
+            } else {
+                const result = await this.getAllProductsUseCase.execute();
+                return res.status(200).json({
+                    success: true,
+                    data: result,
+                    count: result.length,
+                });
+            }
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not retrieve products",
+            });
+        }
+    }
+
+    async getAllWithoutPagination(req: Request, res: Response) {
         try {
             const result = await this.getAllProductsUseCase.execute();
             return res.status(200).json({

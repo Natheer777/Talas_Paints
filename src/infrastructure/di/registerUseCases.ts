@@ -1,4 +1,4 @@
-import { CreateProductUseCase, GetProductUseCase, GetAllProductsUseCase, UpdateProductUseCase, DeleteProductUseCase } from '@/application/use-cases/Products/index';
+import { CreateProductUseCase, GetProductUseCase, GetAllProductsUseCase, GetAllProductsPaginatedUseCase, UpdateProductUseCase, DeleteProductUseCase } from '@/application/use-cases/Products/index';
 import { CreateCategoryUseCase, DeleteCategoryUseCase, UpdateCategoryUseCase, GetAllCategoriesUseCase, GetCategoryUseCase } from '@/application/use-cases/Category';
 import {
     CreateOfferUseCase,
@@ -27,6 +27,8 @@ export function registerUseCases(container: any) {
     container.getProductUseCase = new GetProductUseCase(productsRepository);
 
     container.getAllProductsUseCase = new GetAllProductsUseCase(productsRepository);
+
+    container.getAllProductsPaginatedUseCase = new GetAllProductsPaginatedUseCase(productsRepository);
 
     container.updateProductUseCase = new UpdateProductUseCase(
         productsRepository,
