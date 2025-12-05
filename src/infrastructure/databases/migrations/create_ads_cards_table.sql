@@ -18,3 +18,4 @@ ON ads_cards(status);
 
 CREATE INDEX IF NOT EXISTS idx_ads_cards_created_at
 ON ads_cards(created_at DESC);
+

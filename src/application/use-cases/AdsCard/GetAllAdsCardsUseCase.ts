@@ -8,3 +8,4 @@ export class GetAllAdsCardsUseCase {
         return await this.adsCardRepository.getAll();
     }
 }
+

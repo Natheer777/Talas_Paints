@@ -51,3 +51,4 @@ export class UpdateAdsCardUseCase {
         return await this.adsCardRepository.update(id, updateData);
     }
 }
+

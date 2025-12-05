@@ -8,3 +8,4 @@ export class GetAdsCardByIdUseCase {
         return await this.adsCardRepository.getById(id);
     }
 }
+

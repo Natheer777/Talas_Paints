@@ -7,61 +7,61 @@ export const validateCreateOffer: ValidationChain[] = [
     body('name')
         .isString()
         .notEmpty()
-        .withMessage('Name is required')
+        .withMessage('الاسم مطلوب')
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Name must be between 2 and 255 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('description')
         .isString()
         .notEmpty()
-        .withMessage('Description is required and must be a string')
+        .withMessage('الوصف مطلوب ويجب أن يكون نصاً')
         .trim(),
 
     body('type')
         .isString()
         .notEmpty()
-        .withMessage('Type is required')
+        .withMessage('النوع مطلوب')
         .isIn(Object.values(OfferType))
-        .withMessage(`Type must be one of: ${Object.values(OfferType).join(', ')}`),
+        .withMessage(`النوع يجب أن يكون واحد من: ${Object.values(OfferType).join(', ')}`),
 
     body('product_id')
         .isString()
         .notEmpty()
-        .withMessage('Product ID is required')
+        .withMessage('معرف المنتج مطلوب')
         .isUUID()
-        .withMessage('Product ID must be a valid UUID'),
+        .withMessage('معرف المنتج يجب أن يكون UUID صحيح'),
 
     body('discount_percentage')
         .optional()
         .isFloat({ min: 0.01, max: 100 })
-        .withMessage('Discount percentage must be between 0.01 and 100'),
+        .withMessage('نسبة الخصم يجب أن تكون بين 0.01 و 100'),
 
     body('buy_quantity')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('Buy quantity must be a positive integer'),
+        .withMessage('كمية الشراء يجب أن تكون رقماً صحيحاً موجباً'),
 
     body('get_quantity')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('Get quantity must be a positive integer'),
+        .withMessage('كمية الحصول يجب أن تكون رقماً صحيحاً موجباً'),
 
     body('status')
         .isString()
         .notEmpty()
-        .withMessage('Status is required')
+        .withMessage('الحالة مطلوبة')
         .isIn(Object.values(OfferStatus))
-        .withMessage(`Status must be one of: ${Object.values(OfferStatus).join(', ')}`),
+        .withMessage(`الحالة يجب أن تكون واحدة من: ${Object.values(OfferStatus).join(', ')}`),
 
     body('discount_percentage')
         .custom((value, { req }) => {
             if (req.body.type === OfferType.PERCENTAGE_DISCOUNT) {
                 if (value === undefined || value === null) {
-                    throw new Error('Discount percentage is required for percentage discount offers');
+                    throw new Error('نسبة الخصم مطلوبة لعروض الخصم النسبي');
                 }
                 if (value <= 0 || value > 100) {
-                    throw new Error('Discount percentage must be between 1 and 100');
+                    throw new Error('نسبة الخصم يجب أن تكون بين 1 و 100');
                 }
             }
             return true;
@@ -70,7 +70,7 @@ export const validateCreateOffer: ValidationChain[] = [
         .custom((value, { req }) => {
             if (req.body.type === OfferType.BUY_X_GET_Y_FREE) {
                 if (!value || value <= 0) {
-                    throw new Error('Buy quantity is required and must be greater than 0 for this offer type');
+                    throw new Error('كمية الشراء مطلوبة ويجب أن تكون أكبر من 0 لهذا النوع من العروض');
                 }
             }
             return true;
@@ -79,7 +79,7 @@ export const validateCreateOffer: ValidationChain[] = [
         .custom((value, { req }) => {
             if (req.body.type === OfferType.BUY_X_GET_Y_FREE) {
                 if (!value || value <= 0) {
-                    throw new Error('Get quantity is required and must be greater than 0 for this offer type');
+                    throw new Error('كمية الحصول مطلوبة ويجب أن تكون أكبر من 0 لهذا النوع من العروض');
                 }
             }
             return true;
@@ -90,14 +90,14 @@ export const validateCreateOffer: ValidationChain[] = [
 export const validateUpdateOffer: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid offer ID format'),
+        .withMessage('تنسيق معرف العرض غير صحيح'),
 
     body('name')
         .optional()
         .isString()
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Name must be between 2 and 255 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('description')
         .optional()
@@ -108,48 +108,48 @@ export const validateUpdateOffer: ValidationChain[] = [
         .optional()
         .isString()
         .isIn(Object.values(OfferType))
-        .withMessage(`Type must be one of: ${Object.values(OfferType).join(', ')}`),
+        .withMessage(`النوع يجب أن يكون واحد من: ${Object.values(OfferType).join(', ')}`),
 
     body('product_id')
         .optional()
         .isString()
         .isUUID()
-        .withMessage('Product ID must be a valid UUID'),
+        .withMessage('معرف المنتج يجب أن يكون UUID صحيح'),
 
     body('discount_percentage')
         .optional()
         .isFloat({ min: 0.01, max: 100 })
-        .withMessage('Discount percentage must be between 0.01 and 100'),
+        .withMessage('نسبة الخصم يجب أن تكون بين 0.01 و 100'),
 
     body('buy_quantity')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('Buy quantity must be a positive integer'),
+        .withMessage('كمية الشراء يجب أن تكون رقماً صحيحاً موجباً'),
 
     body('get_quantity')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('Get quantity must be a positive integer'),
+        .withMessage('كمية الحصول يجب أن تكون رقماً صحيحاً موجباً'),
 
     body('status')
         .optional()
         .isString()
         .isIn(Object.values(OfferStatus))
-        .withMessage(`Status must be one of: ${Object.values(OfferStatus).join(', ')}`)
+        .withMessage(`الحالة يجب أن تكون واحدة من: ${Object.values(OfferStatus).join(', ')}`)
 ];
 
 
 export const validateGetOffer: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid offer ID format')
+        .withMessage('تنسيق معرف العرض غير صحيح')
 ];
 
 
 export const validateDeleteOffer: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid offer ID format')
+        .withMessage('تنسيق معرف العرض غير صحيح')
 ];
 
 

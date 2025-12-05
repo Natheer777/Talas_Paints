@@ -27,3 +27,4 @@ export class DeleteAdsCardUseCase {
         return deleted;
     }
 }
+

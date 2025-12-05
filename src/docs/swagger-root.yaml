@@ -37,6 +37,9 @@ paths:
   /api/products:
     $ref: "./swagger-products.yaml#/paths/~1products"
 
+  /api/products/all:
+    $ref: "./swagger-products.yaml#/paths/~1products~1all"
+
   /api/products/{id}:
     $ref: "./swagger-products.yaml#/paths/~1products~1{id}"
 

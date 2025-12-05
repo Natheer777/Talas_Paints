@@ -9,3 +9,4 @@ export interface IAdsCardRepository {
     getActive(): Promise<AdsCard[]>;
 }
 
+

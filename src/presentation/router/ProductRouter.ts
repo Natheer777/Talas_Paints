@@ -30,6 +30,11 @@ export function createProductRouter(productsController: ProductsController) {
     );
 
     router.get(
+        "/products/all",
+        (req: Request, res: Response) => productsController.getAllWithoutPagination(req, res)
+    );
+
+    router.get(
         "/products/search",
         (req: Request, res: Response) => productsController.search(req, res)
     );

@@ -6,62 +6,62 @@ export const validateCreateAdsCard: ValidationChain[] = [
     body('title')
         .isString()
         .notEmpty()
-        .withMessage('Title is required')
+        .withMessage('العنوان مطلوب')
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Title must be between 2 and 255 characters'),
+        .withMessage('العنوان يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('text')
         .isString()
         .notEmpty()
-        .withMessage('Text is required')
+        .withMessage('النص مطلوب')
         .trim()
         .isLength({ min: 10, max: 1000 })
-        .withMessage('Text must be between 10 and 1000 characters'),
+        .withMessage('النص يجب أن يكون بين 10 و 1000 حرفاً'),
 
     body('status')
         .optional()
         .isString()
         .isIn(Object.values(AdsCardStatus))
-        .withMessage(`Status must be one of: ${Object.values(AdsCardStatus).join(', ')}`)
+        .withMessage(`الحالة يجب أن تكون واحدة من: ${Object.values(AdsCardStatus).join(', ')}`)
 ];
 
 export const validateUpdateAdsCard: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid ads card ID format'),
+        .withMessage('تنسيق معرف بطاقة الإعلان غير صحيح'),
 
     body('title')
         .optional()
         .isString()
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Title must be between 2 and 255 characters'),
+        .withMessage('العنوان يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('text')
         .optional()
         .isString()
         .trim()
         .isLength({ min: 10, max: 1000 })
-        .withMessage('Text must be between 10 and 1000 characters'),
+        .withMessage('النص يجب أن يكون بين 10 و 1000 حرفاً'),
 
     body('status')
         .optional()
         .isString()
         .isIn(Object.values(AdsCardStatus))
-        .withMessage(`Status must be one of: ${Object.values(AdsCardStatus).join(', ')}`)
+        .withMessage(`الحالة يجب أن تكون واحدة من: ${Object.values(AdsCardStatus).join(', ')}`)
 ];
 
 export const validateGetAdsCard: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid ads card ID format')
+        .withMessage('تنسيق معرف بطاقة الإعلان غير صحيح')
 ];
 
 export const validateDeleteAdsCard: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid ads card ID format')
+        .withMessage('تنسيق معرف بطاقة الإعلان غير صحيح')
 ];
 
 export function handleValidationResult(req: Request, res: Response, next: NextFunction) {
@@ -74,3 +74,4 @@ export function handleValidationResult(req: Request, res: Response, next: NextFu
     }
     next();
 }
+

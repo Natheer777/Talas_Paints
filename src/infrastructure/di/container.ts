@@ -11,6 +11,7 @@ import {
     DeleteProductUseCase,
     GetProductUseCase,
     GetAllProductsUseCase,
+    GetAllProductsPaginatedUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase
 } from '@/application/use-cases/Products/index';
@@ -72,6 +73,10 @@ class Container {
     );
 
     private static getAllProductsUseCase = new GetAllProductsUseCase(
+        Container.productsRepository
+    );
+
+    private static getAllProductsPaginatedUseCase = new GetAllProductsPaginatedUseCase(
         Container.productsRepository
     );
 
@@ -190,10 +195,12 @@ class Container {
     );
 
     // Presentation layer - Controllers
+    // Updated to include paginated use case
     private static productsController = new ProductsController(
         Container.createProductUseCase,
         Container.getProductUseCase,
         Container.getAllProductsUseCase,
+        Container.getAllProductsPaginatedUseCase,
         Container.updateProductUseCase,
         Container.deleteProductUseCase,
         Container.searchProductsUseCase,

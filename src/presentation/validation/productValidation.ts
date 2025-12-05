@@ -32,15 +32,15 @@ export const validateCreateProduct: ValidationChain[] = [
     body('name')
         .isString()
         .notEmpty()
-        .withMessage('Name is required and must be a string')
+        .withMessage('الاسم مطلوب ويجب أن يكون نصاً')
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Name must be between 2 and 255 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('description')
         .isString()
         .notEmpty()
-        .withMessage('Description is required and must be a string')
+        .withMessage('الوصف مطلوب ويجب أن يكون نصاً')
         .trim(),
 
     body('category')
@@ -52,9 +52,9 @@ export const validateCreateProduct: ValidationChain[] = [
         })
         .isString()
         .notEmpty()
-        .withMessage('Category is required and must be a string')
+        .withMessage('الفئة مطلوبة ويجب أن تكون نصاً')
         .isLength({ min: 2, max: 100 })
-        .withMessage('Category must be between 2 and 100 characters'),
+        .withMessage('الفئة يجب أن تكون بين 2 و 100 حرفاً'),
 
     body('colors')
         .optional()
@@ -70,41 +70,41 @@ export const validateCreateProduct: ValidationChain[] = [
             }
             return true;
         })
-        .withMessage('Colors must be an array of strings'),
+        .withMessage('الألوان يجب أن تكون مصفوفة من النصوص'),
 
     body('sizes')
         .notEmpty()
-        .withMessage('Sizes are required')
+        .withMessage('الأحجام مطلوبة')
         .isArray({ min: 1 })
-        .withMessage('At least one size is required'),
+        .withMessage('يجب وجود حجم واحد على الأقل'),
 
     body('sizes.*.size')
         .isString()
         .notEmpty()
-        .withMessage('Size name is required and must be a string'),
+        .withMessage('اسم الحجم مطلوب ويجب أن يكون نصاً'),
 
     body('sizes.*.price')
         .isFloat({ gt: 0 })
-        .withMessage('Size price must be a positive number'),
+        .withMessage('سعر الحجم يجب أن يكون رقماً موجباً'),
 
     body('status')
         .notEmpty()
-        .withMessage('Status is required')
+        .withMessage('الحالة مطلوبة')
         .isIn(['visible', 'hidden'])
-        .withMessage('Status must be either "visible" or "hidden"'),
+        .withMessage('الحالة يجب أن تكون إما "visible" أو "hidden"'),
 ];
 
 export const validateUpdateProduct: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid product ID format'),
+        .withMessage('تنسيق معرف المنتج غير صحيح'),
 
     body('name')
         .optional()
         .isString()
         .trim()
         .isLength({ min: 2, max: 255 })
-        .withMessage('Name must be between 2 and 255 characters'),
+        .withMessage('الاسم يجب أن يكون بين 2 و 255 حرفاً'),
 
     body('description')
         .optional()
@@ -123,7 +123,7 @@ export const validateUpdateProduct: ValidationChain[] = [
         .optional()
         .isString()
         .isLength({ min: 2, max: 100 })
-        .withMessage('Category must be between 2 and 100 characters'),
+        .withMessage('الفئة يجب أن تكون بين 2 و 100 حرفاً'),
 
     body('colors')
         .optional()
@@ -142,46 +142,46 @@ export const validateUpdateProduct: ValidationChain[] = [
             }
             return true;
         })
-        .withMessage('Colors must be an array of strings'),
+        .withMessage('الألوان يجب أن تكون مصفوفة من النصوص'),
 
     body('sizes')
         .optional()
         .isArray({ min: 1 })
-        .withMessage('At least one size is required when updating sizes'),
+        .withMessage('يجب وجود حجم واحد على الأقل عند تحديث الأحجام'),
 
     body('sizes.*.size')
         .optional()
         .isString()
         .notEmpty()
-        .withMessage('Size name is required and must be a string'),
+        .withMessage('اسم الحجم مطلوب ويجب أن يكون نصاً'),
 
     body('sizes.*.price')
         .optional()
         .isFloat({ gt: 0 })
-        .withMessage('Size price must be a positive number'),
+        .withMessage('سعر الحجم يجب أن يكون رقماً موجباً'),
 
     body('status')
         .optional()
         .isIn(['visible', 'hidden'])
-        .withMessage('Status must be either "visible" or "hidden"'),
+        .withMessage('الحالة يجب أن تكون إما "visible" أو "hidden"'),
 
     body('keepExistingImages')
         .optional()
         .isString()
         .isIn(['true', 'false'])
-        .withMessage('keepExistingImages must be "true" or "false"'),
+        .withMessage('keepExistingImages يجب أن يكون "true" أو "false"'),
 ];
 
 export const validateGetProduct: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid product ID format'),
+        .withMessage('تنسيق معرف المنتج غير صحيح'),
 ];
 
 export const validateDeleteProduct: ValidationChain[] = [
     param('id')
         .isUUID()
-        .withMessage('Invalid product ID format'),
+        .withMessage('تنسيق معرف المنتج غير صحيح'),
 ];
 
 export function handleValidationResult(req: Request, res: Response, next: NextFunction) {

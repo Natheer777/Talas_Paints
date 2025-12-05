@@ -8,3 +8,4 @@ export class GetActiveAdsCardsUseCase {
         return await this.adsCardRepository.getActive();
     }
 }
+

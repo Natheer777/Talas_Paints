@@ -40,3 +40,4 @@ export class CreateAdsCardUseCase {
         return await this.adsCardRepository.create(adsCard);
     }
 }
+
