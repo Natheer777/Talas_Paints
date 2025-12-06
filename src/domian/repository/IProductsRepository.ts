@@ -30,6 +30,7 @@ export interface IProductsRepository {
     searchByNamePaginated(name: string, options?: PaginationOptions): Promise<PaginatedResult<Product>>;
     filterProducts(options: ProductFilterOptions): Promise<Product[]>;
     filterProductsPaginated(filterOptions: ProductFilterOptions, paginationOptions?: PaginationOptions): Promise<PaginatedResult<Product>>;
+    findProductsWithActiveOffers(): Promise<Product[]>;
     checkExistingProduct(name: string): Promise<boolean>;
     update(id: string, product: Product): Promise<Product>;
     delete(id: string): Promise<void>;

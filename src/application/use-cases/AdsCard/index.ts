@@ -5,3 +5,5 @@ export { GetAllAdsCardsUseCase } from './GetAllAdsCardsUseCase';
 export { GetAdsCardByIdUseCase } from './GetAdsCardByIdUseCase';
 export { GetActiveAdsCardsUseCase } from './GetActiveAdsCardsUseCase';
 
+
+

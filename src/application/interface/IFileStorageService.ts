@@ -12,4 +12,12 @@ export interface IFileStorageService {
     ): Promise<string[]>;
 
     DeleteOldImage(fileUrl: string): Promise<void>;
+
+    UploadVideo(
+        file: Express.Multer.File,
+        id: string,
+        folder: string
+    ): Promise<string>;
+
+    DeleteOldVideo(fileUrl: string): Promise<void>;
 }

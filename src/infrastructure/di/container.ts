@@ -4,6 +4,7 @@ import { CategoriesRepository } from '../repository/CategoriesRepository';
 import { CartRepository } from '../repository/CartRepository';
 import { OfferRepository } from '../repository/OfferRepository';
 import { AdsCardRepository } from '../repository/AdsCardRepository';
+import { VideoCardRepository } from '../repository/VideoCardRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
 import {
     CreateProductUseCase,
@@ -12,6 +13,7 @@ import {
     GetProductUseCase,
     GetAllProductsUseCase,
     GetAllProductsPaginatedUseCase,
+    GetProductsWithActiveOffersUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase
 } from '@/application/use-cases/Products/index';
@@ -45,11 +47,20 @@ import {
     GetAdsCardByIdUseCase,
     GetActiveAdsCardsUseCase
 } from '@/application/use-cases/AdsCard/index';
+import {
+    CreateVideoCardUseCase,
+    UpdateVideoCardUseCase,
+    DeleteVideoCardUseCase,
+    GetAllVideoCardsUseCase,
+    GetVideoCardByIdUseCase,
+    GetVisibleVideoCardsUseCase
+} from '@/application/use-cases/VideoCard/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
 import { CartController } from '@/presentation/controller/CartController';
 import { OffersController } from '@/presentation/controller/OffersController';
 import { AdsCardController } from '@/presentation/controller/AdsCardController';
+import { VideoCardController } from '@/presentation/controller/VideoCardController';
 
 class Container {
     // Infrastructure layer
@@ -59,6 +70,7 @@ class Container {
     private static cartRepository = new CartRepository(Container.db.getPool());
     private static offerRepository = new OfferRepository(Container.db.getPool());
     private static adsCardRepository = new AdsCardRepository(Container.db.getPool());
+    private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Application layer - Product Use Cases
@@ -77,6 +89,10 @@ class Container {
     );
 
     private static getAllProductsPaginatedUseCase = new GetAllProductsPaginatedUseCase(
+        Container.productsRepository
+    );
+
+    private static getProductsWithActiveOffersUseCase = new GetProductsWithActiveOffersUseCase(
         Container.productsRepository
     );
 
@@ -194,6 +210,34 @@ class Container {
         Container.adsCardRepository
     );
 
+    // Application layer - VideoCard Use Cases
+    private static createVideoCardUseCase = new CreateVideoCardUseCase(
+        Container.videoCardRepository,
+        Container.fileStorageService
+    );
+
+    private static updateVideoCardUseCase = new UpdateVideoCardUseCase(
+        Container.videoCardRepository,
+        Container.fileStorageService
+    );
+
+    private static deleteVideoCardUseCase = new DeleteVideoCardUseCase(
+        Container.videoCardRepository,
+        Container.fileStorageService
+    );
+
+    private static getAllVideoCardsUseCase = new GetAllVideoCardsUseCase(
+        Container.videoCardRepository
+    );
+
+    private static getVideoCardByIdUseCase = new GetVideoCardByIdUseCase(
+        Container.videoCardRepository
+    );
+
+    private static getVisibleVideoCardsUseCase = new GetVisibleVideoCardsUseCase(
+        Container.videoCardRepository
+    );
+
     // Presentation layer - Controllers
     // Updated to include paginated use case
     private static productsController = new ProductsController(
@@ -201,6 +245,7 @@ class Container {
         Container.getProductUseCase,
         Container.getAllProductsUseCase,
         Container.getAllProductsPaginatedUseCase,
+        Container.getProductsWithActiveOffersUseCase,
         Container.updateProductUseCase,
         Container.deleteProductUseCase,
         Container.searchProductsUseCase,
@@ -241,6 +286,15 @@ class Container {
         Container.getActiveAdsCardsUseCase
     );
 
+    private static videoCardController = new VideoCardController(
+        Container.createVideoCardUseCase,
+        Container.updateVideoCardUseCase,
+        Container.deleteVideoCardUseCase,
+        Container.getAllVideoCardsUseCase,
+        Container.getVideoCardByIdUseCase,
+        Container.getVisibleVideoCardsUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
     }
@@ -259,6 +313,10 @@ class Container {
 
     static getAdsCardController(): AdsCardController {
         return Container.adsCardController;
+    }
+
+    static getVideoCardController(): VideoCardController {
+        return Container.videoCardController;
     }
 }
 

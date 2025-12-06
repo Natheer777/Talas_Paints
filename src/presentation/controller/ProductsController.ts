@@ -5,6 +5,7 @@ import {
     GetProductUseCase,
     GetAllProductsUseCase,
     GetAllProductsPaginatedUseCase,
+    GetProductsWithActiveOffersUseCase,
     UpdateProductUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase
@@ -17,6 +18,7 @@ export class ProductsController {
         private getProductUseCase: GetProductUseCase,
         private getAllProductsUseCase: GetAllProductsUseCase,
         private getAllProductsPaginatedUseCase: GetAllProductsPaginatedUseCase,
+        private getProductsWithActiveOffersUseCase: GetProductsWithActiveOffersUseCase,
         private updateProductUseCase: UpdateProductUseCase,
         private deleteProductUseCase: DeleteProductUseCase,
         private searchProductsUseCase: SearchProductsUseCase,
@@ -153,6 +155,22 @@ export class ProductsController {
             return res.status(500).json({
                 success: false,
                 message: error.message || "Could not retrieve products",
+            });
+        }
+    }
+
+    async getProductsWithActiveOffers(req: Request, res: Response) {
+        try {
+            const result = await this.getProductsWithActiveOffersUseCase.execute();
+            return res.status(200).json({
+                success: true,
+                data: result,
+                count: result.length,
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not retrieve products with active offers",
             });
         }
     }

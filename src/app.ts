@@ -8,6 +8,7 @@ import { createCategoryRouter } from './presentation/router/CategoryRouter';
 import { createCartRouter } from './presentation/router/CartRouter';
 import { createOffersRouter } from './presentation/router/OffersRouter';
 import { createAdsCardRouter } from './presentation/router/AdsCardRouter';
+import { createVideoCardRouter } from './presentation/router/VideoCardRouter';
 import Container from './infrastructure/di/container';
 
 export class App {
@@ -24,12 +25,14 @@ export class App {
     const cartController = Container.getCartController();
     const offersController = Container.getOffersController();
     const adsCardController = Container.getAdsCardController();
+    const videoCardController = Container.getVideoCardController();
 
     this.app.use('/api', createProductRouter(productsController));
     this.app.use('/api', createCategoryRouter(categoriesController));
     this.app.use('/api', createCartRouter(cartController));
     this.app.use('/api', createOffersRouter(offersController));
     this.app.use('/api', createAdsCardRouter(adsCardController));
+    this.app.use('/api', createVideoCardRouter(videoCardController));
 
     const swaggerOptions = {
       swaggerOptions: {

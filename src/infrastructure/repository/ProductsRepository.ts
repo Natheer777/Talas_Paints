@@ -306,6 +306,24 @@ export class ProductsRepository implements IProductsRepository {
         return result.rows[0].exists;
     }
 
+    async findProductsWithActiveOffers(): Promise<Product[]> {
+        const query = `
+            SELECT
+                p.id, p.name, p.description, p.category_id,
+                p.colors, p.sizes, p.status, p.images,
+                p.created_at, p.updated_at
+            FROM products p
+            WHERE p.id IN (
+                SELECT DISTINCT o.product_id
+                FROM offers o
+                WHERE o.status = $1
+            )
+            ORDER BY p.created_at DESC
+        `;
+        const result = await this.db.query(query, ['VISIBLE']);
+        return result.rows.map(row => this.mapToProduct(row));
+    }
+
     private mapToProduct(row: any): Product {
         return {
             id: row.id,
