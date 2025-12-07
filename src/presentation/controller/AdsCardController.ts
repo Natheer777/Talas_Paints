@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import {
     CreateAdsCardUseCase,
@@ -171,4 +172,3 @@ export class AdsCardController {
         }
     }
 }
-

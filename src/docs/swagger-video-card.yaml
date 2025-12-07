@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Tala Paints Video Card API
+  description: API documentation for Tala Paints Video Card management.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local dev
+  - url: https://talas-paints.onrender.com
+    description: Production
+paths:
+  /video-cards:
+    post:
+      tags: [Video Cards]
+      summary: Create a new video card
+      description: Create a new video card with title, video upload, and visibility status.
+      operationId: createVideoCard
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - video
+              properties:
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  example: "Product Demo Video"
+                video:
+                  type: string
+                  format: binary
+                  description: "Video file (MP4, MPEG, MOV, AVI, WEBM, max 100MB)"
+                status:
+                  $ref: '#/components/schemas/VideoStatus'
+      responses:
+        '201':
+          description: Video card created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/VideoCard'
+                  message:
+                    type: string
+                    example: "تم إنشاء بطاقة الفيديو بنجاح"
+        '400':
+          description: Validation error or creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Video Cards]
+      summary: Get all video cards
+      description: Retrieve a list of all video cards ordered by creation date (newest first)
+      operationId: getAllVideoCards
+      responses:
+        '200':
+          description: Video cards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VideoCard'
+                  count:
+                    type: integer
+                    description: Total number of video cards
+                    example: 5
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /video-cards/visible:
+    get:
+      tags: [Video Cards]
+      summary: Get visible video cards
+      description: Retrieve a list of all visible video cards ordered by creation date (newest first)
+      operationId: getVisibleVideoCards
+      responses:
+        '200':
+          description: Visible video cards retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VideoCard'
+                  count:
+                    type: integer
+                    description: Number of visible video cards
+                    example: 3
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /video-cards/{id}:
+    get:
+      tags: [Video Cards]
+      summary: Get video card by ID
+      description: Retrieve a single video card by unique identifier
+      operationId: getVideoCardById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Video card UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Video card retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/VideoCard'
+        '400':
+          description: Invalid video card ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Video card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "بطاقة الفيديو غير موجودة"
+    put:
+      tags: [Video Cards]
+      summary: Update video card
+      description: Update an existing video card. All fields optional.
+      operationId: updateVideoCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Video card UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 255
+                  example: "Updated Product Demo Video"
+                video:
+                  type: string
+                  format: binary
+                  description: "New video file (MP4, MPEG, MOV, AVI, WEBM, max 100MB)"
+                status:
+                  $ref: '#/components/schemas/VideoStatus'
+      responses:
+        '200':
+          description: Video card updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/VideoCard'
+                  message:
+                    type: string
+                    example: "تم تحديث بطاقة الفيديو بنجاح"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Video card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "بطاقة الفيديو غير موجودة"
+    delete:
+      tags: [Video Cards]
+      summary: Delete video card
+      description: Delete a video card and its associated video from AWS S3
+      operationId: deleteVideoCard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Video card UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Video card deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "تم حذف بطاقة الفيديو بنجاح"
+        '400':
+          description: Invalid video card ID or deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Video card not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "بطاقة الفيديو غير موجودة"
+components:
+  schemas:
+    VideoCard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique video card identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          description: Video card title
+          example: "Product Demo Video"
+        videoUrl:
+          type: string
+          format: uri
+          description: URL of the video file stored in S3
+          example: "https://talas-paints-dev.s3.eu-north-1.amazonaws.com/video-cards/550e8400.../uuid.mp4"
+        status:
+          $ref: '#/components/schemas/VideoStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Video card creation timestamp
+          example: "2025-12-06T14:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Video card last update timestamp
+          example: "2025-12-06T14:30:00.000Z"
+      required:
+        - id
+        - title
+        - videoUrl
+        - status
+        - createdAt
+        - updatedAt
+
+    VideoStatus:
+      type: string
+      enum: [visible, hidden]
+      description: Video card visibility status
+      example: visible
+
+    CreateVideoCardRequest:
+      type: object
+      required:
+        - title
+        - videoUrl
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Product Demo Video"
+        videoUrl:
+          type: string
+          format: uri
+          example: "https://talas-paints-dev.s3.eu-north-1.amazonaws.com/video-cards/uuid.mp4"
+        status:
+          $ref: '#/components/schemas/VideoStatus'
+
+    UpdateVideoCardRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "Updated Product Demo Video"
+        videoUrl:
+          type: string
+          format: uri
+          example: "https://talas-paints-dev.s3.eu-north-1.amazonaws.com/video-cards/uuid-updated.mp4"
+        status:
+          $ref: '#/components/schemas/VideoStatus'
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: An error occurred
+        errors:
+          type: array
+          description: Detailed validation errors (if applicable)
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+                description: Error message
+                example: "عنوان الفيديو مطلوب"
+              param:
+                type: string
+                description: Parameter that caused the error
+                example: title
+              location:
+                type: string
+                description: Location of the parameter
+                example: body

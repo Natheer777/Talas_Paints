@@ -4,7 +4,8 @@ import {
     UpdateOfferUseCase,
     DeleteOfferUseCase,
     GetAllOffersUseCase,
-    GetOfferByIdUseCase
+    GetOfferByIdUseCase,
+    GetAllOffersWithDetailsPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 
 
@@ -14,7 +15,8 @@ export class OffersController {
         private updateOfferUseCase: UpdateOfferUseCase,
         private deleteOfferUseCase: DeleteOfferUseCase,
         private getAllOffersUseCase: GetAllOffersUseCase,
-        private getOfferByIdUseCase: GetOfferByIdUseCase
+        private getOfferByIdUseCase: GetOfferByIdUseCase,
+        private getAllOffersWithDetailsPaginatedUseCase: GetAllOffersWithDetailsPaginatedUseCase
     ) { }
 
     async create(req: Request, res: Response) {
@@ -36,7 +38,7 @@ export class OffersController {
         }
     }
 
-  
+
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -58,7 +60,7 @@ export class OffersController {
         }
     }
 
-  
+
     async delete(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -96,7 +98,47 @@ export class OffersController {
         }
     }
 
-   
+  
+    async getAllWithDetailsPaginated(req: Request, res: Response) {
+        try {
+            // Parse and validate pagination parameters
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+            // Validate pagination parameters
+            if (page < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Page must be greater than 0'
+                });
+            }
+
+            if (limit < 1 || limit > 100) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Limit must be between 1 and 100'
+                });
+            }
+
+            const result = await this.getAllOffersWithDetailsPaginatedUseCase.execute({
+                page,
+                limit
+            });
+
+            return res.status(200).json({
+                success: true,
+                ...result
+            });
+        } catch (error: any) {
+            console.error('Get All Offers With Details Paginated Error:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Could not retrieve offers'
+            });
+        }
+    }
+
+
     async getById(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -116,3 +158,4 @@ export class OffersController {
     }
 
 }
+

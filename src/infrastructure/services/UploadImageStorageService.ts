@@ -108,4 +108,87 @@ export class FileStorageService implements IFileStorageService {
       throw new Error(`Failed to delete file from S3: ${error.message}`);
     }
   }
+
+  async UploadVideo(
+    file: Express.Multer.File,
+    id: string,
+    folder: string
+  ): Promise<string> {
+    const uniqueId = uuidv4();
+    const fileExtension = file.originalname.split('.').pop() || 'mp4';
+    const key = `${folder}/${id}/${uniqueId}.${fileExtension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype || 'video/mp4',
+    });
+
+    try {
+      await this.s3Client.send(command);
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+    } catch (error: any) {
+      throw new Error(`Failed to upload video to S3: ${error.message}`);
+    }
+  }
+
+  async DeleteOldVideo(fileUrl: string): Promise<void> {
+    const { key, isValid } = this.extractKeyFromS3Url(fileUrl);
+    if (!isValid) {
+      throw new Error('Invalid S3 URL format');
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      await this.s3Client.send(command);
+    } catch (error: any) {
+      throw new Error(`Failed to delete video from S3: ${error.message}`);
+    }
+  }
+
+  async UploadQRCode(
+    file: Express.Multer.File,
+    paymentMethodId: string
+  ): Promise<string> {
+    const fileBuffer = await this.convertToJPGIfNeeded(file);
+    const uniqueId = uuidv4();
+    const key = `payment-methods/${paymentMethodId}/qr-${uniqueId}.jpg`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: 'image/jpeg',
+    });
+
+    try {
+      await this.s3Client.send(command);
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+    } catch (error: any) {
+      throw new Error(`Failed to upload QR code to S3: ${error.message}`);
+    }
+  }
+
+  async DeleteOldQRCode(fileUrl: string): Promise<void> {
+    const { key, isValid } = this.extractKeyFromS3Url(fileUrl);
+    if (!isValid) {
+      throw new Error('Invalid S3 URL format');
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      await this.s3Client.send(command);
+    } catch (error: any) {
+      throw new Error(`Failed to delete QR code from S3: ${error.message}`);
+    }
+  }
 }

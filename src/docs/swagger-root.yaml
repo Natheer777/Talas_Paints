@@ -27,6 +27,10 @@ tags:
     description: Product offers and discounts management
   - name: Ads Cards
     description: Advertisement card management operations (CRUD)
+  - name: Video Cards
+    description: Video card management operations (CRUD)
+  - name: Payment Methods
+    description: Payment method management with QR code images
 
 paths:
   # Health Check
@@ -50,6 +54,9 @@ paths:
   /api/products/filter:
     $ref: "./swagger-products.yaml#/paths/~1products~1filter"
 
+  /api/products/active-offers:
+    $ref: "./swagger-products.yaml#/paths/~1products~1active-offers"
+
   # Categories
   /api/categories:
     $ref: "./swagger-categories.yaml#/paths/~1categories"
@@ -72,6 +79,9 @@ paths:
   /api/offers:
     $ref: "./swagger-offers.yaml#/paths/~1offers"
 
+  /api/offers/details:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1details"
+
   /api/offers/{id}:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"
 
@@ -85,6 +95,26 @@ paths:
 
   /api/ads-cards/{id}:
     $ref: "./swagger-ads-card.yaml#/paths/~1ads-cards~1{id}"
+
+  # Video Cards
+  /api/video-cards:
+    $ref: "./swagger-video-card.yaml#/paths/~1video-cards"
+
+  /api/video-cards/visible:
+    $ref: "./swagger-video-card.yaml#/paths/~1video-cards~1visible"
+
+  /api/video-cards/{id}:
+    $ref: "./swagger-video-card.yaml#/paths/~1video-cards~1{id}"
+
+  # Payment Methods
+  /api/payment-methods:
+    $ref: "./swagger-payment-methods.yaml#/paths/~1payment-methods"
+
+  /api/payment-methods/visible:
+    $ref: "./swagger-payment-methods.yaml#/paths/~1payment-methods~1visible"
+
+  /api/payment-methods/{id}:
+    $ref: "./swagger-payment-methods.yaml#/paths/~1payment-methods~1{id}"
 
 components:
   schemas:
@@ -112,14 +142,21 @@ components:
     OfferStatus:
       $ref: "./swagger-offers.yaml#/components/schemas/OfferStatus"
     
+    OfferWithDetails:
+      $ref: "./swagger-offers.yaml#/components/schemas/OfferWithDetails"
+
     OfferCalculationResult:
       $ref: "./swagger-offers.yaml#/components/schemas/OfferCalculationResult"
-    
+
     CreateOfferRequest:
       $ref: "./swagger-offers.yaml#/components/schemas/CreateOfferRequest"
-    
+
     UpdateOfferRequest:
       $ref: "./swagger-offers.yaml#/components/schemas/UpdateOfferRequest"
+
+    # Category schema (referenced by OfferWithDetails)
+    Category:
+      $ref: "./swagger-offers.yaml#/components/schemas/Category"
 
     # Ads Card schemas
     AdsCard:
@@ -133,6 +170,26 @@ components:
 
     UpdateAdsCardRequest:
       $ref: "./swagger-ads-card.yaml#/components/schemas/UpdateAdsCardRequest"
+
+    # Video Card schemas
+    VideoCard:
+      $ref: "./swagger-video-card.yaml#/components/schemas/VideoCard"
+
+    VideoStatus:
+      $ref: "./swagger-video-card.yaml#/components/schemas/VideoStatus"
+
+    CreateVideoCardRequest:
+      $ref: "./swagger-video-card.yaml#/components/schemas/CreateVideoCardRequest"
+
+    UpdateVideoCardRequest:
+      $ref: "./swagger-video-card.yaml#/components/schemas/UpdateVideoCardRequest"
+
+    # Payment Methods schemas
+    PaymentMethod:
+      $ref: "./swagger-payment-methods.yaml#/components/schemas/PaymentMethod"
+
+    PaymentMethodStatus:
+      $ref: "./swagger-payment-methods.yaml#/components/schemas/PaymentMethodStatus"
 
     # Common schemas
     Error:

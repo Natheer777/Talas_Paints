@@ -45,6 +45,11 @@ export function createProductRouter(productsController: ProductsController) {
     );
 
     router.get(
+        "/products/active-offers",
+        (req: Request, res: Response) => productsController.getProductsWithActiveOffers(req, res)
+    );
+
+    router.get(
         "/products/:id",
         validateGetProduct,
         handleValidationResult,

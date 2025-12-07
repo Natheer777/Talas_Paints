@@ -316,6 +316,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /products/active-offers:
+    get:
+      tags: [Products]
+      summary: Get products with active offers
+      description: Retrieve all products that currently have active (VISIBLE) offers. Only products with offers that have status 'VISIBLE' are returned, ordered by creation date (newest first).
+      operationId: getProductsWithActiveOffers
+      responses:
+        '200':
+          description: Products with active offers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                    description: Array of products with active offers
+                  count:
+                    type: integer
+                    description: Total number of products with active offers
+                    example: 3
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /products/{id}:
     get:
       tags: [Products]

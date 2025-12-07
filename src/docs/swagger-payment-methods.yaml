@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Tala Paints Payment Methods API
+  description: API documentation for Tala Paints Payment Method management with QR codes.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local dev
+  - url: https://talas-paints.onrender.com
+    description: Production
+paths:
+  /payment-methods:
+    post:
+      tags: [Payment Methods]
+      summary: Create a new payment method
+      description: Create a new payment method with name, description, and QR code image upload.
+      operationId: createPaymentMethod
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - qrCode
+              properties:
+                qrCode:
+                  type: string
+                  format: binary
+                  description: "QR code image (JPEG, PNG, or WebP, max 5MB)"
+                status:
+                  $ref: '#/components/schemas/PaymentMethodStatus'
+      responses:
+        '201':
+          description: Payment method created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+                  message:
+                    type: string
+                    example: "Payment method created successfully"
+        '400':
+          description: Validation error or creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Payment Methods]
+      summary: Get all payment methods
+      description: Retrieve a list of all payment methods ordered by creation date (newest first)
+      operationId: getAllPaymentMethods
+      responses:
+        '200':
+          description: Payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+                  count:
+                    type: integer
+                    description: Total number of payment methods
+                    example: 3
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /payment-methods/visible:
+    get:
+      tags: [Payment Methods]
+      summary: Get visible payment methods
+      description: Retrieve a list of all visible payment methods for public display
+      operationId: getVisiblePaymentMethods
+      responses:
+        '200':
+          description: Visible payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+                  count:
+                    type: integer
+                    description: Total number of visible payment methods
+                    example: 2
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /payment-methods/{id}:
+    get:
+      tags: [Payment Methods]
+      summary: Get payment method by ID
+      description: Retrieve a specific payment method by its UUID
+      operationId: getPaymentMethodById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Payment method retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Payment Methods]
+      summary: Update payment method
+      description: Update an existing payment method with optional QR code replacement
+      operationId: updatePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                qrCode:
+                  type: string
+                  format: binary
+                  description: "New QR code image (optional, JPEG, PNG, or WebP, max 5MB)"
+                status:
+                  $ref: '#/components/schemas/PaymentMethodStatus'
+      responses:
+        '200':
+          description: Payment method updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+                  message:
+                    type: string
+                    example: "Payment method updated successfully"
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Validation error or invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Payment Methods]
+      summary: Delete payment method
+      description: Delete a payment method and its associated QR code image
+      operationId: deletePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Payment method deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Payment method deleted successfully"
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique payment method identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        qrCodeUrl:
+          type: string
+          format: uri
+          description: URL of the QR code image
+          example: "https://example.com/payment-methods/qr-bank-transfer.jpg"
+        status:
+          $ref: '#/components/schemas/PaymentMethodStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Payment method creation timestamp
+          example: "2025-11-25T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Payment method last update timestamp
+          example: "2025-11-25T10:30:00.000Z"
+      required:
+        - id
+        - qrCodeUrl
+        - status
+        - createdAt
+        - updatedAt
+
+    PaymentMethodStatus:
+      type: string
+      enum: [visible, hidden]
+      description: Payment method visibility status
+      example: visible
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation error"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "name"
+              message:
+                type: string
+                example: "Name is required"
+
+
