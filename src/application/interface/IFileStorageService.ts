@@ -20,4 +20,11 @@ export interface IFileStorageService {
     ): Promise<string>;
 
     DeleteOldVideo(fileUrl: string): Promise<void>;
+
+    UploadQRCode(
+        file: Express.Multer.File,
+        paymentMethodId: string
+    ): Promise<string>;
+
+    DeleteOldQRCode(fileUrl: string): Promise<void>;
 }

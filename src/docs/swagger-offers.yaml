@@ -169,6 +169,83 @@ paths:
         '404':
           description: Offer not found
 
+  /offers/details:
+    get:
+      tags:
+        - Offers
+      summary: Get all offers with full details and pagination
+      description: Retrieve all offers with complete product and category details using pagination
+      operationId: getAllOffersWithDetailsPaginated
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (default 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of items per page (default 10, max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Offers with details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OfferWithDetails'
+                  total:
+                    type: integer
+                    description: Total number of offers
+                    example: 25
+                  page:
+                    type: integer
+                    description: Current page number
+                    example: 1
+                  limit:
+                    type: integer
+                    description: Items per page
+                    example: 10
+                  totalPages:
+                    type: integer
+                    description: Total number of pages
+                    example: 3
+                  hasNextPage:
+                    type: boolean
+                    description: Whether there is a next page
+                    example: true
+                  hasPrevPage:
+                    type: boolean
+                    description: Whether there is a previous page
+                    example: false
+        '400':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # /offers/product/{productId} and /offers/calculate endpoints removed on request
 
 components:
@@ -223,6 +300,47 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    OfferWithDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+        buy_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        get_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        product:
+          $ref: '#/components/schemas/Product'
+        category:
+          $ref: '#/components/schemas/Category'
 
     CreateOfferRequest:
       type: object
@@ -308,6 +426,62 @@ components:
               type: string
             offer_type:
               $ref: '#/components/schemas/OfferType'
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category_id:
+          type: string
+          format: uuid
+        colors:
+          type: array
+          items:
+            type: string
+        sizes:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [VISIBLE, HIDDEN]
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Error:
       type: object

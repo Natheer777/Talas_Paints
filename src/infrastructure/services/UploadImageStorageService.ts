@@ -150,4 +150,45 @@ export class FileStorageService implements IFileStorageService {
       throw new Error(`Failed to delete video from S3: ${error.message}`);
     }
   }
+
+  async UploadQRCode(
+    file: Express.Multer.File,
+    paymentMethodId: string
+  ): Promise<string> {
+    const fileBuffer = await this.convertToJPGIfNeeded(file);
+    const uniqueId = uuidv4();
+    const key = `payment-methods/${paymentMethodId}/qr-${uniqueId}.jpg`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: 'image/jpeg',
+    });
+
+    try {
+      await this.s3Client.send(command);
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+    } catch (error: any) {
+      throw new Error(`Failed to upload QR code to S3: ${error.message}`);
+    }
+  }
+
+  async DeleteOldQRCode(fileUrl: string): Promise<void> {
+    const { key, isValid } = this.extractKeyFromS3Url(fileUrl);
+    if (!isValid) {
+      throw new Error('Invalid S3 URL format');
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      await this.s3Client.send(command);
+    } catch (error: any) {
+      throw new Error(`Failed to delete QR code from S3: ${error.message}`);
+    }
+  }
 }

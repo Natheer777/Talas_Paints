@@ -1,5 +1,8 @@
 import { Offer, OfferStatus } from '@/domian/entities/Offer';
-import { IOfferRepository } from '@/domian/repository/IOfferRepository';
+import { OfferWithDetails } from '@/domian/entities/OfferWithDetails';
+import { Product, ProductStatus } from '@/domian/entities/Products';
+import { Category } from '@/domian/entities/Category';
+import { IOfferRepository, PaginationOptions, PaginatedResult } from '@/domian/repository/IOfferRepository';
 import { Pool } from 'pg';
 
 
@@ -127,9 +130,127 @@ export class OfferRepository implements IOfferRepository {
         return result.rows.map(row => this.mapToOffer(row));
     }
 
+   
+    async getByIdWithDetails(id: string): Promise<OfferWithDetails | null> {
+        const query = `
+            SELECT 
+                o.*,
+                p.id as product_id,
+                p.name as product_name,
+                p.description as product_description,
+                p.category_id as product_category_id,
+                p.colors as product_colors,
+                p.sizes as product_sizes,
+                p.status as product_status,
+                p.images as product_images,
+                p.created_at as product_created_at,
+                p.updated_at as product_updated_at,
+                c.id as category_id,
+                c.name as category_name,
+                c.images as category_images,
+                c.created_at as category_created_at,
+                c.updated_at as category_updated_at
+            FROM offers o
+            INNER JOIN products p ON o.product_id = p.id
+            INNER JOIN categories c ON p.category_id = c.id
+            WHERE o.id = $1
+        `;
+
+        const result = await this.db.query(query, [id]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return this.mapToOfferWithDetails(result.rows[0]);
+    }
+
     /**
-     * Map database row to Offer entity
+     * Get all offers with full product and category details
      */
+    async getAllWithDetails(): Promise<OfferWithDetails[]> {
+        const query = `
+            SELECT 
+                o.*,
+                p.id as product_id,
+                p.name as product_name,
+                p.description as product_description,
+                p.category_id as product_category_id,
+                p.colors as product_colors,
+                p.sizes as product_sizes,
+                p.status as product_status,
+                p.images as product_images,
+                p.created_at as product_created_at,
+                p.updated_at as product_updated_at,
+                c.id as category_id,
+                c.name as category_name,
+                c.images as category_images,
+                c.created_at as category_created_at,
+                c.updated_at as category_updated_at
+            FROM offers o
+            INNER JOIN products p ON o.product_id = p.id
+            INNER JOIN categories c ON p.category_id = c.id
+            ORDER BY o.created_at DESC
+        `;
+
+        const result = await this.db.query(query);
+        return result.rows.map(row => this.mapToOfferWithDetails(row));
+    }
+
+   
+    async getAllWithDetailsPaginated(options?: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>> {
+        const page = options?.page || 1;
+        const limit = options?.limit || 10;
+        const offset = (page - 1) * limit;
+
+        // Get total count
+        const countQuery = `SELECT COUNT(*) as total FROM offers`;
+        const countResult = await this.db.query(countQuery);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Get paginated data with details
+        const query = `
+            SELECT 
+                o.*,
+                p.id as product_id,
+                p.name as product_name,
+                p.description as product_description,
+                p.category_id as product_category_id,
+                p.colors as product_colors,
+                p.sizes as product_sizes,
+                p.status as product_status,
+                p.images as product_images,
+                p.created_at as product_created_at,
+                p.updated_at as product_updated_at,
+                c.id as category_id,
+                c.name as category_name,
+                c.images as category_images,
+                c.created_at as category_created_at,
+                c.updated_at as category_updated_at
+            FROM offers o
+            INNER JOIN products p ON o.product_id = p.id
+            INNER JOIN categories c ON p.category_id = c.id
+            ORDER BY o.created_at DESC
+            LIMIT $1 OFFSET $2
+        `;
+
+        const result = await this.db.query(query, [limit, offset]);
+        const data = result.rows.map(row => this.mapToOfferWithDetails(row));
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
+    }
+
+   
     private mapToOffer(row: any): Offer {
         return {
             id: row.id,
@@ -145,4 +266,61 @@ export class OfferRepository implements IOfferRepository {
             updatedAt: new Date(row.updated_at)
         };
     }
+
+   
+    private mapToOfferWithDetails(row: any): OfferWithDetails {
+        const offer = this.mapToOffer(row);
+
+        const parseArrayField = (field: any): any[] => {
+            if (!field) return [];
+            try {
+                return JSON.parse(field);
+            } catch {
+                if (typeof field === 'string' && field.includes(',')) {
+                    return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                }
+                return typeof field === 'string' && field.trim() ? [field.trim()] : [];
+            }
+        };
+
+        const parseImagesField = (field: any): any[] | null => {
+            if (!field) return null;
+            try {
+                return JSON.parse(field);
+            } catch {
+                if (typeof field === 'string' && field.includes(',')) {
+                    return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                }
+                return typeof field === 'string' && field.trim() ? [field.trim()] : null;
+            }
+        };
+
+        const product: Product = {
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            category_id: row.product_category_id,
+            colors: parseArrayField(row.product_colors),
+            sizes: parseArrayField(row.product_sizes),
+            status: row.product_status as ProductStatus,
+            images: parseImagesField(row.product_images),
+            createdAt: new Date(row.product_created_at),
+            updatedAt: new Date(row.product_updated_at)
+        };
+
+        const category: Category = {
+            id: row.category_id,
+            name: row.category_name,
+            images: parseImagesField(row.category_images),
+            createdAt: new Date(row.category_created_at),
+            updatedAt: new Date(row.category_updated_at)
+        };
+
+        return {
+            ...offer,
+            product,
+            category
+        };
+    }
 }
+

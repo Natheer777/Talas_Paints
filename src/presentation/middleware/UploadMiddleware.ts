@@ -65,4 +65,6 @@ export const uploadMultiple = upload.array('images', 10);
 
 export const uploadVideo = videoUpload.single('video');
 
+export const uploadQRCode = upload.single('qrCode');
+
 export const uploadNone = upload.none();

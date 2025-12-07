@@ -1,3 +1,4 @@
+
 import { AdsCard, AdsCardStatus } from '../../../domian/entities/AdsCard';
 import { IAdsCardRepository } from '../../../domian/repository/IAdsCardRepository';
 import { IFileStorageService } from '../../interface/IFileStorageService';
@@ -40,6 +41,3 @@ export class CreateAdsCardUseCase {
         return await this.adsCardRepository.create(adsCard);
     }
 }
-
-
-

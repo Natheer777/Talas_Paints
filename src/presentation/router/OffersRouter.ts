@@ -24,6 +24,12 @@ export function createOffersRouter(offersController: OffersController) {
         (req: Request, res: Response) => offersController.create(req, res)
     );
 
+ 
+    router.get(
+        '/offers/details',
+        (req: Request, res: Response) => offersController.getAllWithDetailsPaginated(req, res)
+    );
+
     router.get(
         '/offers',
         (req: Request, res: Response) => offersController.getAll(req, res)
@@ -56,3 +62,4 @@ export function createOffersRouter(offersController: OffersController) {
 
     return router;
 }
+

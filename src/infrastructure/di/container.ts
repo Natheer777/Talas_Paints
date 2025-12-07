@@ -5,6 +5,7 @@ import { CartRepository } from '../repository/CartRepository';
 import { OfferRepository } from '../repository/OfferRepository';
 import { AdsCardRepository } from '../repository/AdsCardRepository';
 import { VideoCardRepository } from '../repository/VideoCardRepository';
+import { PaymentMethodRepository } from '../repository/PaymentMethodRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
 import {
     CreateProductUseCase,
@@ -37,7 +38,7 @@ import {
     DeleteOfferUseCase,
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
-
+    GetAllOffersWithDetailsPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 import {
     CreateAdsCardUseCase,
@@ -55,12 +56,21 @@ import {
     GetVideoCardByIdUseCase,
     GetVisibleVideoCardsUseCase
 } from '@/application/use-cases/VideoCard/index';
+import {
+    CreatePaymentMethodUseCase,
+    UpdatePaymentMethodUseCase,
+    DeletePaymentMethodUseCase,
+    GetAllPaymentMethodsUseCase,
+    GetPaymentMethodByIdUseCase,
+    GetVisiblePaymentMethodsUseCase
+} from '@/application/use-cases/PaymentMethod/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
 import { CartController } from '@/presentation/controller/CartController';
 import { OffersController } from '@/presentation/controller/OffersController';
 import { AdsCardController } from '@/presentation/controller/AdsCardController';
 import { VideoCardController } from '@/presentation/controller/VideoCardController';
+import { PaymentMethodController } from '@/presentation/controller/PaymentMethodController';
 
 class Container {
     // Infrastructure layer
@@ -71,6 +81,7 @@ class Container {
     private static offerRepository = new OfferRepository(Container.db.getPool());
     private static adsCardRepository = new AdsCardRepository(Container.db.getPool());
     private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
+    private static paymentMethodRepository = new PaymentMethodRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Application layer - Product Use Cases
@@ -183,6 +194,10 @@ class Container {
         Container.offerRepository
     );
 
+    private static getAllOffersWithDetailsPaginatedUseCase = new GetAllOffersWithDetailsPaginatedUseCase(
+        Container.offerRepository
+    );
+
     private static createAdsCardUseCase = new CreateAdsCardUseCase(
         Container.adsCardRepository,
         Container.fileStorageService
@@ -238,6 +253,34 @@ class Container {
         Container.videoCardRepository
     );
 
+    // Application layer - PaymentMethod Use Cases
+    private static createPaymentMethodUseCase = new CreatePaymentMethodUseCase(
+        Container.paymentMethodRepository,
+        Container.fileStorageService
+    );
+
+    private static updatePaymentMethodUseCase = new UpdatePaymentMethodUseCase(
+        Container.paymentMethodRepository,
+        Container.fileStorageService
+    );
+
+    private static deletePaymentMethodUseCase = new DeletePaymentMethodUseCase(
+        Container.paymentMethodRepository,
+        Container.fileStorageService
+    );
+
+    private static getAllPaymentMethodsUseCase = new GetAllPaymentMethodsUseCase(
+        Container.paymentMethodRepository
+    );
+
+    private static getPaymentMethodByIdUseCase = new GetPaymentMethodByIdUseCase(
+        Container.paymentMethodRepository
+    );
+
+    private static getVisiblePaymentMethodsUseCase = new GetVisiblePaymentMethodsUseCase(
+        Container.paymentMethodRepository
+    );
+
     // Presentation layer - Controllers
     // Updated to include paginated use case
     private static productsController = new ProductsController(
@@ -274,7 +317,7 @@ class Container {
         Container.deleteOfferUseCase,
         Container.getAllOffersUseCase,
         Container.getOfferByIdUseCase,
-
+        Container.getAllOffersWithDetailsPaginatedUseCase
     );
 
     private static adsCardController = new AdsCardController(
@@ -293,6 +336,15 @@ class Container {
         Container.getAllVideoCardsUseCase,
         Container.getVideoCardByIdUseCase,
         Container.getVisibleVideoCardsUseCase
+    );
+
+    private static paymentMethodController = new PaymentMethodController(
+        Container.createPaymentMethodUseCase,
+        Container.updatePaymentMethodUseCase,
+        Container.deletePaymentMethodUseCase,
+        Container.getAllPaymentMethodsUseCase,
+        Container.getPaymentMethodByIdUseCase,
+        Container.getVisiblePaymentMethodsUseCase
     );
 
     static getProductsController(): ProductsController {
@@ -317,6 +369,10 @@ class Container {
 
     static getVideoCardController(): VideoCardController {
         return Container.videoCardController;
+    }
+
+    static getPaymentMethodController(): PaymentMethodController {
+        return Container.paymentMethodController;
     }
 }
 

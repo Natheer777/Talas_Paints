@@ -27,6 +27,8 @@ tags:
     description: Advertisement card management operations (CRUD)
   - name: Video Cards
     description: Video card management operations (CRUD)
+  - name: Payment Methods
+    description: Payment method management with QR code images
 paths:
   /api/health:
     get:
@@ -1219,6 +1221,82 @@ paths:
                   count:
                     type: integer
                     example: 5
+  /api/offers/details:
+    get:
+      tags:
+        - Offers
+      summary: Get all offers with full details and pagination
+      description: Retrieve all offers with complete product and category details using pagination
+      operationId: getAllOffersWithDetailsPaginated
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (default 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: 'Number of items per page (default 10, max 100)'
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Offers with details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OfferWithDetails'
+                  total:
+                    type: integer
+                    description: Total number of offers
+                    example: 25
+                  page:
+                    type: integer
+                    description: Current page number
+                    example: 1
+                  limit:
+                    type: integer
+                    description: Items per page
+                    example: 10
+                  totalPages:
+                    type: integer
+                    description: Total number of pages
+                    example: 3
+                  hasNextPage:
+                    type: boolean
+                    description: Whether there is a next page
+                    example: true
+                  hasPrevPage:
+                    type: boolean
+                    description: Whether there is a previous page
+                    example: false
+        '400':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1offers/post/responses/400/content/application~1json/schema'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1offers/post/responses/400/content/application~1json/schema'
   '/api/offers/{id}':
     get:
       tags:
@@ -1945,6 +2023,269 @@ paths:
                   message:
                     type: string
                     example: بطاقة الفيديو غير موجودة
+  /api/payment-methods:
+    post:
+      tags:
+        - Payment Methods
+      summary: Create a new payment method
+      description: 'Create a new payment method with name, description, and QR code image upload.'
+      operationId: createPaymentMethod
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - qrCode
+              properties:
+                qrCode:
+                  type: string
+                  format: binary
+                  description: 'QR code image (JPEG, PNG, or WebP, max 5MB)'
+                status:
+                  $ref: '#/components/schemas/PaymentMethodStatus'
+      responses:
+        '201':
+          description: Payment method created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+                  message:
+                    type: string
+                    example: Payment method created successfully
+        '400':
+          description: Validation error or creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+    get:
+      tags:
+        - Payment Methods
+      summary: Get all payment methods
+      description: Retrieve a list of all payment methods ordered by creation date (newest first)
+      operationId: getAllPaymentMethods
+      responses:
+        '200':
+          description: Payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+                  count:
+                    type: integer
+                    description: Total number of payment methods
+                    example: 3
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation error
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                          example: name
+                        message:
+                          type: string
+                          example: Name is required
+  /api/payment-methods/visible:
+    get:
+      tags:
+        - Payment Methods
+      summary: Get visible payment methods
+      description: Retrieve a list of all visible payment methods for public display
+      operationId: getVisiblePaymentMethods
+      responses:
+        '200':
+          description: Visible payment methods retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+                  count:
+                    type: integer
+                    description: Total number of visible payment methods
+                    example: 2
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+  '/api/payment-methods/{id}':
+    get:
+      tags:
+        - Payment Methods
+      summary: Get payment method by ID
+      description: Retrieve a specific payment method by its UUID
+      operationId: getPaymentMethodById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Payment method retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+    put:
+      tags:
+        - Payment Methods
+      summary: Update payment method
+      description: Update an existing payment method with optional QR code replacement
+      operationId: updatePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                qrCode:
+                  type: string
+                  format: binary
+                  description: 'New QR code image (optional, JPEG, PNG, or WebP, max 5MB)'
+                status:
+                  $ref: '#/components/schemas/PaymentMethodStatus'
+      responses:
+        '200':
+          description: Payment method updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PaymentMethod'
+                  message:
+                    type: string
+                    example: Payment method updated successfully
+        '400':
+          description: Validation error or invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+    delete:
+      tags:
+        - Payment Methods
+      summary: Delete payment method
+      description: Delete a payment method and its associated QR code image
+      operationId: deletePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Payment method UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Payment method deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Payment method deleted successfully
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
+        '404':
+          description: Payment method not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1payment-methods/get/responses/500/content/application~1json/schema'
 components:
   schemas:
     Product:
@@ -2152,6 +2493,81 @@ components:
         - VISIBLE
         - HIDDEN
       description: 'Offer visibility status (VISIBLE = shown & applied, HIDDEN = not shown / not applied)'
+    OfferWithDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/OfferType'
+        product_id:
+          type: string
+          format: uuid
+        discount_percentage:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+        buy_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        get_quantity:
+          type: integer
+          nullable: true
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        product:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            category_id:
+              type: string
+              format: uuid
+            colors:
+              type: array
+              items:
+                type: string
+            sizes:
+              type: array
+              items:
+                type: string
+            status:
+              type: string
+              enum:
+                - VISIBLE
+                - HIDDEN
+            images:
+              type: array
+              items:
+                type: string
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+        category:
+          $ref: '#/components/schemas/Category'
     OfferCalculationResult:
       type: object
       properties:
@@ -2234,6 +2650,25 @@ components:
           minimum: 1
         status:
           $ref: '#/components/schemas/OfferStatus'
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     AdsCard:
       type: object
       properties:
@@ -2398,6 +2833,44 @@ components:
           example: 'https://talas-paints-dev.s3.eu-north-1.amazonaws.com/video-cards/uuid-updated.mp4'
         status:
           $ref: '#/components/schemas/VideoStatus'
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique payment method identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        qrCodeUrl:
+          type: string
+          format: uri
+          description: URL of the QR code image
+          example: 'https://example.com/payment-methods/qr-bank-transfer.jpg'
+        status:
+          $ref: '#/components/schemas/PaymentMethodStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Payment method creation timestamp
+          example: '2025-11-25T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Payment method last update timestamp
+          example: '2025-11-25T10:30:00.000Z'
+      required:
+        - id
+        - qrCodeUrl
+        - status
+        - createdAt
+        - updatedAt
+    PaymentMethodStatus:
+      type: string
+      enum:
+        - visible
+        - hidden
+      description: Payment method visibility status
+      example: visible
     Error:
       type: object
       properties:

@@ -21,3 +21,7 @@ ON ads_cards(created_at DESC);
 
 
 
+
+
+
+
