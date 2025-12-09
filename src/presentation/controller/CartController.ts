@@ -18,21 +18,28 @@ export class CartController {
 
     async addToCart(req: Request, res: Response) {
         try {
-            const { productId, quantity } = req.body;
-            // Support phone number from body or params
-            const phoneNumber = req.body.phoneNumber || req.params.phoneNumber;
-
-            if (!phoneNumber) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Phone number is required"
-                });
-            }
+            const {
+                productId,
+                quantity,
+                customerName,
+                phoneNumber,
+                areaName,
+                streetName,
+                buildingNumber,
+                additionalNotes,
+                paymentMethod
+            } = req.body;
 
             const result = await this.addToCartUseCase.execute({
                 phoneNumber,
                 productId,
                 quantity: parseInt(quantity),
+                customerName,
+                areaName,
+                streetName,
+                buildingNumber,
+                additionalNotes,
+                paymentMethod,
             });
 
             return res.status(201).json({
@@ -51,21 +58,9 @@ export class CartController {
 
     async getCart(req: Request, res: Response) {
         try {
-            const { phoneNumber } = req.params;
+            const { phoneNumber } = req.query as { phoneNumber: string };
 
             const result = await this.getCartUseCase.execute({ phoneNumber });
-
-            if (!result) {
-                return res.status(200).json({
-                    success: true,
-                    data: {
-                        phone_number: phoneNumber,
-                        items: [],
-                        totalAmount: 0
-                    },
-                    message: "Cart is empty",
-                });
-            }
 
             return res.status(200).json({
                 success: true,
@@ -81,8 +76,7 @@ export class CartController {
 
     async updateCartItem(req: Request, res: Response) {
         try {
-            const { phoneNumber, cartItemId } = req.params;
-            const { quantity } = req.body;
+            const { phoneNumber, cartItemId, quantity } = req.body;
 
             const result = await this.updateCartItemUseCase.execute({
                 phoneNumber,
@@ -105,7 +99,7 @@ export class CartController {
 
     async removeFromCart(req: Request, res: Response) {
         try {
-            const { phoneNumber, cartItemId } = req.params;
+            const { phoneNumber, cartItemId } = req.body;
 
             await this.removeFromCartUseCase.execute({
                 phoneNumber,
@@ -126,7 +120,7 @@ export class CartController {
 
     async clearCart(req: Request, res: Response) {
         try {
-            const { phoneNumber } = req.params;
+            const { phoneNumber } = req.body;
 
             await this.clearCartUseCase.execute({ phoneNumber });
 

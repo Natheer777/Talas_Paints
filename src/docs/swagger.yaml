@@ -906,7 +906,7 @@ paths:
           $ref: '#/paths/~1api~1categories/post/responses/400'
         '404':
           $ref: '#/paths/~1api~1categories~1%7Bid%7D/get/responses/404'
-  '/api/cart/{phoneNumber}':
+  /api/cart:
     get:
       tags:
         - Cart
@@ -915,7 +915,7 @@ paths:
       operationId: getCart
       parameters:
         - name: phoneNumber
-          in: path
+          in: query
           required: true
           description: User's phone number
           schema:
@@ -954,14 +954,19 @@ paths:
       summary: Clear cart
       description: Remove all items from the user's cart
       operationId: clearCart
-      parameters:
-        - name: phoneNumber
-          in: path
-          required: true
-          description: User's phone number
-          schema:
-            type: string
-          example: '+1234567890'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phoneNumber
+              properties:
+                phoneNumber:
+                  type: string
+                  description: User's phone number
+                  example: '+1234567890'
       responses:
         '200':
           description: Cart cleared successfully
@@ -981,31 +986,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
-  '/api/cart/{phoneNumber}/items':
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
+  /api/cart/items:
     post:
       tags:
         - Cart
       summary: Add item to cart
       description: 'Add a product to the cart. If product exists, quantity is updated.'
       operationId: addToCart
-      parameters:
-        - name: phoneNumber
-          in: path
-          required: true
-          description: User's phone number
-          schema:
-            type: string
-          example: '+1234567890'
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
                 - productId
                 - quantity
+                - customerName
+                - phoneNumber
+                - areaName
+                - paymentMethod
               properties:
                 productId:
                   type: string
@@ -1017,6 +1018,37 @@ paths:
                   minimum: 1
                   description: Quantity to add
                   example: 2
+                customerName:
+                  type: string
+                  description: Customer or company name
+                  example: John Doe
+                phoneNumber:
+                  type: string
+                  description: Customer's phone number
+                  example: '+1234567890'
+                areaName:
+                  type: string
+                  description: Delivery area name
+                  example: Downtown
+                streetName:
+                  type: string
+                  description: Street name for delivery (optional)
+                  example: Main Street
+                buildingNumber:
+                  type: string
+                  description: Building or shop number (optional)
+                  example: 'Building 5, Shop 12'
+                additionalNotes:
+                  type: string
+                  description: Additional delivery notes (optional)
+                  example: Please call before delivery
+                paymentMethod:
+                  type: string
+                  enum:
+                    - cash_on_delivery
+                    - electronic_payment
+                  description: Payment method
+                  example: cash_on_delivery
       responses:
         '201':
           description: Product added to cart successfully
@@ -1038,39 +1070,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
-  '/api/cart/{phoneNumber}/items/{cartItemId}':
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
     put:
       tags:
         - Cart
       summary: Update cart item quantity
       description: Update the quantity of a specific item in the cart
       operationId: updateCartItem
-      parameters:
-        - name: phoneNumber
-          in: path
-          required: true
-          description: User's phone number
-          schema:
-            type: string
-          example: '+1234567890'
-        - name: cartItemId
-          in: path
-          required: true
-          description: Cart item UUID
-          schema:
-            type: string
-            format: uuid
-          example: item-550e8400-e29b-41d4-a716-446655440000
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
+                - phoneNumber
+                - cartItemId
                 - quantity
               properties:
+                phoneNumber:
+                  type: string
+                  description: User's phone number
+                  example: '+1234567890'
+                cartItemId:
+                  type: string
+                  format: uuid
+                  description: Cart item UUID
+                  example: item-550e8400-e29b-41d4-a716-446655440000
                 quantity:
                   type: integer
                   minimum: 1
@@ -1097,35 +1123,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
         '404':
           description: Cart item not found
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
     delete:
       tags:
         - Cart
       summary: Remove item from cart
       description: Remove a specific item from the user's cart
       operationId: removeFromCart
-      parameters:
-        - name: phoneNumber
-          in: path
-          required: true
-          description: User's phone number
-          schema:
-            type: string
-          example: '+1234567890'
-        - name: cartItemId
-          in: path
-          required: true
-          description: Cart item UUID
-          schema:
-            type: string
-            format: uuid
-          example: item-550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - phoneNumber
+                - cartItemId
+              properties:
+                phoneNumber:
+                  type: string
+                  description: User's phone number
+                  example: '+1234567890'
+                cartItemId:
+                  type: string
+                  format: uuid
+                  description: Cart item UUID
+                  example: item-550e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Item removed from cart successfully
@@ -1145,13 +1174,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
         '404':
           description: Cart item not found
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1cart~1%7BphoneNumber%7D/get/responses/500/content/application~1json/schema'
+                $ref: '#/paths/~1api~1cart/get/responses/500/content/application~1json/schema'
   /api/offers:
     post:
       tags:
@@ -2378,8 +2407,35 @@ components:
       properties:
         phone_number:
           type: string
-          description: User's phone number
+          description: Customer's phone number
           example: '+1234567890'
+        customer_name:
+          type: string
+          description: Customer or company name (present when cart has items)
+          example: John Doe
+        area_name:
+          type: string
+          description: Delivery area name (present when cart has items)
+          example: Downtown
+        street_name:
+          type: string
+          description: Street name for delivery (present when cart has items)
+          example: Main Street
+        building_number:
+          type: string
+          description: Building or shop number (present when cart has items)
+          example: 'Building 5, Shop 12'
+        additional_notes:
+          type: string
+          description: Additional delivery notes (present when cart has items)
+          example: Please call before delivery
+        payment_method:
+          type: string
+          enum:
+            - cash_on_delivery
+            - electronic_payment
+          description: Payment method (present when cart has items)
+          example: cash_on_delivery
         totalAmount:
           type: number
           format: float
@@ -2398,7 +2454,7 @@ components:
           example: item-550e8400-e29b-41d4-a716-446655440000
         phone_number:
           type: string
-          description: User's phone number
+          description: Customer's phone number
           example: '+1234567890'
         product_id:
           type: string
@@ -2415,6 +2471,33 @@ components:
           format: float
           description: Price snapshot at time of adding to cart
           example: 45.99
+        customer_name:
+          type: string
+          description: Customer or company name
+          example: John Doe
+        area_name:
+          type: string
+          description: Delivery area name
+          example: Downtown
+        street_name:
+          type: string
+          description: Street name for delivery
+          example: Main Street
+        building_number:
+          type: string
+          description: Building or shop number
+          example: 'Building 5, Shop 12'
+        additional_notes:
+          type: string
+          description: Additional delivery notes
+          example: Please call before delivery
+        payment_method:
+          type: string
+          enum:
+            - cash_on_delivery
+            - electronic_payment
+          description: Payment method
+          example: cash_on_delivery
         createdAt:
           type: string
           format: date-time
@@ -2431,6 +2514,9 @@ components:
         - product_id
         - quantity
         - price
+        - customer_name
+        - area_name
+        - payment_method
         - createdAt
         - updatedAt
     CartWithItems:
@@ -2441,7 +2527,45 @@ components:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/CartItem'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: Unique cart item identifier
+                    example: item-550e8400-e29b-41d4-a716-446655440000
+                  product_id:
+                    type: string
+                    format: uuid
+                    description: Product identifier
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  quantity:
+                    type: integer
+                    minimum: 1
+                    description: Quantity of the product in cart
+                    example: 2
+                  price:
+                    type: number
+                    format: float
+                    description: Price snapshot at time of adding to cart
+                    example: 45.99
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: Cart item creation timestamp
+                    example: '2025-11-29T10:00:00.000Z'
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    description: Cart item last update timestamp
+                    example: '2025-11-29T10:30:00.000Z'
+                required:
+                  - id
+                  - product_id
+                  - quantity
+                  - price
+                  - createdAt
+                  - updatedAt
               description: List of items in the cart
           required:
             - items
