@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CreateCategoryUseCase, GetCategoryUseCase, GetAllCategoriesUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase } from "@/application/use-cases/Category/index";
+import { CreateCategoryUseCase, GetCategoryUseCase, GetAllCategoriesUseCase, GetAllCategoriesPaginatedUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase } from "@/application/use-cases/Category/index";
 
 
 export class CategoriesController {
@@ -7,6 +7,7 @@ export class CategoriesController {
         private createCategoryUseCase: CreateCategoryUseCase,
         private getCategoryUseCase: GetCategoryUseCase,
         private getAllCategoriesUseCase: GetAllCategoriesUseCase,
+        private getAllCategoriesPaginatedUseCase: GetAllCategoriesPaginatedUseCase,
         private updateCategoryUseCase: UpdateCategoryUseCase,
         private deleteCategoryUseCase: DeleteCategoryUseCase
     ) { }
@@ -55,13 +56,53 @@ export class CategoriesController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const result = await this.getAllCategoriesUseCase.execute();
+            const { page, limit } = req.query;
 
-            return res.status(200).json({
-                success: true,
-                data: result,
-                count: result.length,
-            });
+            const hasPagination = page !== undefined || limit !== undefined;
+
+            if (hasPagination) {
+                const pageNum = page ? parseInt(page as string, 10) : undefined;
+                const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+                if (pageNum !== undefined && (isNaN(pageNum) || pageNum < 1)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Page must be a positive integer",
+                    });
+                }
+
+                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 100)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Limit must be a positive integer between 1 and 100",
+                    });
+                }
+
+                const result = await this.getAllCategoriesPaginatedUseCase.execute({
+                    page: pageNum,
+                    limit: limitNum
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: result.data,
+                    pagination: {
+                        page: result.page,
+                        limit: result.limit,
+                        total: result.total,
+                        totalPages: result.totalPages,
+                        hasNextPage: result.hasNextPage,
+                        hasPrevPage: result.hasPrevPage
+                    }
+                });
+            } else {
+                const result = await this.getAllCategoriesUseCase.execute();
+                return res.status(200).json({
+                    success: true,
+                    data: result,
+                    count: result.length,
+                });
+            }
         } catch (error: any) {
             return res.status(500).json({
                 success: false,

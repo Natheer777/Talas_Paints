@@ -1,5 +1,5 @@
 import { CreateProductUseCase, GetProductUseCase, GetAllProductsUseCase, GetAllProductsPaginatedUseCase, GetProductsWithActiveOffersUseCase, UpdateProductUseCase, DeleteProductUseCase } from '@/application/use-cases/Products/index';
-import { CreateCategoryUseCase, DeleteCategoryUseCase, UpdateCategoryUseCase, GetAllCategoriesUseCase, GetCategoryUseCase } from '@/application/use-cases/Category';
+import { CreateCategoryUseCase, DeleteCategoryUseCase, UpdateCategoryUseCase, GetAllCategoriesUseCase, GetAllCategoriesPaginatedUseCase, GetCategoryUseCase } from '@/application/use-cases/Category';
 import {
     CreateOfferUseCase,
     UpdateOfferUseCase,
@@ -47,6 +47,8 @@ export function registerUseCases(container: any) {
     container.getCategoryUseCase = new GetCategoryUseCase(categoryRepository);
 
     container.getAllCategoriesUseCase = new GetAllCategoriesUseCase(categoryRepository);
+
+    container.getAllCategoriesPaginatedUseCase = new GetAllCategoriesPaginatedUseCase(categoryRepository);
 
     container.createCategoryUseCase = new CreateCategoryUseCase(
         categoryRepository,
