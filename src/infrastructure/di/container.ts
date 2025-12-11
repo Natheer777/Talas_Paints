@@ -22,6 +22,7 @@ import {
     CreateCategoryUseCase,
     GetCategoryUseCase,
     GetAllCategoriesUseCase,
+    GetAllCategoriesPaginatedUseCase,
     UpdateCategoryUseCase,
     DeleteCategoryUseCase
 } from '@/application/use-cases/Category/index';
@@ -137,6 +138,10 @@ class Container {
     );
 
     private static getAllCategoriesUseCase = new GetAllCategoriesUseCase(
+        Container.categoriesRepository
+    );
+
+    private static getAllCategoriesPaginatedUseCase = new GetAllCategoriesPaginatedUseCase(
         Container.categoriesRepository
     );
 
@@ -299,6 +304,7 @@ class Container {
         Container.createCategoryUseCase,
         Container.getCategoryUseCase,
         Container.getAllCategoriesUseCase,
+        Container.getAllCategoriesPaginatedUseCase,
         Container.updateCategoryUseCase,
         Container.deleteCategoryUseCase
     );

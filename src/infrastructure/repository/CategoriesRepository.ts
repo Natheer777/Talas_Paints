@@ -1,5 +1,5 @@
 import { Category } from '@/domian/entities/Category';
-import { ICategoriesRepository } from '@/domian/repository/ICategoriesRepository';
+import { ICategoriesRepository, PaginationOptions, PaginatedResult } from '@/domian/repository/ICategoriesRepository';
 import { Pool } from 'pg';
 
 export class CategoriesRepository implements ICategoriesRepository {
@@ -39,6 +39,37 @@ export class CategoriesRepository implements ICategoriesRepository {
         const result = await this.db.query(query);
 
         return result.rows.map(row => this.mapToCategory(row));
+    }
+
+    async findAllPaginated(options: PaginationOptions = {}): Promise<PaginatedResult<Category>> {
+        const page = Math.max(1, options.page || 1);
+        const limit = Math.min(100, Math.max(1, options.limit || 10));
+        const offset = (page - 1) * limit;
+
+        // Get total count
+        const countQuery = `SELECT COUNT(*) as total FROM categories`;
+        const countResult = await this.db.query(countQuery);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Get paginated data
+        const dataQuery = `
+            SELECT * FROM categories
+            ORDER BY name ASC
+            LIMIT $1 OFFSET $2
+        `;
+        const dataResult = await this.db.query(dataQuery, [limit, offset]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToCategory(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
     }
 
     async findByName(name: string): Promise<Category | null> {

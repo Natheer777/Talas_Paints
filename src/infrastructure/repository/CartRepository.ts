@@ -7,11 +7,23 @@ export class CartRepository implements ICartRepository {
 
     async addItem(item: Omit<CartItem, 'createdAt' | 'updatedAt'>): Promise<CartItem> {
         const query = `
-            INSERT INTO cart_items (id, phone_number, product_id, quantity, price)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO cart_items (id, phone_number, product_id, quantity, price, customer_name, area_name, street_name, building_number, additional_notes, payment_method)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
-        const values = [item.id, item.phone_number, item.product_id, item.quantity, item.price];
+        const values = [
+            item.id,
+            item.phone_number,
+            item.product_id,
+            item.quantity,
+            item.price,
+            item.customer_name,
+            item.area_name,
+            item.street_name,
+            item.building_number,
+            item.additional_notes,
+            item.payment_method
+        ];
         const result = await this.pool.query(query, values);
         return this.mapToEntity(result.rows[0]);
     }
@@ -63,6 +75,12 @@ export class CartRepository implements ICartRepository {
             product_id: row.product_id,
             quantity: row.quantity,
             price: parseFloat(row.price),
+            customer_name: row.customer_name,
+            area_name: row.area_name,
+            street_name: row.street_name,
+            building_number: row.building_number,
+            additional_notes: row.additional_notes,
+            payment_method: row.payment_method,
             createdAt: row.created_at,
             updatedAt: row.updated_at
         };

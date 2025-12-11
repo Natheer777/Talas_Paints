@@ -64,16 +64,12 @@ paths:
   /api/categories/{id}:
     $ref: "./swagger-categories.yaml#/paths/~1categories~1{id}"
 
-  # Cart - Main operations
-  /api/cart/{phoneNumber}:
-    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}"
+  # Cart operations
+  /api/cart:
+    $ref: "./swagger-cart.yaml#/paths/~1cart"
 
-  # Cart - Item operations
-  /api/cart/{phoneNumber}/items:
-    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}~1items"
-
-  /api/cart/{phoneNumber}/items/{cartItemId}:
-    $ref: "./swagger-cart.yaml#/paths/~1cart~1{phoneNumber}~1items~1{cartItemId}"
+  /api/cart/items:
+    $ref: "./swagger-cart.yaml#/paths/~1cart~1items"
 
   # Offers
   /api/offers:

@@ -1,5 +1,6 @@
 export * from './CreateCategoryUseCase'
 export * from './DeleteCategoryUseCase'
 export * from './GetAllCategoriesUseCase'
+export * from './GetAllCategoriesPaginatedUseCase'
 export * from './GetCategoryUseCase'
 export * from './UpdateCategoryUseCase'
