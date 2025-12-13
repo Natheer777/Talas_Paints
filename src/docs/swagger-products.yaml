@@ -119,6 +119,13 @@ paths:
                   message:
                     type: string
                     example: "Product created successfully"
+          headers:
+            X-RateLimit-Limit:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitReset'
         '400':
           description: Validation error or product already exists
           content:
@@ -137,6 +144,15 @@ paths:
                   value:
                     success: false
                     message: Product already exists
+        '429':
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              $ref: './swagger-root.yaml#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: './swagger-root.yaml#/components/schemas/RateLimitError'
     get:
       tags: [Products]
       summary: Get all products with pagination 
@@ -169,12 +185,28 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/ProductsResponse'
                   - $ref: '#/components/schemas/PaginatedProductsResponse'
+          headers:
+            X-RateLimit-Limit:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: './swagger-root.yaml#/components/headers/RateLimitReset'
         '500':
           description: Server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '429':
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              $ref: './swagger-root.yaml#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: './swagger-root.yaml#/components/schemas/RateLimitError'
   /products/all:
     get:
       tags: [Products]

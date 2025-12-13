@@ -9,14 +9,32 @@ import {
 } from '../validation/offerValidation';
 import { ValidationMiddleware } from '../middleware/ValidationMiddleware';
 import { uploadNone } from '../middleware/UploadMiddleware';
+import { RateLimitMiddleware } from '../middleware/RateLimitMiddleware';
+import { RateLimitConfigurations } from '../../infrastructure/config/RateLimitConfigurations';
+import Container from '../../infrastructure/di/container';
 
 
 export function createOffersRouter(offersController: OffersController) {
     const router = Router();
 
+    // Get rate limit service from container
+    const rateLimitService = Container.getRateLimitService();
+
+    // Create rate limiters for different operations
+    const writeLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.WRITE_OPERATIONS
+    );
+
+    const deleteLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.DELETE_OPERATIONS
+    );
+
 
     router.post(
         '/offers',
+        writeLimit.handle(), 
         uploadNone,
         validateCreateOffer,
         handleValidationResult,
@@ -24,7 +42,7 @@ export function createOffersRouter(offersController: OffersController) {
         (req: Request, res: Response) => offersController.create(req, res)
     );
 
- 
+
     router.get(
         '/offers/details',
         (req: Request, res: Response) => offersController.getAllWithDetailsPaginated(req, res)
@@ -45,6 +63,7 @@ export function createOffersRouter(offersController: OffersController) {
 
     router.put(
         '/offers/:id',
+        writeLimit.handle(), 
         uploadNone,
         validateUpdateOffer,
         handleValidationResult,
@@ -54,6 +73,7 @@ export function createOffersRouter(offersController: OffersController) {
 
     router.delete(
         '/offers/:id',
+        deleteLimit.handle(),
         validateDeleteOffer,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

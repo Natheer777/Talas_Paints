@@ -9,12 +9,35 @@ import {
 } from '../validation/adsCardValidation';
 import { ValidationMiddleware } from '../middleware/ValidationMiddleware';
 import { uploadSingle } from '../middleware/UploadMiddleware';
+import { RateLimitMiddleware } from '../middleware/RateLimitMiddleware';
+import { RateLimitConfigurations } from '../../infrastructure/config/RateLimitConfigurations';
+import Container from '../../infrastructure/di/container';
 
 export function createAdsCardRouter(adsCardController: AdsCardController) {
     const router = Router();
 
+    // Get rate limit service from container
+    const rateLimitService = Container.getRateLimitService();
+
+    // Create rate limiters for different operations
+    const fileUploadLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.FILE_UPLOAD
+    );
+
+    const writeLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.WRITE_OPERATIONS
+    );
+
+    const deleteLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.DELETE_OPERATIONS
+    );
+
     router.post(
         '/ads-cards',
+        fileUploadLimit.handle(), 
         uploadSingle,
         validateCreateAdsCard,
         handleValidationResult,
@@ -42,6 +65,7 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
 
     router.put(
         '/ads-cards/:id',
+        writeLimit.handle(), 
         uploadSingle,
         validateUpdateAdsCard,
         handleValidationResult,
@@ -51,6 +75,7 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
 
     router.delete(
         '/ads-cards/:id',
+        deleteLimit.handle(),   
         validateDeleteAdsCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),
