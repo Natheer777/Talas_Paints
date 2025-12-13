@@ -9,14 +9,37 @@ import {
 } from '../validation/videoCardValidation';
 import { ValidationMiddleware } from '../middleware/ValidationMiddleware';
 import { uploadVideo } from '../middleware/UploadMiddleware';
+import { RateLimitMiddleware } from '../middleware/RateLimitMiddleware';
+import { RateLimitConfigurations } from '../../infrastructure/config/RateLimitConfigurations';
+import Container from '../../infrastructure/di/container';
 
 
 export function createVideoCardRouter(videoCardController: VideoCardController) {
     const router = Router();
 
+    // Get rate limit service from container
+    const rateLimitService = Container.getRateLimitService();
+
+    // Create rate limiters for different operations
+    const fileUploadLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.FILE_UPLOAD
+    );
+
+    const writeLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.WRITE_OPERATIONS
+    );
+
+    const deleteLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.DELETE_OPERATIONS
+    );
+
     // Create new video card
     router.post(
         '/video-cards',
+        fileUploadLimit.handle(), 
         uploadVideo,
         validateCreateVideoCard,
         handleValidationResult,
@@ -24,19 +47,19 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
         (req: Request, res: Response) => videoCardController.create(req, res)
     );
 
-    // Get all video cards (admin)
+   
     router.get(
         '/video-cards',
         (req: Request, res: Response) => videoCardController.getAll(req, res)
     );
 
-    // Get visible video cards (public)
+    
     router.get(
         '/video-cards/visible',
         (req: Request, res: Response) => videoCardController.getVisible(req, res)
     );
 
-    // Get video card by ID
+   
     router.get(
         '/video-cards/:id',
         validateGetVideoCard,
@@ -45,9 +68,9 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
         (req: Request, res: Response) => videoCardController.getById(req, res)
     );
 
-    // Update video card
     router.put(
         '/video-cards/:id',
+        writeLimit.handle(), 
         uploadVideo,
         validateUpdateVideoCard,
         handleValidationResult,
@@ -55,9 +78,10 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
         (req: Request, res: Response) => videoCardController.update(req, res)
     );
 
-    // Delete video card
+
     router.delete(
         '/video-cards/:id',
+        deleteLimit.handle(), 
         validateDeleteVideoCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

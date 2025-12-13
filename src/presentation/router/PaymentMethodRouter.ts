@@ -9,13 +9,36 @@ import {
 } from '../validation/paymentMethodValidation';
 import { ValidationMiddleware } from '../middleware/ValidationMiddleware';
 import { uploadQRCode } from '../middleware/UploadMiddleware';
+import { RateLimitMiddleware } from '../middleware/RateLimitMiddleware';
+import { RateLimitConfigurations } from '../../infrastructure/config/RateLimitConfigurations';
+import Container from '../../infrastructure/di/container';
 
 
 export function createPaymentMethodRouter(paymentMethodController: PaymentMethodController) {
     const router = Router();
 
+    // Get rate limit service from container
+    const rateLimitService = Container.getRateLimitService();
+
+    // Create rate limiters for different operations
+    const fileUploadLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.FILE_UPLOAD
+    );
+
+    const writeLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.WRITE_OPERATIONS
+    );
+
+    const deleteLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.DELETE_OPERATIONS
+    );
+
     router.post(
         '/payment-methods',
+        fileUploadLimit.handle(),
         uploadQRCode,
         validateCreatePaymentMethod,
         handleValidationResult,
@@ -43,6 +66,7 @@ export function createPaymentMethodRouter(paymentMethodController: PaymentMethod
 
     router.put(
         '/payment-methods/:id',
+        writeLimit.handle(), 
         uploadQRCode,
         validateUpdatePaymentMethod,
         handleValidationResult,
@@ -52,6 +76,7 @@ export function createPaymentMethodRouter(paymentMethodController: PaymentMethod
 
     router.delete(
         '/payment-methods/:id',
+        deleteLimit.handle(), 
         validateDeletePaymentMethod,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

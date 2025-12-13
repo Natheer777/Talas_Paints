@@ -11,6 +11,7 @@ import { createAdsCardRouter } from './presentation/router/AdsCardRouter';
 import { createVideoCardRouter } from './presentation/router/VideoCardRouter';
 import { createPaymentMethodRouter } from './presentation/router/PaymentMethodRouter';
 import Container from './infrastructure/di/container';
+import { RateLimitMiddleware } from './presentation/middleware/RateLimitMiddleware';
 
 export class App {
   private app: Application;
@@ -20,6 +21,11 @@ export class App {
     const swaggerDocument = YAML.load(path.join(__dirname, './docs/swagger.yaml'));
     this.app = express();
     this.app.use(express.json());
+
+    // Apply global rate limiting
+    const rateLimitService = Container.getRateLimitService();
+    const globalRateLimit = RateLimitMiddleware.createModerate(rateLimitService);
+    this.app.use('/api', globalRateLimit.handle());
 
     const productsController = Container.getProductsController();
     const categoriesController = Container.getCategoriesController();

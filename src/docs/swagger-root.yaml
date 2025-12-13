@@ -191,6 +191,54 @@ components:
     Error:
       $ref: "./swagger-products.yaml#/components/schemas/Error"
 
+    RateLimitError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Too many requests, please try again later."
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "RATE_LIMIT_EXCEEDED"
+            limit:
+              type: integer
+              example: 100
+            remaining:
+              type: integer
+              example: 0
+            resetTime:
+              type: string
+              format: date-time
+              example: "2025-12-13T10:00:00.000Z"
+            retryAfter:
+              type: integer
+              example: 30
+
+  headers:
+    RateLimitLimit:
+      description: The maximum number of requests allowed in the current window
+      schema:
+        type: integer
+    RateLimitRemaining:
+      description: The number of requests remaining in the current window
+      schema:
+        type: integer
+    RateLimitReset:
+      description: The UTC date/time when the window resets
+      schema:
+        type: string
+        format: date-time
+    RetryAfter:
+      description: The number of seconds to wait before retrying
+      schema:
+        type: integer
+
   securitySchemes:
     BearerAuth:
       type: http

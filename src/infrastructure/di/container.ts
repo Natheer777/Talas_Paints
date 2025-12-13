@@ -7,6 +7,8 @@ import { AdsCardRepository } from '../repository/AdsCardRepository';
 import { VideoCardRepository } from '../repository/VideoCardRepository';
 import { PaymentMethodRepository } from '../repository/PaymentMethodRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
+import { InMemoryRateLimitStore } from '../services/InMemoryRateLimitStore';
+import { RateLimitService } from '@/application/services/RateLimitService';
 import {
     CreateProductUseCase,
     UpdateProductUseCase,
@@ -84,6 +86,10 @@ class Container {
     private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
     private static paymentMethodRepository = new PaymentMethodRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
+
+    // Rate Limiting Infrastructure
+    private static rateLimitStore = new InMemoryRateLimitStore();
+    private static rateLimitService = new RateLimitService(Container.rateLimitStore);
 
     // Application layer - Product Use Cases
     private static createProductUseCase = new CreateProductUseCase(
@@ -379,6 +385,10 @@ class Container {
 
     static getPaymentMethodController(): PaymentMethodController {
         return Container.paymentMethodController;
+    }
+
+    static getRateLimitService(): RateLimitService {
+        return Container.rateLimitService;
     }
 }
 

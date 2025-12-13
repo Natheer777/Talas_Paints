@@ -10,12 +10,40 @@ import {
 } from "../validation/productValidation";
 import { ValidationMiddleware } from "../middleware/ValidationMiddleware";
 import { uploadMultiple } from "../middleware/UploadMiddleware";
+import { RateLimitMiddleware } from "../middleware/RateLimitMiddleware";
+import { RateLimitConfigurations } from "../../infrastructure/config/RateLimitConfigurations";
+import Container from "../../infrastructure/di/container";
 
 export function createProductRouter(productsController: ProductsController) {
     const router = Router();
 
+    // Get rate limit service from container
+    const rateLimitService = Container.getRateLimitService();
+
+    // Create specific rate limiters for different operations
+    const createProductRateLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.CREATE_PRODUCT
+    );
+
+    const writeOperationRateLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.WRITE_OPERATIONS
+    );
+
+    const deleteOperationRateLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.DELETE_OPERATIONS
+    );
+
+    const searchRateLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.SEARCH
+    );
+
     router.post(
         "/products",
+        createProductRateLimit.handle(), // Apply strict rate limit for product creation
         uploadMultiple,
         parseMultipartArrays,
         validateCreateProduct,
@@ -36,11 +64,13 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.get(
         "/products/search",
+        searchRateLimit.handle(), 
         (req: Request, res: Response) => productsController.search(req, res)
     );
 
     router.get(
         "/products/filter",
+        searchRateLimit.handle(), 
         (req: Request, res: Response) => productsController.filter(req, res)
     );
 
@@ -59,6 +89,7 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.put(
         "/products/:id",
+        writeOperationRateLimit.handle(), 
         uploadMultiple,
         parseMultipartArrays,
         validateUpdateProduct,
@@ -69,6 +100,7 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.delete(
         "/products/:id",
+        deleteOperationRateLimit.handle(), 
         validateDeleteProduct,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

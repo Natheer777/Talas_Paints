@@ -149,6 +149,13 @@ paths:
                   message:
                     type: string
                     example: Product created successfully
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
         '400':
           description: Validation error or product already exists
           content:
@@ -167,6 +174,15 @@ paths:
                   value:
                     success: false
                     message: Product already exists
+        '429':
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
     get:
       tags:
         - Products
@@ -262,6 +278,22 @@ paths:
                       - success
                       - data
                       - pagination
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+        '429':
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
         '500':
           description: Server error
           content:
@@ -3086,6 +3118,52 @@ components:
                 type: string
                 description: Location of the parameter
                 example: body
+    RateLimitError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: 'Too many requests, please try again later.'
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: RATE_LIMIT_EXCEEDED
+            limit:
+              type: integer
+              example: 100
+            remaining:
+              type: integer
+              example: 0
+            resetTime:
+              type: string
+              format: date-time
+              example: '2025-12-13T10:00:00.000Z'
+            retryAfter:
+              type: integer
+              example: 30
+  headers:
+    RateLimitLimit:
+      description: The maximum number of requests allowed in the current window
+      schema:
+        type: integer
+    RateLimitRemaining:
+      description: The number of requests remaining in the current window
+      schema:
+        type: integer
+    RateLimitReset:
+      description: The UTC date/time when the window resets
+      schema:
+        type: string
+        format: date-time
+    RetryAfter:
+      description: The number of seconds to wait before retrying
+      schema:
+        type: integer
   securitySchemes:
     BearerAuth:
       type: http
