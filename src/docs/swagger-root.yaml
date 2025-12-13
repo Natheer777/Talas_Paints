@@ -21,8 +21,8 @@ tags:
     description: Product management operations (CRUD, search, filter)
   - name: Categories
     description: Category management operations (CRUD)
-  - name: Cart
-    description: Shopping cart operations
+  - name: Orders
+    description: Order management operations with real-time notifications
   - name: Offers
     description: Product offers and discounts management
   - name: Ads Cards
@@ -64,12 +64,18 @@ paths:
   /api/categories/{id}:
     $ref: "./swagger-categories.yaml#/paths/~1categories~1{id}"
 
-  # Cart operations
-  /api/cart:
-    $ref: "./swagger-cart.yaml#/paths/~1cart"
+  # Order operations
+  /api/orders:
+    $ref: "./swagger-orders.yaml#/paths/~1orders"
 
-  /api/cart/items:
-    $ref: "./swagger-cart.yaml#/paths/~1cart~1items"
+  /api/orders/{orderId}:
+    $ref: "./swagger-orders.yaml#/paths/~1orders~1{orderId}"
+
+  /api/orders/{orderId}/status:
+    $ref: "./swagger-orders.yaml#/paths/~1orders~1{orderId}~1status"
+
+  /api/admin/orders:
+    $ref: "./swagger-orders.yaml#/paths/~1admin~1orders"
 
   # Offers
   /api/offers:
@@ -118,15 +124,21 @@ components:
     Product:
       $ref: "./swagger-products.yaml#/components/schemas/Product"
     
-    # Cart schemas
-    Cart:
-      $ref: "./swagger-cart.yaml#/components/schemas/Cart"
+    # Order schemas
+    Order:
+      $ref: "./swagger-orders.yaml#/components/schemas/Order"
     
-    CartItem:
-      $ref: "./swagger-cart.yaml#/components/schemas/CartItem"
+    OrderItem:
+      $ref: "./swagger-orders.yaml#/components/schemas/OrderItem"
     
-    CartWithItems:
-      $ref: "./swagger-cart.yaml#/components/schemas/CartWithItems"
+    OrderStatus:
+      $ref: "./swagger-orders.yaml#/components/schemas/OrderStatus"
+    
+    PaymentMethodType:
+      $ref: "./swagger-orders.yaml#/components/schemas/PaymentMethodType"
+    
+    CreateOrderRequest:
+      $ref: "./swagger-orders.yaml#/components/schemas/CreateOrderRequest"
     
     # Offer schemas
     Offer:

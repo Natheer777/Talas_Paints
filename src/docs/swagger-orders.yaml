@@ -1,0 +1,517 @@
+paths:
+  /orders:
+    post:
+      tags:
+        - Orders
+      summary: Create a new order
+      description: |
+        Create a new order with items. The order will be created with status 'pending' and
+        a notification will be sent to admin via Socket.IO.
+
+        **Form Data Format:**
+        - For single item: `productId=uuid&quantity=2`
+        - For multiple items, use indexed notation: `productId[0]=uuid1&quantity[0]=2&productId[1]=uuid2&quantity[1]=1`
+        - Each productId must have a corresponding quantity with the same index
+
+        **Socket.IO Events:**
+        - When an order is created, admins connected to the 'admin' room will receive a 'new_order' event.
+        - Users should connect to Socket.IO and join the 'user_{phoneNumber}' room to receive order status updates.
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order created successfully"
+        '400':
+          description: Validation error or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Orders
+      summary: Get orders by phone number
+      description: Retrieve all orders for a specific phone number
+      operationId: getOrdersByPhoneNumber
+      parameters:
+        - name: phoneNumber
+          in: query
+          required: true
+          description: User's phone number
+          schema:
+            type: string
+            minLength: 7
+            maxLength: 15
+          example: "+1234567890"
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get order by ID
+      description: Retrieve a specific order by its ID
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Orders
+      summary: Delete order (Admin only)
+      description: |
+        Delete a pending order. Only pending orders can be deleted for safety reasons.
+        Accepted, rejected, or in-progress orders should be cancelled by changing their status instead.
+      operationId: deleteOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Order deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order deleted successfully"
+        '400':
+          description: Validation error or order cannot be deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{orderId}/status:
+    patch:
+      tags:
+        - Orders
+      summary: Update order status
+      description: |
+        Update the status of an order. When status changes, a notification will be sent
+        to the order owner via Socket.IO. Valid statuses: pending, accepted, rejected, in_progress
+
+        **Socket.IO Events:**
+        - When order status is updated, the order owner (connected to 'user_{phoneNumber}' room)
+          will receive an 'order_status_changed' event with the new status.
+      operationId: updateOrderStatus
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  format: text
+                  enum: [pending, accepted, rejected, in_progress]
+                  description: New order status
+                  example: "accepted"
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order status updated successfully"
+        '400':
+          description: Validation error or invalid status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/orders:
+    get:
+      tags:
+        - Orders
+      summary: Get all orders (Admin)
+      description: |
+        Retrieve all orders with pagination. This endpoint is for admin use to view all orders.
+      operationId: getOrdersForAdmin
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of orders to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: offset
+          in: query
+          required: false
+          description: Number of orders to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 150
+                      limit:
+                        type: integer
+                        example: 20
+                      offset:
+                        type: integer
+                        example: 0
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique order identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        phone_number:
+          type: string
+          description: Customer's phone number
+          example: "+1234567890"
+        customer_name:
+          type: string
+          description: Customer or company name
+          example: "John Doe"
+        area_name:
+          type: string
+          description: Delivery area name
+          example: "Downtown"
+        street_name:
+          type: string
+          description: Street name for delivery
+          example: "Main Street"
+        building_number:
+          type: string
+          description: Building or shop number
+          example: "Building 5, Shop 12"
+        additional_notes:
+          type: string
+          description: Additional delivery notes
+          example: "Please call before delivery"
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodType'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        total_amount:
+          type: number
+          format: float
+          description: Total amount of the order
+          example: 91.98
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: List of items in the order
+        createdAt:
+          type: string
+          format: date-time
+          description: Order creation timestamp
+          example: "2025-11-29T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Order last update timestamp
+          example: "2025-11-29T10:30:00.000Z"
+      required:
+        - id
+        - phone_number
+        - customer_name
+        - area_name
+        - payment_method
+        - status
+        - total_amount
+        - items
+        - createdAt
+        - updatedAt
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique order item identifier
+          example: "item-550e8400-e29b-41d4-a716-446655440000"
+        order_id:
+          type: string
+          format: uuid
+          description: Order identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        product_id:
+          type: string
+          format: uuid
+          description: Product identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of the product
+          example: 2
+        price:
+          type: number
+          format: float
+          description: Price snapshot at time of order creation
+          example: 45.99
+        createdAt:
+          type: string
+          format: date-time
+          description: Order item creation timestamp
+          example: "2025-11-29T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Order item last update timestamp
+          example: "2025-11-29T10:00:00.000Z"
+      required:
+        - id
+        - order_id
+        - product_id
+        - quantity
+        - price
+        - createdAt
+        - updatedAt
+
+    OrderStatus:
+      type: string
+      enum: [pending, accepted, rejected, in_progress]
+      description: Order status
+      example: "pending"
+      x-enum-descriptions:
+        pending: Order is pending approval
+        accepted: Order has been accepted
+        rejected: Order has been rejected
+        in_progress: Order is being processed
+
+    PaymentMethodType:
+      type: string
+      enum: [cash_on_delivery, electronic_payment]
+      description: Payment method
+      example: "cash_on_delivery"
+      x-enum-descriptions:
+        cash_on_delivery: Payment on delivery
+        electronic_payment: Electronic payment
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - phoneNumber
+        - customerName
+        - areaName
+        - paymentMethod
+      properties:
+        phoneNumber:
+          type: string
+          format: text
+          minLength: 7
+          maxLength: 15
+          description: Customer's phone number
+          example: "+1234567890"
+        customerName:
+          type: string
+          format: text
+          minLength: 1
+          description: Customer or company name
+          example: "John Doe"
+        areaName:
+          type: string
+          format: text
+          minLength: 1
+          description: Delivery area name
+          example: "Downtown"
+        streetName:
+          type: string
+          format: text
+          description: Street name for delivery (optional)
+          example: "Main Street"
+        buildingNumber:
+          type: string
+          format: text
+          description: Building or shop number (optional)
+          example: "Building 5, Shop 12"
+        additionalNotes:
+          type: string
+          format: text
+          description: Additional delivery notes (optional)
+          example: "Please call before delivery"
+        paymentMethod:
+          type: string
+          format: text
+          enum: [cash_on_delivery, electronic_payment]
+          description: Payment method
+          example: "cash_on_delivery"
+        productId:
+          type: string
+          format: text
+          description: |
+            Product UUID. For multiple items, use indexed notation: productId[0], productId[1], etc.
+            Example: productId[0]=uuid1&quantity[0]=2&productId[1]=uuid2&quantity[1]=1
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            Quantity for the product. For multiple items, use indexed notation: quantity[0], quantity[1], etc.
+            Must match the productId index.
+          example: 2
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "An error occurred"
+        errors:
+          type: array
+          description: Validation errors (if applicable)
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+              param:
+                type: string
+              location:
+                type: string

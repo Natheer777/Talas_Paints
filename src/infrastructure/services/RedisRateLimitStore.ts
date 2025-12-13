@@ -1,22 +1,26 @@
 import { IRateLimitStore, RateLimitInfo } from '../../domian/interfaces/IRateLimitStore';
 
-export class RedisRateLimitStore implements IRateLimitStore {
-    private client: any; 
+export interface RedisClient {
+    get(key: string): Promise<string | null>;
+    setex(key: string, seconds: number, value: string): Promise<void>;
+    del(key: string): Promise<void>;
+    quit(): Promise<void>;
+}
 
-    constructor(redisClient?: any) {
-        if (redisClient) {
-            this.client = redisClient;
-        } else {
-            throw new Error('Redis client not configured. Please provide a Redis client or configure default connection.');
+export class RedisRateLimitStore implements IRateLimitStore {
+    private client: RedisClient; 
+
+    constructor(redisClient: RedisClient) {
+        if (!redisClient) {
+            throw new Error('Redis client is required. Please provide a Redis client.');
         }
+        this.client = redisClient;
     }
 
     async increment(key: string, windowMs: number): Promise<RateLimitInfo> {
         const now = Date.now();
         const redisKey = `ratelimit:${key}`;
         const ttlSeconds = Math.ceil(windowMs / 1000);
-
-        const pipeline = this.client.pipeline();
 
         const existing = await this.client.get(redisKey);
 
@@ -85,7 +89,9 @@ export class RedisRateLimitStore implements IRateLimitStore {
     }
 
     async cleanup(): Promise<void> {
- }
+        // Redis handles TTL automatically, so no manual cleanup is needed
+        // This method is kept for interface compliance
+    }
 
     async disconnect(): Promise<void> {
         if (this.client) {

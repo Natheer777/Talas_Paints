@@ -3,8 +3,6 @@ export class RateLimitConfig {
     public readonly maxRequests: number;
     public readonly message: string;
     public readonly statusCode: number;
-    public readonly skipSuccessfulRequests: boolean;
-    public readonly skipFailedRequests: boolean;
     public readonly keyGenerator?: (req: any) => string;
 
     constructor(config: {
@@ -12,8 +10,6 @@ export class RateLimitConfig {
         maxRequests: number;
         message?: string;
         statusCode?: number;
-        skipSuccessfulRequests?: boolean;
-        skipFailedRequests?: boolean;
         keyGenerator?: (req: any) => string;
     }) {
         if (config.windowMs <= 0) {
@@ -27,8 +23,6 @@ export class RateLimitConfig {
         this.maxRequests = config.maxRequests;
         this.message = config.message || 'Too many requests, please try again later.';
         this.statusCode = config.statusCode || 429;
-        this.skipSuccessfulRequests = config.skipSuccessfulRequests || false;
-        this.skipFailedRequests = config.skipFailedRequests || false;
         this.keyGenerator = config.keyGenerator;
     }
 
@@ -58,7 +52,7 @@ export class RateLimitConfig {
     static createAuthConfig(): RateLimitConfig {
         return new RateLimitConfig({
             windowMs: 15 * 60 * 1000, // 15 minutes
-            maxRequests: 5, // Strict limit for auth endpoints
+            maxRequests: 5,
             message: 'Too many authentication attempts, please try again later.',
         });
     }
@@ -66,7 +60,7 @@ export class RateLimitConfig {
     static createWriteOperationConfig(): RateLimitConfig {
         return new RateLimitConfig({
             windowMs: 60 * 1000, // 1 minute
-            maxRequests: 10, // 10 writes per minute
+            maxRequests: 10,
             message: 'Too many write operations, please slow down.',
         });
     }

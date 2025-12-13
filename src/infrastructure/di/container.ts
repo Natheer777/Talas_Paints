@@ -1,7 +1,7 @@
 import { DatabaseConnection } from '../databases/DataBaseConnection';
 import { ProductsRepository } from '../repository/ProductsRepository';
 import { CategoriesRepository } from '../repository/CategoriesRepository';
-import { CartRepository } from '../repository/CartRepository';
+import { OrderRepository } from '../repository/OrderRepository';
 import { OfferRepository } from '../repository/OfferRepository';
 import { AdsCardRepository } from '../repository/AdsCardRepository';
 import { VideoCardRepository } from '../repository/VideoCardRepository';
@@ -9,6 +9,8 @@ import { PaymentMethodRepository } from '../repository/PaymentMethodRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
 import { InMemoryRateLimitStore } from '../services/InMemoryRateLimitStore';
 import { RateLimitService } from '@/application/services/RateLimitService';
+import { NotificationService } from '@/application/services/NotificationService';
+import { Server as SocketIOServer } from 'socket.io';
 import {
     CreateProductUseCase,
     UpdateProductUseCase,
@@ -29,12 +31,13 @@ import {
     DeleteCategoryUseCase
 } from '@/application/use-cases/Category/index';
 import {
-    AddToCartUseCase,
-    GetCartUseCase,
-    UpdateCartItemUseCase,
-    RemoveFromCartUseCase,
-    ClearCartUseCase
-} from '@/application/use-cases/Cart/index';
+    CreateOrderUseCase,
+    GetOrderUseCase,
+    GetOrdersByPhoneNumberUseCase,
+    UpdateOrderStatusUseCase,
+    GetOrdersForAdminUseCase,
+    DeleteOrderUseCase
+} from '@/application/use-cases/Order/index';
 import {
     CreateOfferUseCase,
     UpdateOfferUseCase,
@@ -69,7 +72,7 @@ import {
 } from '@/application/use-cases/PaymentMethod/index';
 import { ProductsController } from '@/presentation/controller/ProductsController';
 import { CategoriesController } from '@/presentation/controller/CategoriesController';
-import { CartController } from '@/presentation/controller/CartController';
+import { OrderController } from '@/presentation/controller/OrderController';
 import { OffersController } from '@/presentation/controller/OffersController';
 import { AdsCardController } from '@/presentation/controller/AdsCardController';
 import { VideoCardController } from '@/presentation/controller/VideoCardController';
@@ -80,7 +83,7 @@ class Container {
     private static db = DatabaseConnection.getInstance();
     private static productsRepository = new ProductsRepository(Container.db.getPool());
     private static categoriesRepository = new CategoriesRepository(Container.db.getPool());
-    private static cartRepository = new CartRepository(Container.db.getPool());
+    private static orderRepository = new OrderRepository(Container.db.getPool());
     private static offerRepository = new OfferRepository(Container.db.getPool());
     private static adsCardRepository = new AdsCardRepository(Container.db.getPool());
     private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
@@ -90,6 +93,10 @@ class Container {
     // Rate Limiting Infrastructure
     private static rateLimitStore = new InMemoryRateLimitStore();
     private static rateLimitService = new RateLimitService(Container.rateLimitStore);
+
+    // Socket.IO and Notification Service (will be initialized when server starts)
+    private static io: SocketIOServer | null = null;
+    private static notificationService: NotificationService | null = null;
 
     // Application layer - Product Use Cases
     private static createProductUseCase = new CreateProductUseCase(
@@ -161,27 +168,20 @@ class Container {
         Container.fileStorageService
     );
 
-    // Application layer - Cart Use Cases
-    private static addToCartUseCase = new AddToCartUseCase(
-        Container.cartRepository,
-        Container.productsRepository
+    // Application layer - Order Use Cases (lazy initialization)
+    private static createOrderUseCase: CreateOrderUseCase | null = null;
+    private static getOrderUseCase = new GetOrderUseCase(
+        Container.orderRepository
     );
-
-    private static getCartUseCase = new GetCartUseCase(
-        Container.cartRepository
+    private static getOrdersByPhoneNumberUseCase = new GetOrdersByPhoneNumberUseCase(
+        Container.orderRepository
     );
-
-    private static updateCartItemUseCase = new UpdateCartItemUseCase(
-        Container.cartRepository,
-        Container.productsRepository
+    private static updateOrderStatusUseCase: UpdateOrderStatusUseCase | null = null;
+    private static getOrdersForAdminUseCase = new GetOrdersForAdminUseCase(
+        Container.orderRepository
     );
-
-    private static removeFromCartUseCase = new RemoveFromCartUseCase(
-        Container.cartRepository
-    );
-
-    private static clearCartUseCase = new ClearCartUseCase(
-        Container.cartRepository
+    private static deleteOrderUseCase = new DeleteOrderUseCase(
+        Container.orderRepository
     );
 
     // Application layer - Offer Use Cases
@@ -315,13 +315,7 @@ class Container {
         Container.deleteCategoryUseCase
     );
 
-    private static cartController = new CartController(
-        Container.addToCartUseCase,
-        Container.getCartUseCase,
-        Container.updateCartItemUseCase,
-        Container.removeFromCartUseCase,
-        Container.clearCartUseCase
-    );
+    private static orderController: OrderController | null = null;
 
     private static offersController = new OffersController(
         Container.createOfferUseCase,
@@ -367,8 +361,67 @@ class Container {
         return Container.categoriesController;
     }
 
-    static getCartController(): CartController {
-        return Container.cartController;
+    static getOrderController(): OrderController {
+        if (!Container.orderController) {
+            // Initialize use cases if not already initialized
+            if (!Container.createOrderUseCase) {
+                Container.createOrderUseCase = new CreateOrderUseCase(
+                    Container.orderRepository,
+                    Container.productsRepository,
+                    Container.getNotificationService()
+                );
+            }
+            if (!Container.updateOrderStatusUseCase) {
+                Container.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
+                    Container.orderRepository,
+                    Container.getNotificationService()
+                );
+            }
+            Container.orderController = new OrderController(
+                Container.createOrderUseCase,
+                Container.getOrderUseCase,
+                Container.getOrdersByPhoneNumberUseCase,
+                Container.updateOrderStatusUseCase,
+                Container.getOrdersForAdminUseCase,
+                Container.deleteOrderUseCase
+            );
+        }
+        return Container.orderController;
+    }
+
+    static initializeSocketIO(io: SocketIOServer): void {
+        Container.io = io;
+        Container.notificationService = new NotificationService(io);
+        // Reinitialize order use cases with notification service
+        Container.createOrderUseCase = new CreateOrderUseCase(
+            Container.orderRepository,
+            Container.productsRepository,
+            Container.getNotificationService()
+        );
+        Container.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
+            Container.orderRepository,
+            Container.getNotificationService()
+        );
+        // Reinitialize controller if it was already created
+        if (Container.orderController) {
+            Container.orderController = new OrderController(
+                Container.createOrderUseCase,
+                Container.getOrderUseCase,
+                Container.getOrdersByPhoneNumberUseCase,
+                Container.updateOrderStatusUseCase,
+                Container.getOrdersForAdminUseCase,
+                Container.deleteOrderUseCase
+            );
+        }
+    }
+
+    private static getNotificationService(): NotificationService {
+        if (!Container.notificationService) {
+            // Create a notification service with null io - it will handle gracefully
+            // This allows the app to start, but notifications won't work until Socket.IO is ready
+            Container.notificationService = new NotificationService(null);
+        }
+        return Container.notificationService;
     }
 
     static getOffersController(): OffersController {

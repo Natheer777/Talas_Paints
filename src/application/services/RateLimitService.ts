@@ -32,15 +32,32 @@ export class RateLimitService {
         await this.store.reset(key);
     }
 
-    async getStatus(key: string): Promise<RateLimitResult | null> {
+    async getStatus(key: string, config?: RateLimitConfig): Promise<RateLimitResult | null> {
         const info = await this.store.get(key);
 
         if (!info) {
             return null;
         }
 
+        // If config is provided, we can calculate proper remaining and isAllowed
+        if (config) {
+            const isAllowed = info.count <= config.maxRequests;
+            const remaining = Math.max(0, config.maxRequests - info.count);
+            const retryAfter = isAllowed ? 0 : Math.ceil((info.resetTime - Date.now()) / 1000);
+
+            return {
+                isAllowed,
+                limit: config.maxRequests,
+                remaining,
+                resetTime: info.resetTime,
+                retryAfter,
+                current: info.count,
+            };
+        }
+
+        // Without config, return basic info
         return {
-            isAllowed: true, // Not incrementing, so we don't know the limit
+            isAllowed: true,
             limit: 0,
             remaining: 0,
             resetTime: info.resetTime,
@@ -52,11 +69,13 @@ export class RateLimitService {
   
     static generateKey(req: Request, prefix: string = 'global'): string {
         // Try to get real IP from various headers (for proxy/load balancer scenarios)
-        const ip =
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-            (req.headers['x-real-ip'] as string) ||
-            req.socket.remoteAddress ||
-            'unknown';
+        // x-forwarded-for can contain multiple IPs, take the first one (original client)
+        const forwardedFor = req.headers['x-forwarded-for'];
+        const ip = forwardedFor
+            ? (typeof forwardedFor === 'string' ? forwardedFor : forwardedFor[0])?.split(',')[0]?.trim()
+            : (req.headers['x-real-ip'] as string) ||
+              req.socket.remoteAddress ||
+              'unknown';
 
         return `${prefix}:${ip}`;
     }

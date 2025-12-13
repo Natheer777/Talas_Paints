@@ -13,7 +13,7 @@ class MigrationRunner {
   private readonly migrationPaths = [
     'create_categories_table.sql',
     'create_products_table.sql',
-    'create_cart_tables.sql',
+    'create_orders_table.sql',
     'create_offers_table.sql',
     'create_ads_cards_table.sql',
     'create_video_cards_table.sql',

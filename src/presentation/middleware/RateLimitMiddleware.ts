@@ -38,20 +38,12 @@ export class RateLimitMiddleware {
                     return;
                 }
 
-                if (this.config.skipSuccessfulRequests || this.config.skipFailedRequests) {
-                    const originalSend = res.send;
-                    res.send = function (data: any): Response {
-                        const statusCode = res.statusCode;
-
-                   
-                        return originalSend.call(this, data);
-                    };
-                }
-
                 next();
             } catch (error) {
                 console.error('Rate limit middleware error:', error);
-               next();
+                // On error, allow the request to proceed to avoid blocking legitimate users
+                // but log the error for monitoring
+                next();
             }
         };
     }

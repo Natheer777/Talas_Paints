@@ -53,10 +53,10 @@ export class RateLimitConfigurations {
     });
 
 
-    static readonly CART_OPERATIONS = new RateLimitConfig({
+    static readonly ORDER_OPERATIONS = new RateLimitConfig({
         windowMs: 60 * 1000, // 1 minute
         maxRequests: 60,
-        message: 'Too many cart operations. Please slow down.',
+        message: 'Too many order operations. Please slow down.',
     });
 
   

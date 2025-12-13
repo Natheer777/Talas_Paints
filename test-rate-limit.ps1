@@ -147,7 +147,7 @@ Write-Host ""
 $endpoints = @(
     @{Name="Products"; Url="/api/products"; Method="GET"},
     @{Name="Categories"; Url="/api/categories"; Method="GET"},
-    @{Name="Cart"; Url="/api/cart"; Method="GET"},
+    @{Name="Orders"; Url="/api/orders"; Method="GET"},
     @{Name="Offers"; Url="/api/offers"; Method="GET"}
 )
 
