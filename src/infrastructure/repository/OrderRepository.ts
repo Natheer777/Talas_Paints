@@ -4,107 +4,76 @@ import { Order, OrderItem, OrderStatus } from '@/domian/entities/Order';
 import { v4 as uuidv4 } from 'uuid';
 
 export class OrderRepository implements IOrderRepository {
-    constructor(private pool: Pool) { }
+    constructor(private readonly pool: Pool) { }
 
     async create(
-        order: Omit<Order, 'createdAt' | 'updatedAt' | 'items'>,
+        order: Omit<Order, 'createdAt' | 'up   datedAt' | 'items'>,
         items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]
     ): Promise<Order> {
-        const client = await this.pool.connect();
-        
-        try {
-            await client.query('BEGIN');
+        const now = new Date();
+        const preparedItems = items.map(item => ({
+            id: uuidv4(),
+            order_id: order.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+            createdAt: now,
+            updatedAt: now
+        }));
 
-            // Insert order
-            const orderQuery = `
-                INSERT INTO orders (
-                    id, phone_number, customer_name, area_name, street_name, 
-                    building_number, additional_notes, payment_method, status, total_amount, created_at, updated_at
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                RETURNING *
-            `;
-            const orderValues = [
-                order.id,
-                order.phone_number,
-                order.customer_name,
-                order.area_name,
-                order.street_name,
-                order.building_number,
-                order.additional_notes,
-                order.payment_method,
-                order.status,
-                order.total_amount
-            ];
+        const query = `
+            INSERT INTO orders (
+                id, phone_number, customer_name, area_name, street_name,
+                building_number, additional_notes, delivery_agent_name, 
+                payment_method, status, total_amount, items, created_at, updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING *
+        `;
 
-            const orderResult = await client.query(orderQuery, orderValues);
-            const createdOrder = orderResult.rows[0];
+        const values = [
+            order.id,
+            order.phone_number,
+            order.customer_name,
+            order.area_name,
+            order.street_name,
+            order.building_number,
+            order.additional_notes,
+            order.delivery_agent_name,
+            order.payment_method,
+            order.status,
+            order.total_amount,
+            JSON.stringify(preparedItems) 
+        ];
 
-            // Insert order items
-            const orderItems: OrderItem[] = [];
-            for (const item of items) {
-                const itemId = uuidv4();
-                const itemQuery = `
-                    INSERT INTO order_items (id, order_id, product_id, quantity, price, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    RETURNING *
-                `;
-                const itemValues = [itemId, order.id, item.product_id, item.quantity, item.price];
-                const itemResult = await client.query(itemQuery, itemValues);
-                orderItems.push(this.mapToOrderItem(itemResult.rows[0]));
-            }
-
-            await client.query('COMMIT');
-
-            return {
-                ...this.mapToOrder(createdOrder),
-                items: orderItems
-            };
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        const result = await this.pool.query(query, values);
+        return this.mapRowToOrder(result.rows[0]);
     }
 
+    
     async findById(id: string): Promise<Order | null> {
-        const orderQuery = `SELECT * FROM orders WHERE id = $1`;
-        const orderResult = await this.pool.query(orderQuery, [id]);
+        const query = `SELECT * FROM orders WHERE id = $1`;
+        const result = await this.pool.query(query, [id]);
 
-        if (orderResult.rows.length === 0) {
+        if (result.rows.length === 0) {
             return null;
         }
 
-        const order = this.mapToOrder(orderResult.rows[0]);
-
-        // Fetch order items
-        const itemsQuery = `SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at ASC`;
-        const itemsResult = await this.pool.query(itemsQuery, [id]);
-        const items = itemsResult.rows.map(row => this.mapToOrderItem(row));
-
-        return {
-            ...order,
-            items
-        };
+        return this.mapRowToOrder(result.rows[0]);
     }
 
+   
     async findByPhoneNumber(phoneNumber: string): Promise<Order[]> {
-        const orderQuery = `SELECT * FROM orders WHERE phone_number = $1 ORDER BY created_at DESC`;
-        const orderResult = await this.pool.query(orderQuery, [phoneNumber]);
-
-        const orders = orderResult.rows.map(row => this.mapToOrder(row));
-
-        // Fetch items for each order
-        for (const order of orders) {
-            const itemsQuery = `SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at ASC`;
-            const itemsResult = await this.pool.query(itemsQuery, [order.id]);
-            order.items = itemsResult.rows.map(row => this.mapToOrderItem(row));
-        }
-
-        return orders;
+        const query = `
+            SELECT * FROM orders 
+            WHERE phone_number = $1 
+            ORDER BY created_at DESC
+        `;
+        const result = await this.pool.query(query, [phoneNumber]);
+        return result.rows.map(row => this.mapRowToOrder(row));
     }
 
+   
     async findAll(limit?: number, offset?: number): Promise<Order[]> {
         let query = `SELECT * FROM orders ORDER BY created_at DESC`;
         const values: any[] = [];
@@ -118,17 +87,8 @@ export class OrderRepository implements IOrderRepository {
             }
         }
 
-        const orderResult = await this.pool.query(query, values);
-        const orders = orderResult.rows.map(row => this.mapToOrder(row));
-
-        // Fetch items for each order
-        for (const order of orders) {
-            const itemsQuery = `SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at ASC`;
-            const itemsResult = await this.pool.query(itemsQuery, [order.id]);
-            order.items = itemsResult.rows.map(row => this.mapToOrderItem(row));
-        }
-
-        return orders;
+        const result = await this.pool.query(query, values);
+        return result.rows.map(row => this.mapRowToOrder(row));
     }
 
     async updateStatus(id: string, status: OrderStatus): Promise<Order> {
@@ -144,40 +104,16 @@ export class OrderRepository implements IOrderRepository {
             throw new Error('Order not found');
         }
 
-        const order = this.mapToOrder(result.rows[0]);
-
-        // Fetch order items
-        const itemsQuery = `SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at ASC`;
-        const itemsResult = await this.pool.query(itemsQuery, [id]);
-        order.items = itemsResult.rows.map(row => this.mapToOrderItem(row));
-
-        return order;
+        return this.mapRowToOrder(result.rows[0]);
     }
 
+    
     async delete(id: string): Promise<void> {
-        const client = await this.pool.connect();
+        const query = `DELETE FROM orders WHERE id = $1`;
+        const result = await this.pool.query(query, [id]);
 
-        try {
-            await client.query('BEGIN');
-
-            // Delete order items first (due to foreign key constraint)
-            const deleteItemsQuery = `DELETE FROM order_items WHERE order_id = $1`;
-            await client.query(deleteItemsQuery, [id]);
-
-            // Delete the order
-            const deleteOrderQuery = `DELETE FROM orders WHERE id = $1`;
-            const result = await client.query(deleteOrderQuery, [id]);
-
-            if (result.rowCount === 0) {
-                throw new Error('Order not found');
-            }
-
-            await client.query('COMMIT');
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
+        if (result.rowCount === 0) {
+            throw new Error('Order not found');
         }
     }
 
@@ -187,13 +123,15 @@ export class OrderRepository implements IOrderRepository {
         return parseInt(result.rows[0].count, 10);
     }
 
+   
     async countByPhoneNumber(phoneNumber: string): Promise<number> {
         const query = `SELECT COUNT(*) as count FROM orders WHERE phone_number = $1`;
         const result = await this.pool.query(query, [phoneNumber]);
         return parseInt(result.rows[0].count, 10);
     }
 
-    private mapToOrder(row: any): Order {
+   
+    private mapRowToOrder(row: any): Order {
         return {
             id: row.id,
             phone_number: row.phone_number,
@@ -202,25 +140,31 @@ export class OrderRepository implements IOrderRepository {
             street_name: row.street_name,
             building_number: row.building_number,
             additional_notes: row.additional_notes,
+            delivery_agent_name: row.delivery_agent_name,
             payment_method: row.payment_method,
             status: row.status as OrderStatus,
             total_amount: parseFloat(row.total_amount),
-            items: [],
+            items: this.mapJsonbToOrderItems(row.items),
             createdAt: row.created_at,
             updatedAt: row.updated_at
         };
     }
 
-    private mapToOrderItem(row: any): OrderItem {
-        return {
-            id: row.id,
-            order_id: row.order_id,
-            product_id: row.product_id,
-            quantity: row.quantity,
-            price: parseFloat(row.price),
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        };
+   
+    private mapJsonbToOrderItems(jsonbItems: any): OrderItem[] {
+        if (!jsonbItems || !Array.isArray(jsonbItems)) {
+            return [];
+        }
+
+        return jsonbItems.map(item => ({
+            id: item.id,
+            order_id: item.order_id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+            createdAt: new Date(item.createdAt),
+            updatedAt: new Date(item.updatedAt)
+        }));
     }
 }
 

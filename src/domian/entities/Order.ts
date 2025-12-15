@@ -28,6 +28,7 @@ export interface Order {
     street_name?: string;
     building_number?: string;
     additional_notes?: string;
+    delivery_agent_name: string;
     payment_method: PaymentMethodType;
     status: OrderStatus;
     total_amount: number;
@@ -36,19 +37,5 @@ export interface Order {
     updatedAt: Date;
 }
 
-export interface OrderResponse {
-    id: string;
-    phone_number: string;
-    customer_name: string;
-    area_name: string;
-    street_name?: string;
-    building_number?: string;
-    additional_notes?: string;
-    payment_method: PaymentMethodType;
-    status: OrderStatus;
-    total_amount: number;
-    items: OrderItem[];
-    createdAt: Date;
-    updatedAt: Date;
-}
+export type OrderResponse = Order;
 

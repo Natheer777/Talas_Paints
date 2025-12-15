@@ -27,6 +27,7 @@ export class OrderController {
                 streetName,
                 buildingNumber,
                 additionalNotes,
+                deliveryAgentName,
                 paymentMethod,
                 productId,
                 quantity,
@@ -40,8 +41,21 @@ export class OrderController {
                 orderItems = items;
             } else if (productId && quantity) {
                 // Convert productId and quantity arrays/values to items array
-                const productIds = Array.isArray(productId) ? productId : [productId];
-                const quantities = Array.isArray(quantity) ? quantity : [quantity];
+                let productIds = productId;
+                let quantities = quantity;
+
+                // Handle comma-separated strings (e.g. from Swagger UI or some form submissions)
+                if (typeof productIds === 'string' && productIds.includes(',')) {
+                    productIds = productIds.split(',').map((id: string) => id.trim());
+                }
+                
+                // Handle comma-separated quantities
+                if (typeof quantities === 'string' && quantities.includes(',')) {
+                    quantities = quantities.split(',').map((q: string) => q.trim());
+                }
+
+                productIds = Array.isArray(productIds) ? productIds : [productIds];
+                quantities = Array.isArray(quantities) ? quantities : [quantities];
                 
                 if (productIds.length !== quantities.length) {
                     throw new Error('productId and quantity arrays must have the same length');
@@ -62,6 +76,7 @@ export class OrderController {
                 streetName,
                 buildingNumber,
                 additionalNotes,
+                deliveryAgentName,
                 paymentMethod,
                 items: orderItems
             });
