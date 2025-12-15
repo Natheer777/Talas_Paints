@@ -326,6 +326,10 @@ components:
           type: string
           description: Additional delivery notes
           example: "Please call before delivery"
+        delivery_agent_name:
+          type: string
+          description: Name of the delivery agent assigned to the order
+          example: "John Smith"
         payment_method:
           $ref: '#/components/schemas/PaymentMethodType'
         status:
@@ -355,6 +359,7 @@ components:
         - phone_number
         - customer_name
         - area_name
+        - delivery_agent_name
         - payment_method
         - status
         - total_amount
@@ -435,6 +440,7 @@ components:
         - phoneNumber
         - customerName
         - areaName
+        - deliveryAgentName
         - paymentMethod
       properties:
         phoneNumber:
@@ -471,6 +477,11 @@ components:
           format: text
           description: Additional delivery notes (optional)
           example: "Please call before delivery"
+        deliveryAgentName:
+          type: string
+          enum: ["ابو بسام", "ابو حسام", "ابو ماجد", "ابو ليث", "مؤسسة طلس"]
+          description: Name of the delivery agent assigned to the order
+          example: "ابو بسام"
         paymentMethod:
           type: string
           format: text
@@ -478,20 +489,22 @@ components:
           description: Payment method
           example: "cash_on_delivery"
         productId:
-          type: string
-          format: text
+          type: array
+          items:
+            type: string
+            format: uuid
           description: |
-            Product UUID. For multiple items, use indexed notation: productId[0], productId[1], etc.
-            Example: productId[0]=uuid1&quantity[0]=2&productId[1]=uuid2&quantity[1]=1
-          example: "550e8400-e29b-41d4-a716-446655440000"
+            List of Product UUIDs.
+            Example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
         quantity:
-          type: integer
-          format: int32
-          minimum: 1
+          type: array
+          items:
+            type: integer
+            format: int32
+            minimum: 1
           description: |
-            Quantity for the product. For multiple items, use indexed notation: quantity[0], quantity[1], etc.
-            Must match the productId index.
-          example: 2
+            List of quantities corresponding to the productIds.
+            Example: [2, 1]
 
     Error:
       type: object

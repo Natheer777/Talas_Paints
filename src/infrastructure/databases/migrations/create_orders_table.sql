@@ -1,4 +1,4 @@
--- Create orders table
+-- Create orders table with JSONB items
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY,
 
@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS orders (
     street_name VARCHAR(255),
     building_number VARCHAR(255),
     additional_notes TEXT,
+    delivery_agent_name VARCHAR(255) NOT NULL,
 
     -- Payment
     payment_method VARCHAR(50) NOT NULL
@@ -21,24 +22,13 @@ CREATE TABLE IF NOT EXISTS orders (
     -- Financial
     total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
 
+    -- Order items stored as JSONB array
+    -- Each item contains: {id, product_id, quantity, price, createdAt, updatedAt}
+    items JSONB NOT NULL DEFAULT '[]'::JSONB,
+
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create order_items table
-CREATE TABLE IF NOT EXISTS order_items (
-    id UUID PRIMARY KEY,
-    order_id UUID NOT NULL,
-    product_id UUID NOT NULL,
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    -- Relations
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
 );
 
 -- Indexes for performance
@@ -48,12 +38,20 @@ ON orders(phone_number);
 CREATE INDEX IF NOT EXISTS idx_orders_status
 ON orders(status);
 
+CREATE INDEX IF NOT EXISTS idx_orders_delivery_agent_name
+ON orders(delivery_agent_name);
+
 CREATE INDEX IF NOT EXISTS idx_orders_created_at
 ON orders(created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id
-ON order_items(order_id);
+-- GIN index for JSONB items array for efficient querying
+CREATE INDEX IF NOT EXISTS idx_orders_items_gin
+ON orders USING GIN (items);
 
-CREATE INDEX IF NOT EXISTS idx_order_items_product_id
-ON order_items(product_id);
+-- Index for searching by product_id within items
+CREATE INDEX IF NOT EXISTS idx_orders_items_product_id
+ON orders USING GIN ((items -> 'product_id'));
 
+-- Comments
+COMMENT ON TABLE orders IS 'Consolidated orders table containing order details and items in JSONB format';
+COMMENT ON COLUMN orders.items IS 'Array of order items stored as JSONB. Each item contains: id, product_id, quantity, price, createdAt, updatedAt';

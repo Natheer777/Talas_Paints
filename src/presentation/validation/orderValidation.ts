@@ -32,6 +32,12 @@ export const validateCreateOrder: ValidationChain[] = [
         .isString()
         .trim()
         .withMessage('Additional notes must be a string'),
+    body('deliveryAgentName')
+        .isString()
+        .trim()
+        .notEmpty()
+        .isIn(['ابو بسام', 'ابو حسام', 'ابو ماجد', 'ابو ليث', 'مؤسسة طلس'])
+        .withMessage('Delivery agent name must be one of: ابو بسام, ابو حسام, ابو ماجد, ابو ليث, مؤسسة طلس'),
     body('paymentMethod')
         .isString()
         .isIn(['cash_on_delivery', 'electronic_payment'])

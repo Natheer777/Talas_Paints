@@ -16,6 +16,7 @@ interface CreateOrderDTO {
     streetName?: string;
     buildingNumber?: string;
     additionalNotes?: string;
+    deliveryAgentName: string;
     paymentMethod: PaymentMethodType;
     items: OrderItemDTO[];
 }
@@ -35,6 +36,7 @@ export class CreateOrderUseCase {
             streetName,
             buildingNumber,
             additionalNotes,
+            deliveryAgentName,
             paymentMethod,
             items
         } = dto;
@@ -82,6 +84,7 @@ export class CreateOrderUseCase {
                 street_name: streetName,
                 building_number: buildingNumber,
                 additional_notes: additionalNotes,
+                delivery_agent_name: deliveryAgentName,
                 payment_method: paymentMethod,
                 status: OrderStatus.PENDING,
                 total_amount: parseFloat(totalAmount.toFixed(2))
