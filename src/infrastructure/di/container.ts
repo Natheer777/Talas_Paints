@@ -10,6 +10,7 @@ import { FileStorageService } from '../services/UploadImageStorageService';
 import { InMemoryRateLimitStore } from '../services/InMemoryRateLimitStore';
 import { RateLimitService } from '@/application/services/RateLimitService';
 import { NotificationService } from '@/application/services/NotificationService';
+import { SecurityService } from '../services/SecurityService';
 import { Server as SocketIOServer } from 'socket.io';
 import {
     CreateProductUseCase,
@@ -93,6 +94,7 @@ class Container {
     // Rate Limiting Infrastructure
     private static rateLimitStore = new InMemoryRateLimitStore();
     private static rateLimitService = new RateLimitService(Container.rateLimitStore);
+    private static securityService = new SecurityService();
 
     // Socket.IO and Notification Service (will be initialized when server starts)
     private static io: SocketIOServer | null = null;
@@ -442,6 +444,10 @@ class Container {
 
     static getRateLimitService(): RateLimitService {
         return Container.rateLimitService;
+    }
+
+    static getSecurityService(): SecurityService {
+        return Container.securityService;
     }
 }
 

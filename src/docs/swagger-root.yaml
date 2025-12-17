@@ -257,7 +257,25 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT token for authentication
+    
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-Signature
+      description: |
+        HMAC-SHA256 signature of the request.
+        Format: Hex encoded string.
+        Construction: `hmac_sha256(secret_key, url + body_json_string + timestamp)`
+    
+    HmacTimestamp:
+      type: apiKey
+      in: header
+      name: X-Timestamp
+      description: |
+        Current Unix timestamp in milliseconds.
+        Must be within 5 minutes of server time.
 
-# Global security (can be overridden per endpoint)
-# security:
-#   - BearerAuth: []
+security:
+  - HmacSignature: []
+    HmacTimestamp: []
+
