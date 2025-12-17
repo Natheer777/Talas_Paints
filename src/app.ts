@@ -13,6 +13,7 @@ import { createVideoCardRouter } from './presentation/router/VideoCardRouter';
 import { createPaymentMethodRouter } from './presentation/router/PaymentMethodRouter';
 import Container from './infrastructure/di/container';
 import { RateLimitMiddleware } from './presentation/middleware/RateLimitMiddleware';
+import { HmacMiddleware } from './presentation/middleware/HmacMiddleware';
 
 export class App {
   private app: Application;
@@ -23,7 +24,7 @@ export class App {
     const swaggerDocument = YAML.load(path.join(__dirname, './docs/swagger.yaml'));
     this.app = express();
     this.app.use(express.json());
-    
+
     // Serve static files from public directory
     this.app.use(express.static(path.join(__dirname, '../public')));
 
@@ -31,6 +32,12 @@ export class App {
     const rateLimitService = Container.getRateLimitService();
     const globalRateLimit = RateLimitMiddleware.createModerate(rateLimitService);
     this.app.use('/api', globalRateLimit.handle());
+
+    // Apply HMAC security
+    const securityService = Container.getSecurityService();
+    const hmacMiddleware = new HmacMiddleware(securityService);
+    // Apply to all /api routes
+    this.app.use('/api', hmacMiddleware.handle());
 
     const productsController = Container.getProductsController();
     const categoriesController = Container.getCategoriesController();
@@ -55,7 +62,7 @@ export class App {
           req.credentials = 'include';
           return req;
         },
-        persistAuthorization: true,
+        persistAuthorization: true,  
         displayOperationId: false,
         tryItOutEnabled: true,
       },
@@ -94,7 +101,7 @@ export class App {
   public async start(port: number = 3000): Promise<void> {
     try {
       this.server = http.createServer(this.app);
-      
+
       // Initialize Socket.IO
       this.io = new SocketIOServer(this.server, {
         cors: {

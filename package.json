@@ -24,6 +24,7 @@
   "main": "index.js",
   "devDependencies": {
     "@apidevtools/swagger-cli": "^4.0.4",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/multer": "^1.4.12",
     "@types/node": "^24.10.1",
