@@ -12,6 +12,8 @@ import {
 } from "@/application/use-cases/Products/index";
 
 
+import { ICategoriesRepository } from "@/domian/repository/ICategoriesRepository";
+
 export class ProductsController {
     constructor(
         private createProductUseCase: CreateProductUseCase,
@@ -22,7 +24,8 @@ export class ProductsController {
         private updateProductUseCase: UpdateProductUseCase,
         private deleteProductUseCase: DeleteProductUseCase,
         private searchProductsUseCase: SearchProductsUseCase,
-        private filterProductsUseCase: FilterProductsUseCase
+        private filterProductsUseCase: FilterProductsUseCase,
+        private categoriesRepository: ICategoriesRepository
     ) { }
 
     async create(req: Request, res: Response) {
@@ -74,9 +77,14 @@ export class ProductsController {
         try {
             const { id } = req.params;
             const result = await this.getProductUseCase.execute({ id });
+            const category = await this.categoriesRepository.findById(result.category_id);
+            const { category_id, ...rest } = result;
             return res.status(200).json({
                 success: true,
-                data: result,
+                data: {
+                    ...rest,
+                    category: category ? { id: category.id, name: category.name } : null,
+                },
             });
         } catch (error: any) {
             return res.status(404).json({
@@ -114,10 +122,17 @@ export class ProductsController {
                     page: pageNum,
                     limit: limitNum
                 });
-
+                const productsWithCategory = await Promise.all(result.data.map(async (prod) => {
+                    const cat = await this.categoriesRepository.findById(prod.category_id);
+                    const { category_id, ...rest } = prod;
+                    return {
+                        ...rest,
+                        category: cat ? { id: cat.id, name: cat.name } : null,
+                    };
+                }));
                 return res.status(200).json({
                     success: true,
-                    data: result.data,
+                    data: productsWithCategory,
                     pagination: {
                         page: result.page,
                         limit: result.limit,
@@ -129,10 +144,19 @@ export class ProductsController {
                 });
             } else {
                 const result = await this.getAllProductsUseCase.execute();
+                // Attach category name for each product
+                const productsWithCategory = await Promise.all(result.map(async (prod) => {
+                    const cat = await this.categoriesRepository.findById(prod.category_id);
+                    const { category_id, ...rest } = prod;
+                    return {
+                        ...rest,
+                        category: cat ? { id: cat.id, name: cat.name } : null,
+                    };
+                }));
                 return res.status(200).json({
                     success: true,
-                    data: result,
-                    count: result.length,
+                    data: productsWithCategory,
+                    count: productsWithCategory.length,
                 });
             }
         } catch (error: any) {
@@ -146,10 +170,18 @@ export class ProductsController {
     async getAllWithoutPagination(req: Request, res: Response) {
         try {
             const result = await this.getAllProductsUseCase.execute();
+            // Attach category name for each product
+            const productsWithCategory = await Promise.all(result.map(async (prod) => {
+                const cat = await this.categoriesRepository.findById(prod.category_id);
+                return {
+                    ...prod,
+                    category: cat ? { id: cat.id, name: cat.name } : null,
+                };
+            }));
             return res.status(200).json({
                 success: true,
-                data: result,
-                count: result.length,
+                data: productsWithCategory,
+                count: productsWithCategory.length,
             });
         } catch (error: any) {
             return res.status(500).json({

@@ -305,7 +305,8 @@ class Container {
         Container.updateProductUseCase,
         Container.deleteProductUseCase,
         Container.searchProductsUseCase,
-        Container.filterProductsUseCase
+        Container.filterProductsUseCase,
+        Container.categoriesRepository
     );
 
     private static categoriesController = new CategoriesController(
