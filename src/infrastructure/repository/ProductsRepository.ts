@@ -270,7 +270,7 @@ export class ProductsRepository implements IProductsRepository {
             product.description,
             product.category_id,
             JSON.stringify(product.colors || []),
-            JSON.stringify(product.sizes),
+            JSON.stringify(product.sizes || []),
             product.status,
             JSON.stringify(product.images || []),
             new Date(),

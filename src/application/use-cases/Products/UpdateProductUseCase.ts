@@ -101,11 +101,16 @@ export class UpdateProductUseCase {
             description: description || existingProduct.description,
             category_id: category_id || existingProduct.category_id,
             colors: colors !== undefined ? colors : existingProduct.colors,
-            sizes: sizes || existingProduct.sizes,
+            sizes: sizes && sizes.length > 0 ? sizes : existingProduct.sizes,
             status: status || existingProduct.status,
             images: imageUrls,
             updatedAt: new Date(),
         };
+
+        // Validate that required fields are present
+        if (!updatedProduct.sizes || updatedProduct.sizes.length === 0) {
+            throw new Error('Product must have at least one size');
+        }
 
         return this.productsRepository.update(id, updatedProduct);
     }
