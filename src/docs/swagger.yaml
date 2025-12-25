@@ -450,13 +450,22 @@ paths:
                     type: string
                     format: binary
                   maxItems: 10
+                  description: 'New product images to upload (JPEG, PNG, or WebP, max 10 files, 5MB each)'
                 keepExistingImages:
                   type: string
                   enum:
                     - 'true'
                     - 'false'
-                  description: Whether to keep existing images when uploading new ones
+                  description: 'Whether to keep existing images when uploading new ones. If false, all existing images will be deleted.'
                   example: 'true'
+                imagesToDelete:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of image URLs to delete from the product. Only images belonging to this product will be deleted.
+                  example:
+                    - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid1.jpg'
+                    - 'https://bucket.s3.us-east-1.amazonaws.com/products/550e8400.../uuid2.jpg'
       responses:
         '200':
           description: Product updated successfully
