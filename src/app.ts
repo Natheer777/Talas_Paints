@@ -62,7 +62,7 @@ export class App {
           req.credentials = 'include';
           return req;
         },
-        persistAuthorization: true,  
+        persistAuthorization: true,
         displayOperationId: false,
         tryItOutEnabled: true,
       },
@@ -84,12 +84,71 @@ export class App {
   }
 
   private setupErrorHandling(): void {
-    this.app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((error: any, req: Request, res: Response, next: NextFunction) => {
       console.error('Global Error Handler:', error);
-      res.status(500).json({
+
+      // Handle Multer errors (file upload errors)
+      if (error.name === 'MulterError') {
+        let message = 'File upload error';
+        let hint = '';
+        let statusCode = 400;
+
+        switch (error.code) {
+          case 'LIMIT_UNEXPECTED_FILE':
+            message = 'Unexpected file field';
+            hint = `The field '${error.field}' is not expected. For product images, use field name 'images' (plural), not 'image'.`;
+            break;
+          case 'LIMIT_FILE_SIZE':
+            message = 'File too large';
+            hint = 'Maximum file size is 5MB per image. Please reduce the file size and try again.';
+            break;
+          case 'LIMIT_FILE_COUNT':
+            message = 'Too many files';
+            hint = 'You can upload unlimited images, but there might be a server limit. Try uploading in smaller batches.';
+            break;
+          case 'LIMIT_FIELD_KEY':
+            message = 'Field name too long';
+            hint = 'The field name is too long. Use shorter field names.';
+            break;
+          case 'LIMIT_FIELD_VALUE':
+            message = 'Field value too long';
+            hint = 'One of the field values is too long. Please reduce the length.';
+            break;
+          case 'LIMIT_FIELD_COUNT':
+            message = 'Too many fields';
+            hint = 'Too many form fields in the request. Reduce the number of fields.';
+            break;
+          case 'LIMIT_PART_COUNT':
+            message = 'Too many parts';
+            hint = 'The multipart request has too many parts. Simplify your request.';
+            break;
+          default:
+            hint = 'Please check your file upload configuration and try again.';
+        }
+
+        return res.status(statusCode).json({
+          success: false,
+          message,
+          error: error.message,
+          hint,
+          field: error.field,
+          code: error.code,
+          timestamp: new Date().toISOString(),
+          path: req.path,
+        });
+      }
+
+      // Handle other errors
+      const statusCode = error.statusCode || error.status || 500;
+      res.status(statusCode).json({
         success: false,
-        message: 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { error: error.message }),
+        message: error.message || 'Internal server error',
+        timestamp: new Date().toISOString(),
+        path: req.path,
+        ...(process.env.NODE_ENV === 'development' && {
+          error: error.message,
+          stack: error.stack
+        }),
       });
     });
   }
