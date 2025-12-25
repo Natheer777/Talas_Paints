@@ -131,8 +131,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: 'Product images (JPEG, PNG, or WebP, max 10 files, 5MB each)'
-                  maxItems: 10
+                  description: 'Product images (JPEG, PNG, or WebP, unlimited files, 5MB each)'
       responses:
         '201':
           description: Product created successfully
@@ -449,8 +448,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  maxItems: 10
-                  description: 'New product images to upload (JPEG, PNG, or WebP, max 10 files, 5MB each)'
+                  description: 'New product images to upload (JPEG, PNG, or WebP, unlimited files, 5MB each)'
                 keepExistingImages:
                   type: string
                   enum:

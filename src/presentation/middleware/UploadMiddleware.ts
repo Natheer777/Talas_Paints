@@ -39,13 +39,13 @@ const videoFileFilter = (
     }
 };
 
-// Image upload configuration
+// Image upload configuration - UNLIMITED images allowed
 export const upload = multer({
     storage: storage,
     fileFilter: imageFileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB max file size
-        files: 10, // Maximum 10 files
+        fileSize: 5 * 1024 * 1024, // 5MB max file size per image
+        // No file count limit - unlimited images allowed
     },
 });
 
@@ -61,7 +61,8 @@ export const videoUpload = multer({
 
 export const uploadSingle = upload.single('image');
 
-export const uploadMultiple = upload.array('images', 10);
+// Unlimited images - removed the second parameter (file count limit)
+export const uploadMultiple = upload.array('images');
 
 export const uploadVideo = videoUpload.single('video');
 
