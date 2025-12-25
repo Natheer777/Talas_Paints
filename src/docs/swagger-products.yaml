@@ -521,7 +521,93 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  error:
+                    type: string
+                  hint:
+                    type: string
+                  receivedValue:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  path:
+                    type: string
+              examples:
+                invalidSizesFormat:
+                  summary: Invalid sizes JSON format
+                  value:
+                    success: false
+                    message: "Invalid sizes format"
+                    error: "The 'sizes' field must be a valid JSON array. Example: [{\"size\":\"1L\",\"price\":34.99}]"
+                    receivedValue: "[{\"size\":\"1L\",\"price\":34.99"
+                    hint: "Make sure to send sizes as a properly formatted JSON string"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                invalidSizesType:
+                  summary: Sizes is not an array
+                  value:
+                    success: false
+                    message: "Invalid sizes format"
+                    error: "The 'sizes' field must be an array"
+                    receivedType: "string"
+                    expectedFormat: "Array of objects with 'size' and 'price' properties"
+                    example: "[{\"size\":\"1L\",\"price\":34.99},{\"size\":\"5L\",\"price\":149.99}]"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                emptySizesArray:
+                  summary: Empty sizes array
+                  value:
+                    success: false 
+                    message: "Invalid sizes data"
+                    error: "The 'sizes' array cannot be empty. At least one size must be provided."
+                    hint: "Add at least one size with format: {\"size\":\"1L\",\"price\":34.99}"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                invalidSizeObject:
+                  summary: Size object missing required fields
+                  value:
+                    success: false
+                    message: "Invalid size object structure"
+                    error: "Size at index 0 is missing required fields"
+                    receivedObject:
+                      size: "1L"
+                    requiredFields: ["size", "price"]
+                    example: "{\"size\":\"1L\",\"price\":34.99}"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                invalidPriceValue:
+                  summary: Price is not a valid number
+                  value:
+                    success: false
+                    message: "Invalid price value"
+                    error: "Price at index 0 must be a positive number"
+                    receivedPrice: "34.99"
+                    hint: "Price should be a number like 34.99, not a string"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                productNameExists:
+                  summary: Product name already exists
+                  value:
+                    success: false
+                    message: "Product with this name already exists"
+                    error: "Product with this name already exists"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
+                categoryNotFound:
+                  summary: Category not found
+                  value:
+                    success: false
+                    message: "Category not found"
+                    error: "Category not found"
+                    timestamp: "2025-12-25T14:03:45.000Z"
+                    path: "/api/products/a766a1b9-dda1-4c13-88f6-7859a76f5959"
         '404':
           description: Product not found
           content:
@@ -535,6 +621,34 @@ paths:
                   message:
                     type: string
                     example: Product not found
+                  error:
+                    type: string
+                    example: Product not found
+                  timestamp:
+                    type: string
+                    format: date-time
+                  path:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal server error
+                  error:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  path:
+                    type: string
     delete:
       tags: [Products]
       summary: Delete product

@@ -95,21 +95,32 @@ export class UpdateProductUseCase {
                 : newImageUrls;
         }
 
+        // Determine final sizes - use provided sizes if valid, otherwise keep existing
+        let finalSizes = existingProduct.sizes;
+        if (sizes !== undefined && sizes !== null) {
+            if (Array.isArray(sizes) && sizes.length > 0) {
+                finalSizes = sizes;
+            } else if (Array.isArray(sizes) && sizes.length === 0) {
+                // If an empty array is explicitly sent, this is an error
+                throw new Error('Product must have at least one size. Cannot update with empty sizes array.');
+            }
+        }
+
         const updatedProduct: Product = {
             ...existingProduct,
             name: name || existingProduct.name,
             description: description || existingProduct.description,
             category_id: category_id || existingProduct.category_id,
             colors: colors !== undefined ? colors : existingProduct.colors,
-            sizes: sizes && sizes.length > 0 ? sizes : existingProduct.sizes,
+            sizes: finalSizes,
             status: status || existingProduct.status,
             images: imageUrls,
             updatedAt: new Date(),
         };
 
-        // Validate that required fields are present
-        if (!updatedProduct.sizes || updatedProduct.sizes.length === 0) {
-            throw new Error('Product must have at least one size');
+        // Final validation - ensure product has at least one size
+        if (!updatedProduct.sizes || !Array.isArray(updatedProduct.sizes) || updatedProduct.sizes.length === 0) {
+            throw new Error('Product must have at least one size with valid size and price information');
         }
 
         return this.productsRepository.update(id, updatedProduct);

@@ -209,10 +209,16 @@ export class ProductsController {
 
     async update(req: Request, res: Response) {
         try {
+            console.log('=== CONTROLLER UPDATE START ===');
+            console.log('Request params:', req.params);
+            console.log('Request body:', req.body);
+            console.log('Request files:', req.files);
+
             const { id } = req.params;
             const { name, description, category, colors, sizes, status, keepExistingImages, imagesToDelete } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
 
+            // Validate and parse colors
             let parsedColors = colors;
             if (colors && typeof colors === 'string') {
                 try {
@@ -224,9 +230,77 @@ export class ProductsController {
                 }
             }
 
+            // Validate and parse sizes with comprehensive error handling
             let parsedSizes = sizes;
-            if (sizes && typeof sizes === 'string') {
-                parsedSizes = JSON.parse(sizes);
+            console.log('Raw sizes from request:', sizes);
+            console.log('Type of sizes:', typeof sizes);
+
+            if (sizes !== undefined && sizes !== null && sizes !== '') {
+                if (typeof sizes === 'string') {
+                    try {
+                        parsedSizes = JSON.parse(sizes);
+                        console.log('Parsed sizes from JSON:', parsedSizes);
+                    } catch (error) {
+                        console.error('Failed to parse sizes as JSON:', error);
+                        return res.status(400).json({
+                            success: false,
+                            message: "Invalid sizes format",
+                            error: "The 'sizes' field must be a valid JSON array. Example: [{\"size\":\"1L\",\"price\":34.99}]",
+                            receivedValue: sizes,
+                            hint: "Make sure to send sizes as a properly formatted JSON string"
+                        });
+                    }
+                }
+
+                // Validate that parsedSizes is an array
+                if (parsedSizes !== undefined && !Array.isArray(parsedSizes)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Invalid sizes format",
+                        error: "The 'sizes' field must be an array",
+                        receivedType: typeof parsedSizes,
+                        expectedFormat: "Array of objects with 'size' and 'price' properties",
+                        example: "[{\"size\":\"1L\",\"price\":34.99},{\"size\":\"5L\",\"price\":149.99}]"
+                    });
+                }
+
+                // Validate array is not empty and has proper structure
+                if (parsedSizes && Array.isArray(parsedSizes)) {
+                    if (parsedSizes.length === 0) {
+                        return res.status(400).json({
+                            success: false,
+                            message: "Invalid sizes data",
+                            error: "The 'sizes' array cannot be empty. At least one size must be provided.",
+                            hint: "Add at least one size with format: {\"size\":\"1L\",\"price\":34.99}"
+                        });
+                    }
+
+                    // Validate each size object
+                    for (let i = 0; i < parsedSizes.length; i++) {
+                        const sizeObj = parsedSizes[i];
+                        if (!sizeObj.size || sizeObj.price === undefined || sizeObj.price === null) {
+                            return res.status(400).json({
+                                success: false,
+                                message: "Invalid size object structure",
+                                error: `Size at index ${i} is missing required fields`,
+                                receivedObject: sizeObj,
+                                requiredFields: ["size", "price"],
+                                example: "{\"size\":\"1L\",\"price\":34.99}"
+                            });
+                        }
+
+                        // Validate price is a number
+                        if (typeof sizeObj.price !== 'number' || isNaN(sizeObj.price) || sizeObj.price < 0) {
+                            return res.status(400).json({
+                                success: false,
+                                message: "Invalid price value",
+                                error: `Price at index ${i} must be a positive number`,
+                                receivedPrice: sizeObj.price,
+                                hint: "Price should be a number like 34.99, not a string"
+                            });
+                        }
+                    }
+                }
             }
 
             // Parse imagesToDelete if it's a string
@@ -242,6 +316,18 @@ export class ProductsController {
                 }
             }
 
+            console.log('Parsed data:', {
+                id,
+                name,
+                description,
+                category,
+                parsedColors,
+                parsedSizes,
+                status,
+                keepExistingImages,
+                parsedImagesToDelete
+            });
+
             const result = await this.updateProductUseCase.execute({
                 id,
                 name,
@@ -255,15 +341,35 @@ export class ProductsController {
                 imagesToDelete: parsedImagesToDelete,
             });
 
+            console.log('=== CONTROLLER UPDATE SUCCESS ===');
             return res.status(200).json({
                 success: true,
                 data: result,
                 message: "Product updated successfully",
             });
         } catch (error: any) {
-            return res.status(400).json({
+            console.error('=== CONTROLLER UPDATE ERROR ===');
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+
+            // Determine appropriate status code based on error type
+            let statusCode = 500;
+            if (error.message?.includes('not found')) {
+                statusCode = 404;
+            } else if (error.message?.includes('already exists') ||
+                error.message?.includes('must have') ||
+                error.message?.includes('Invalid')) {
+                statusCode = 400;
+            }
+
+            return res.status(statusCode).json({
                 success: false,
                 message: error.message || "Could not update product",
+                error: error.message,
+                timestamp: new Date().toISOString(),
+                path: req.path,
+                ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
             });
         }
     }
