@@ -210,7 +210,7 @@ export class ProductsController {
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const { name, description, category, colors, sizes, status, keepExistingImages } = req.body;
+            const { name, description, category, colors, sizes, status, keepExistingImages, imagesToDelete } = req.body;
             const imageFiles = req.files as Express.Multer.File[];
 
             let parsedColors = colors;
@@ -229,6 +229,19 @@ export class ProductsController {
                 parsedSizes = JSON.parse(sizes);
             }
 
+            // Parse imagesToDelete if it's a string
+            let parsedImagesToDelete = imagesToDelete;
+            if (imagesToDelete && typeof imagesToDelete === 'string') {
+                try {
+                    parsedImagesToDelete = JSON.parse(imagesToDelete);
+                } catch {
+                    // If it's a comma-separated string
+                    parsedImagesToDelete = imagesToDelete.includes(',')
+                        ? imagesToDelete.split(',').map((url: string) => url.trim()).filter((url: string) => url)
+                        : [imagesToDelete.trim()];
+                }
+            }
+
             const result = await this.updateProductUseCase.execute({
                 id,
                 name,
@@ -239,6 +252,7 @@ export class ProductsController {
                 status,
                 imageFiles,
                 keepExistingImages: keepExistingImages === 'true',
+                imagesToDelete: parsedImagesToDelete,
             });
 
             return res.status(200).json({

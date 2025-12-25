@@ -13,6 +13,7 @@ export interface UpdateProductDTO {
     status?: ProductStatus;
     imageFiles?: Express.Multer.File[];
     keepExistingImages?: boolean;
+    imagesToDelete?: string[]; // Array of image URLs to delete
 }
 
 export class UpdateProductUseCase {
@@ -23,7 +24,7 @@ export class UpdateProductUseCase {
     ) { }
 
     async execute(data: UpdateProductDTO): Promise<Product> {
-        const { id, name, description, category, colors, sizes, status, imageFiles, keepExistingImages } = data;
+        const { id, name, description, category, colors, sizes, status, imageFiles, keepExistingImages, imagesToDelete } = data;
 
         const existingProduct = await this.productsRepository.findById(id);
         if (!existingProduct) {
@@ -46,30 +47,52 @@ export class UpdateProductUseCase {
             category_id = categoryEntity.id;
         }
 
-        let imageUrls: string[] = [];
+        let imageUrls: string[] = existingProduct.images || [];
 
+        // Handle selective image deletion
+        if (imagesToDelete && imagesToDelete.length > 0) {
+            // Delete specified images from storage
+            for (const imageUrl of imagesToDelete) {
+                // Verify the image belongs to this product
+                if (imageUrls.includes(imageUrl)) {
+                    try {
+                        await this.fileStorageService.DeleteOldImage(imageUrl);
+                        console.log(`Successfully deleted image: ${imageUrl}`);
+                    } catch (error) {
+                        console.error(`Failed to delete image: ${imageUrl}`, error);
+                        // Continue with other deletions even if one fails
+                    }
+                }
+            }
+            // Remove deleted images from the array
+            imageUrls = imageUrls.filter(url => !imagesToDelete.includes(url));
+        }
+
+        // Handle new image uploads
         if (imageFiles && imageFiles.length > 0) {
-            if (!keepExistingImages && existingProduct.images) {
-                for (const imageUrl of existingProduct.images) {
+            // If keepExistingImages is false, delete all remaining old images
+            if (!keepExistingImages && imageUrls.length > 0) {
+                for (const imageUrl of imageUrls) {
                     try {
                         await this.fileStorageService.DeleteOldImage(imageUrl);
                     } catch (error) {
                         console.error(`Failed to delete old image: ${imageUrl}`, error);
                     }
                 }
+                imageUrls = [];
             }
 
+            // Upload new images
             const newImageUrls = await this.fileStorageService.UploadMultipleProductImages(
                 imageFiles,
                 id,
                 'products'
             );
 
-            imageUrls = keepExistingImages && existingProduct.images
-                ? [...existingProduct.images, ...newImageUrls]
+            // Combine existing and new images if keepExistingImages is true
+            imageUrls = keepExistingImages
+                ? [...imageUrls, ...newImageUrls]
                 : newImageUrls;
-        } else {
-            imageUrls = existingProduct.images || [];
         }
 
         const updatedProduct: Product = {
