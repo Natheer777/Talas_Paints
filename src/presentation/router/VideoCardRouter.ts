@@ -36,10 +36,14 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
         RateLimitConfigurations.DELETE_OPERATIONS
     );
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     // Create new video card
     router.post(
         '/video-cards',
-        fileUploadLimit.handle(), 
+        authMiddleware.handle(), // Only admins can create video cards
+        fileUploadLimit.handle(),
         uploadVideo,
         validateCreateVideoCard,
         handleValidationResult,
@@ -47,19 +51,19 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
         (req: Request, res: Response) => videoCardController.create(req, res)
     );
 
-   
+
     router.get(
         '/video-cards',
         (req: Request, res: Response) => videoCardController.getAll(req, res)
     );
 
-    
+
     router.get(
         '/video-cards/visible',
         (req: Request, res: Response) => videoCardController.getVisible(req, res)
     );
 
-   
+
     router.get(
         '/video-cards/:id',
         validateGetVideoCard,
@@ -70,7 +74,8 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
 
     router.put(
         '/video-cards/:id',
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update video cards
+        writeLimit.handle(),
         uploadVideo,
         validateUpdateVideoCard,
         handleValidationResult,
@@ -81,7 +86,8 @@ export function createVideoCardRouter(videoCardController: VideoCardController) 
 
     router.delete(
         '/video-cards/:id',
-        deleteLimit.handle(), 
+        authMiddleware.handle(), // Only admins can delete video cards
+        deleteLimit.handle(),
         validateDeleteVideoCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

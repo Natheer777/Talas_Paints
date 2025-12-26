@@ -15,6 +15,8 @@ servers:
 tags:
   - name: Health Check
     description: Server health monitoring
+  - name: Authentication
+    description: Admin authentication and token management
   - name: Products
     description: 'Product management operations (CRUD, search, filter)'
   - name: Categories
@@ -56,6 +58,54 @@ paths:
                     type: number
                     description: Server uptime in seconds
                     example: 3600.5
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Admin login check
+      description: Verify admin credentials. No token is returned; use these credentials in headers for protected routes.
+      operationId: loginAdmin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  example: yourpassword
+      responses:
+        '200':
+          description: Credentials are valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          email:
+                            type: string
+        '401':
+          description: Invalid credentials
   /api/products:
     post:
       tags:
@@ -63,6 +113,11 @@ paths:
       summary: Create a new product
       description: Create a new product with optional image uploads.
       operationId: createProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -385,6 +440,11 @@ paths:
       summary: Update product
       description: Update an existing product. All fields optional.
       operationId: updateProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -621,6 +681,11 @@ paths:
       summary: Delete product
       description: Delete a product and its associated images from AWS S3
       operationId: deleteProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -816,6 +881,11 @@ paths:
       summary: Create a new category
       description: 'Create a category with an image upload (single image). Image is stored in S3 under `categories/{categoryId}/...`.'
       operationId: createCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -1040,6 +1110,11 @@ paths:
       summary: Update category
       description: Update category name and/or replace its image. Set `keepExistingImage` to `true` to retain the current image.
       operationId: updateCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -1097,6 +1172,11 @@ paths:
         - Categories
       summary: Delete category
       operationId: deleteCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -1442,6 +1522,11 @@ paths:
       summary: Create a new offer
       description: Create a new promotional offer (Percentage Discount or Buy 2 Get 1 Free)
       operationId: createOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -1620,6 +1705,11 @@ paths:
       summary: Update offer
       description: Update an existing offer
       operationId: updateOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -1658,6 +1748,11 @@ paths:
       summary: Delete offer
       description: Delete an offer by its ID
       operationId: deleteOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -1689,6 +1784,11 @@ paths:
       summary: Create a new ads card
       description: 'Create a new advertisement card with title, text, and image upload.'
       operationId: createAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -1881,6 +1981,11 @@ paths:
       summary: Update ads card
       description: Update an existing ads card. All fields optional.
       operationId: updateAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -1961,6 +2066,11 @@ paths:
       summary: Delete ads card
       description: Delete an ads card by its ID
       operationId: deleteAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -2010,6 +2120,11 @@ paths:
       summary: Create a new video card
       description: 'Create a new video card with title, video upload, and visibility status.'
       operationId: createVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -2196,6 +2311,11 @@ paths:
       summary: Update video card
       description: Update an existing video card. All fields optional.
       operationId: updateVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -2264,6 +2384,11 @@ paths:
       summary: Delete video card
       description: Delete a video card and its associated video from AWS S3
       operationId: deleteVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -2313,6 +2438,11 @@ paths:
       summary: Create a new payment method
       description: 'Create a new payment method with name, description, and QR code image upload.'
       operationId: createPaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -2478,6 +2608,11 @@ paths:
       summary: Update payment method
       description: Update an existing payment method with optional QR code replacement
       operationId: updatePaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -2534,6 +2669,11 @@ paths:
       summary: Delete payment method
       description: Delete a payment method and its associated QR code image
       operationId: deletePaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -3377,11 +3517,16 @@ components:
       schema:
         type: integer
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token for authentication
+    AdminEmail:
+      type: apiKey
+      in: header
+      name: admin-email
+      description: Admin email for authentication
+    AdminPassword:
+      type: apiKey
+      in: header
+      name: admin-password
+      description: Admin password for authentication
     HmacSignature:
       type: apiKey
       in: header

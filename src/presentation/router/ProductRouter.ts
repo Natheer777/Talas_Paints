@@ -41,8 +41,12 @@ export function createProductRouter(productsController: ProductsController) {
         RateLimitConfigurations.SEARCH
     );
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     router.post(
         "/products",
+        authMiddleware.handle(), // Only admins can create products
         createProductRateLimit.handle(), // Apply strict rate limit for product creation
         uploadMultiple,
         parseMultipartArrays,
@@ -64,13 +68,13 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.get(
         "/products/search",
-        searchRateLimit.handle(), 
+        searchRateLimit.handle(),
         (req: Request, res: Response) => productsController.search(req, res)
     );
 
     router.get(
         "/products/filter",
-        searchRateLimit.handle(), 
+        searchRateLimit.handle(),
         (req: Request, res: Response) => productsController.filter(req, res)
     );
 
@@ -89,7 +93,8 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.put(
         "/products/:id",
-        writeOperationRateLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update products
+        writeOperationRateLimit.handle(),
         uploadMultiple,
         parseMultipartArrays,
         validateUpdateProduct,
@@ -100,7 +105,8 @@ export function createProductRouter(productsController: ProductsController) {
 
     router.delete(
         "/products/:id",
-        deleteOperationRateLimit.handle(), 
+        authMiddleware.handle(), // Only admins can delete products
+        deleteOperationRateLimit.handle(),
         validateDeleteProduct,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

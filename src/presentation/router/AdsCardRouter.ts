@@ -35,9 +35,13 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
         RateLimitConfigurations.DELETE_OPERATIONS
     );
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     router.post(
         '/ads-cards',
-        fileUploadLimit.handle(), 
+        authMiddleware.handle(), // Only admins can create ads cards
+        fileUploadLimit.handle(),
         uploadSingle,
         validateCreateAdsCard,
         handleValidationResult,
@@ -65,7 +69,8 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
 
     router.put(
         '/ads-cards/:id',
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update ads cards
+        writeLimit.handle(),
         uploadSingle,
         validateUpdateAdsCard,
         handleValidationResult,
@@ -75,7 +80,8 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
 
     router.delete(
         '/ads-cards/:id',
-        deleteLimit.handle(),   
+        authMiddleware.handle(), // Only admins can delete ads cards
+        deleteLimit.handle(),
         validateDeleteAdsCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

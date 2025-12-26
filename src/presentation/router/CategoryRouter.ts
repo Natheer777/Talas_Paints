@@ -35,9 +35,13 @@ export function createCategoryRouter(categoriesController: CategoriesController)
         RateLimitConfigurations.DELETE_OPERATIONS
     );
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     router.post(
         "/categories",
-        fileUploadLimit.handle(), 
+        authMiddleware.handle(), // Only admins can create categories
+        fileUploadLimit.handle(),
         uploadSingle,
         validateCreateCategory,
         handleValidationResult,
@@ -60,7 +64,8 @@ export function createCategoryRouter(categoriesController: CategoriesController)
 
     router.put(
         "/categories/:id",
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update categories
+        writeLimit.handle(),
         uploadSingle,
         validateUpdateCategory,
         handleValidationResult,
@@ -70,7 +75,8 @@ export function createCategoryRouter(categoriesController: CategoriesController)
 
     router.delete(
         "/categories/:id",
-        deleteLimit.handle(), 
+        authMiddleware.handle(), // Only admins can delete categories
+        deleteLimit.handle(),
         validateDeleteCategory,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

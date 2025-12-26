@@ -15,6 +15,11 @@ paths:
       summary: Create a new video card
       description: Create a new video card with title, video upload, and visibility status.
       operationId: createVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -171,6 +176,11 @@ paths:
       summary: Update video card
       description: Update an existing video card. All fields optional.
       operationId: updateVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -238,6 +248,11 @@ paths:
       summary: Delete video card
       description: Delete a video card and its associated video from AWS S3
       operationId: deleteVideoCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
