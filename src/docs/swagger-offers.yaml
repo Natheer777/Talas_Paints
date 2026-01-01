@@ -10,6 +10,11 @@ paths:
       summary: Create a new offer
       description: Create a new promotional offer (Percentage Discount or Buy 2 Get 1 Free)
       operationId: createOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -105,6 +110,11 @@ paths:
       summary: Update offer
       description: Update an existing offer
       operationId: updateOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -144,6 +154,11 @@ paths:
       summary: Delete offer
       description: Delete an offer by its ID
       operationId: deleteOffer
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path

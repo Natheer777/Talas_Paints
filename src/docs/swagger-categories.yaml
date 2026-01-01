@@ -7,6 +7,11 @@ paths:
       summary: Create a new category
       description: Create a category with an image upload (single image). Image is stored in S3 under `categories/{categoryId}/...`.
       operationId: createCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -121,6 +126,11 @@ paths:
       summary: Update category
       description: Update category name and/or replace its image. Set `keepExistingImage` to `true` to retain the current image.
       operationId: updateCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -176,6 +186,11 @@ paths:
         - Categories
       summary: Delete category
       operationId: deleteCategory
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path

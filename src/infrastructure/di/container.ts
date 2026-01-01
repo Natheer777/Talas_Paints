@@ -11,6 +11,11 @@ import { InMemoryRateLimitStore } from '../services/InMemoryRateLimitStore';
 import { RateLimitService } from '@/application/services/RateLimitService';
 import { NotificationService } from '@/application/services/NotificationService';
 import { SecurityService } from '../services/SecurityService';
+import { AdminRepository } from '../repository/AdminRepository';
+import { AuthenticationService } from '../services/AuthenticationService';
+import { LoginAdminUseCase } from '@/application/use-cases/Admin/index';
+import { AuthController } from '@/presentation/controller/AuthController';
+import { AuthMiddleware } from '@/presentation/middleware/AuthMiddleware';
 import { Server as SocketIOServer } from 'socket.io';
 import {
     CreateProductUseCase,
@@ -89,16 +94,25 @@ class Container {
     private static adsCardRepository = new AdsCardRepository(Container.db.getPool());
     private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
     private static paymentMethodRepository = new PaymentMethodRepository(Container.db.getPool());
+    private static adminRepository = new AdminRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
 
     // Rate Limiting Infrastructure
     private static rateLimitStore = new InMemoryRateLimitStore();
     private static rateLimitService = new RateLimitService(Container.rateLimitStore);
     private static securityService = new SecurityService();
+    private static authService = new AuthenticationService();
+    private static authMiddleware = new AuthMiddleware(Container.adminRepository, Container.authService);
 
     // Socket.IO and Notification Service (will be initialized when server starts)
     private static io: SocketIOServer | null = null;
     private static notificationService: NotificationService | null = null;
+
+    // Application layer - Admin Use Cases
+    private static loginAdminUseCase = new LoginAdminUseCase(
+        Container.adminRepository,
+        Container.authService
+    );
 
     // Application layer - Product Use Cases
     private static createProductUseCase = new CreateProductUseCase(
@@ -356,6 +370,10 @@ class Container {
         Container.getVisiblePaymentMethodsUseCase
     );
 
+    private static authController = new AuthController(
+        Container.loginAdminUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
     }
@@ -449,6 +467,18 @@ class Container {
 
     static getSecurityService(): SecurityService {
         return Container.securityService;
+    }
+
+    static getAuthController(): AuthController {
+        return Container.authController;
+    }
+
+    static getAuthMiddleware(): AuthMiddleware {
+        return Container.authMiddleware;
+    }
+
+    static getAuthService(): AuthenticationService {
+        return Container.authService;
     }
 }
 

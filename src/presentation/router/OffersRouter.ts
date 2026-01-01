@@ -32,9 +32,13 @@ export function createOffersRouter(offersController: OffersController) {
     );
 
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     router.post(
         '/offers',
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can create offers
+        writeLimit.handle(),
         uploadNone,
         validateCreateOffer,
         handleValidationResult,
@@ -63,7 +67,8 @@ export function createOffersRouter(offersController: OffersController) {
 
     router.put(
         '/offers/:id',
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update offers
+        writeLimit.handle(),
         uploadNone,
         validateUpdateOffer,
         handleValidationResult,
@@ -73,6 +78,7 @@ export function createOffersRouter(offersController: OffersController) {
 
     router.delete(
         '/offers/:id',
+        authMiddleware.handle(), // Only admins can delete offers
         deleteLimit.handle(),
         validateDeleteOffer,
         handleValidationResult,

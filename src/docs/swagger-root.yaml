@@ -17,6 +17,8 @@ servers:
 tags:
   - name: Health Check
     description: Server health monitoring
+  - name: Authentication
+    description: Admin authentication and token management
   - name: Products
     description: Product management operations (CRUD, search, filter)
   - name: Categories
@@ -36,6 +38,10 @@ paths:
   # Health Check
   /api/health:
     $ref: "./swagger-products.yaml#/paths/~1health"
+
+  # Authentication
+  /api/auth/login:
+    $ref: "./swagger-login.yaml#/paths/~1api~1auth~1login"
 
   # Products - CRUD
   /api/products:
@@ -252,11 +258,17 @@ components:
         type: integer
 
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token for authentication
+    AdminEmail:
+      type: apiKey
+      in: header
+      name: admin-email
+      description: Admin email for authentication
+    
+    AdminPassword:
+      type: apiKey
+      in: header
+      name: admin-password
+      description: Admin password for authentication
     
     HmacSignature:
       type: apiKey

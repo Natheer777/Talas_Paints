@@ -15,6 +15,11 @@ paths:
       summary: Create a new payment method
       description: Create a new payment method with name, description, and QR code image upload.
       operationId: createPaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -158,6 +163,11 @@ paths:
       summary: Update payment method
       description: Update an existing payment method with optional QR code replacement
       operationId: updatePaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -213,6 +223,11 @@ paths:
       summary: Delete payment method
       description: Delete a payment method and its associated QR code image
       operationId: deletePaymentMethod
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path

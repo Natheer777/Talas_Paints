@@ -111,10 +111,10 @@ export class ProductsController {
                     });
                 }
 
-                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 100)) {
+                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 1000)) {
                     return res.status(400).json({
                         success: false,
-                        message: "Limit must be a positive integer between 1 and 100",
+                        message: "Limit must be a positive integer between 1 and 1000",
                     });
                 }
 

@@ -36,8 +36,12 @@ export function createPaymentMethodRouter(paymentMethodController: PaymentMethod
         RateLimitConfigurations.DELETE_OPERATIONS
     );
 
+    // Get auth middleware from container
+    const authMiddleware = Container.getAuthMiddleware();
+
     router.post(
         '/payment-methods',
+        authMiddleware.handle(), // Only admins can create payment methods
         fileUploadLimit.handle(),
         uploadQRCode,
         validateCreatePaymentMethod,
@@ -66,7 +70,8 @@ export function createPaymentMethodRouter(paymentMethodController: PaymentMethod
 
     router.put(
         '/payment-methods/:id',
-        writeLimit.handle(), 
+        authMiddleware.handle(), // Only admins can update payment methods
+        writeLimit.handle(),
         uploadQRCode,
         validateUpdatePaymentMethod,
         handleValidationResult,
@@ -76,7 +81,8 @@ export function createPaymentMethodRouter(paymentMethodController: PaymentMethod
 
     router.delete(
         '/payment-methods/:id',
-        deleteLimit.handle(), 
+        authMiddleware.handle(), // Only admins can delete payment methods
+        deleteLimit.handle(),
         validateDeletePaymentMethod,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

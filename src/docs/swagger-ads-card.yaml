@@ -15,6 +15,11 @@ paths:
       summary: Create a new ads card
       description: Create a new advertisement card with title, text, and image upload.
       operationId: createAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -177,6 +182,11 @@ paths:
       summary: Update ads card
       description: Update an existing ads card. All fields optional.
       operationId: updateAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -254,6 +264,11 @@ paths:
       summary: Delete ads card
       description: Delete an ads card by its ID
       operationId: deleteAdsCard
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path

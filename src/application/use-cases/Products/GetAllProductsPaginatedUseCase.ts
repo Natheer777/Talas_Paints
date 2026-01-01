@@ -6,8 +6,7 @@ export class GetAllProductsPaginatedUseCase {
 
     async execute(options?: PaginationOptions): Promise<PaginatedResult<Product>> {
         const page = Math.max(1, options?.page || 1);
-        const limit = Math.min(100, Math.max(1, options?.limit || 10)); // Default 10, max 100
-        const offset = (page - 1) * limit;
+        const limit = Math.min(1000, Math.max(1, options?.limit || 10)); // Default 10, max 1000
 
         const paginationOptions: PaginationOptions = {
             page,

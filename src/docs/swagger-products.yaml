@@ -40,6 +40,11 @@ paths:
       summary: Create a new product
       description: Create a new product with optional image uploads.
       operationId: createProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       requestBody:
         required: true
         content:
@@ -431,6 +436,11 @@ paths:
       summary: Update product
       description: Update an existing product. All fields optional.
       operationId: updateProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
@@ -654,6 +664,11 @@ paths:
       summary: Delete product
       description: Delete a product and its associated images from AWS S3
       operationId: deleteProduct
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: id
           in: path
