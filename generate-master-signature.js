@@ -1,7 +1,9 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env.development') });
 const crypto = require('crypto');
 
 // Configuration
-const SECRET_KEY = process.env.HMAC_SECRET_KEY || '5f8d9e2a1b4c3d6e7f0a8b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e';
+const SECRET_KEY = process.env.HMAC_SECRET_KEY;
 
 const timestamp = Date.now().toString();
 
