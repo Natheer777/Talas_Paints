@@ -84,6 +84,11 @@ export function createProductRouter(productsController: ProductsController) {
     );
 
     router.get(
+        "/products/most-ordered",
+        (req: Request, res: Response) => productsController.getProductsWithMostOrders(req, res)
+    );
+
+    router.get(
         "/products/:id",
         validateGetProduct,
         handleValidationResult,

@@ -63,6 +63,9 @@ paths:
   /api/products/active-offers:
     $ref: "./swagger-products.yaml#/paths/~1products~1active-offers"
 
+  /api/products/most-ordered:
+    $ref: "./swagger-products.yaml#/paths/~1products~1most-ordered"
+
   # Categories
   /api/categories:
     $ref: "./swagger-categories.yaml#/paths/~1categories"

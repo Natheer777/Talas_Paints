@@ -31,6 +31,7 @@ export interface IProductsRepository {
     filterProducts(options: ProductFilterOptions): Promise<Product[]>;
     filterProductsPaginated(filterOptions: ProductFilterOptions, paginationOptions?: PaginationOptions): Promise<PaginatedResult<Product>>;
     findProductsWithActiveOffers(): Promise<Product[]>;
+    findProductsWithMostOrdersPaginated(options?: PaginationOptions): Promise<PaginatedResult<Product>>;
     checkExistingProduct(name: string): Promise<boolean>;
     update(id: string, product: Product): Promise<Product>;
     delete(id: string): Promise<void>;
