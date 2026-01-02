@@ -324,6 +324,55 @@ export class ProductsRepository implements IProductsRepository {
         return result.rows.map(row => this.mapToProduct(row));
     }
 
+    async findProductsWithMostOrdersPaginated(options: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+        const page = Math.max(1, options.page || 1);
+        const limit = Math.min(100, Math.max(1, options.limit || 10));
+        const offset = (page - 1) * limit;
+
+        // Get total count of products that have orders
+        const countQuery = `
+            SELECT COUNT(DISTINCT (item->>'product_id')) as total
+            FROM orders o, jsonb_array_elements(o.items) AS item
+            WHERE jsonb_array_length(o.items) > 0
+        `;
+        const countResult = await this.db.query(countQuery);
+        const total = parseInt(countResult.rows[0].total || '0');
+
+        // Get paginated data ordered by total orders quantity
+        const dataQuery = `
+            SELECT
+                p.id, p.name, p.description, p.category_id,
+                p.colors, p.sizes, p.status, p.images,
+                p.created_at, p.updated_at,
+                COALESCE(stats.total_quantity, 0) as total_orders
+            FROM products p
+            LEFT JOIN (
+                SELECT
+                    (item->>'product_id') as product_id,
+                    SUM((item->>'quantity')::int) as total_quantity
+                FROM orders o, jsonb_array_elements(o.items) AS item
+                WHERE jsonb_array_length(o.items) > 0
+                GROUP BY (item->>'product_id')
+            ) stats ON stats.product_id = p.id::text
+            WHERE stats.total_quantity > 0
+            ORDER BY stats.total_quantity DESC, p.created_at DESC
+            LIMIT $1 OFFSET $2
+        `;
+        const dataResult = await this.db.query(dataQuery, [limit, offset]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToProduct(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
+    }
+
     private mapToProduct(row: any): Product {
         return {
             id: row.id,

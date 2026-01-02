@@ -6,6 +6,7 @@ import {
     GetAllProductsUseCase,
     GetAllProductsPaginatedUseCase,
     GetProductsWithActiveOffersUseCase,
+    GetProductsWithMostOrdersPaginatedUseCase,
     UpdateProductUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase
@@ -21,6 +22,7 @@ export class ProductsController {
         private getAllProductsUseCase: GetAllProductsUseCase,
         private getAllProductsPaginatedUseCase: GetAllProductsPaginatedUseCase,
         private getProductsWithActiveOffersUseCase: GetProductsWithActiveOffersUseCase,
+        private getProductsWithMostOrdersPaginatedUseCase: GetProductsWithMostOrdersPaginatedUseCase,
         private updateProductUseCase: UpdateProductUseCase,
         private deleteProductUseCase: DeleteProductUseCase,
         private searchProductsUseCase: SearchProductsUseCase,
@@ -203,6 +205,59 @@ export class ProductsController {
             return res.status(500).json({
                 success: false,
                 message: error.message || "Could not retrieve products with active offers",
+            });
+        }
+    }
+
+    async getProductsWithMostOrders(req: Request, res: Response) {
+        try {
+            const { page, limit } = req.query;
+
+            const pageNum = page ? parseInt(page as string, 10) : undefined;
+            const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+            if (pageNum !== undefined && (isNaN(pageNum) || pageNum < 1)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Page must be a positive integer",
+                });
+            }
+
+            if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 1000)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Limit must be a positive integer between 1 and 1000",
+                });
+            }
+
+            const result = await this.getProductsWithMostOrdersPaginatedUseCase.execute({
+                page: pageNum,
+                limit: limitNum
+            });
+            const productsWithCategory = await Promise.all(result.data.map(async (prod) => {
+                const cat = await this.categoriesRepository.findById(prod.category_id);
+                const { category_id, ...rest } = prod;
+                return {
+                    ...rest,
+                    category: cat ? { id: cat.id, name: cat.name } : null,
+                };
+            }));
+            return res.status(200).json({
+                success: true,
+                data: productsWithCategory,
+                pagination: {
+                    page: result.page,
+                    limit: result.limit,
+                    total: result.total,
+                    totalPages: result.totalPages,
+                    hasNextPage: result.hasNextPage,
+                    hasPrevPage: result.hasPrevPage
+                }
+            });
+        } catch (error: any) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not retrieve products with most orders",
             });
         }
     }
