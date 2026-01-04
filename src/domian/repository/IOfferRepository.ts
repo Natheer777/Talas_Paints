@@ -27,4 +27,5 @@ export interface IOfferRepository {
     getByIdWithDetails(id: string): Promise<OfferWithDetails | null>;
     getAllWithDetails(): Promise<OfferWithDetails[]>;
     getAllWithDetailsPaginated(options?: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>>;
+    getVisibleWithDetailsPaginated(options?: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>>;
 }

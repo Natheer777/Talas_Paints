@@ -50,8 +50,14 @@ paths:
   /api/products/all:
     $ref: "./swagger-products.yaml#/paths/~1products~1all"
 
+  /api/products/visible:
+    $ref: "./swagger-products.yaml#/paths/~1products~1visible"
+
   /api/products/{id}:
     $ref: "./swagger-products.yaml#/paths/~1products~1{id}"
+
+  /api/admin/products:
+    $ref: "./swagger-products.yaml#/paths/~1admin~1products"
 
   # Products - Search & Filter
   /api/products/search:
@@ -92,6 +98,9 @@ paths:
 
   /api/offers/details:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1details"
+
+  /api/offers/visible:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1visible"
 
   /api/offers/{id}:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"

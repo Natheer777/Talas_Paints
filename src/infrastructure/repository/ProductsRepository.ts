@@ -77,6 +77,38 @@ export class ProductsRepository implements IProductsRepository {
         };
     }
 
+    async findVisiblePaginated(options: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+        const page = Math.max(1, options.page || 1);
+        const limit = Math.min(100, Math.max(1, options.limit || 10));
+        const offset = (page - 1) * limit;
+
+        // Get total count of visible products
+        const countQuery = `SELECT COUNT(*) as total FROM products WHERE status = 'visible'`;
+        const countResult = await this.db.query(countQuery);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Get paginated visible data
+        const dataQuery = `
+            SELECT * FROM products
+            WHERE status = 'visible'
+            ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
+        `;
+        const dataResult = await this.db.query(dataQuery, [limit, offset]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: dataResult.rows.map(row => this.mapToProduct(row)),
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
+    }
+
     async searchByName(name: string): Promise<Product[]> {
         const query = `
             SELECT * FROM products

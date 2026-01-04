@@ -4,4 +4,5 @@ export { DeleteOfferUseCase } from './DeleteOfferUseCase';
 export { GetAllOffersUseCase } from './GetAllOffersUseCase';
 export { GetOfferByIdUseCase } from './GetOfferByIdUseCase';
 export { GetAllOffersWithDetailsPaginatedUseCase } from './GetAllOffersWithDetailsPaginatedUseCase';
+export { GetVisibleOffersWithDetailsPaginatedUseCase } from './GetVisibleOffersWithDetailsPaginatedUseCase';
 

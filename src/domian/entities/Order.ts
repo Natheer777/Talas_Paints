@@ -16,6 +16,9 @@ export interface OrderItem {
     product_id: string;
     quantity: number;
     price: number;
+    product?: any;
+    category?: any;
+    offer?: any;
     createdAt: Date;
     updatedAt: Date;
 }

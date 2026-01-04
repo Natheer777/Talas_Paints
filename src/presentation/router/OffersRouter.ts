@@ -53,6 +53,11 @@ export function createOffersRouter(offersController: OffersController) {
     );
 
     router.get(
+        '/offers/visible',
+        (req: Request, res: Response) => offersController.getVisibleWithDetailsPaginated(req, res)
+    );
+
+    router.get(
         '/offers',
         (req: Request, res: Response) => offersController.getAll(req, res)
     );

@@ -11,10 +11,10 @@ export class OrderRepository implements IOrderRepository {
         items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]
     ): Promise<Order> {
         const now = new Date();
-        const preparedItems = items.map(item => ({
+        const preparedItems = items.map((item: any) => ({
             id: uuidv4(),
             order_id: order.id,
-            product_id: item.product_id,
+            product_id: item.product_id || item.productId,
             quantity: item.quantity,
             price: item.price,
             createdAt: now,
@@ -43,39 +43,160 @@ export class OrderRepository implements IOrderRepository {
             order.payment_method,
             order.status,
             order.total_amount,
-            JSON.stringify(preparedItems) 
+            JSON.stringify(preparedItems)
         ];
 
         const result = await this.pool.query(query, values);
         return this.mapRowToOrder(result.rows[0]);
     }
 
-    
+
     async findById(id: string): Promise<Order | null> {
-        const query = `SELECT * FROM orders WHERE id = $1`;
+        const query = `
+            SELECT 
+                o.*,
+                (
+                    SELECT jsonb_agg(
+                        item || jsonb_build_object(
+                            'product', (
+                                SELECT jsonb_build_object(
+                                    'id', p.id,
+                                    'name', p.name,
+                                    'description', p.description,
+                                    'images', p.images,
+                                    'status', p.status,
+                                    'colors', p.colors,
+                                    'sizes', p.sizes
+                                )
+                                FROM products p
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'category', (
+                                SELECT row_to_json(c) 
+                                FROM categories c 
+                                JOIN products p ON c.id = p.category_id 
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'offer', (
+                                SELECT row_to_json(off) 
+                                FROM offers off 
+                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
+                                AND off.status = 'VISIBLE' 
+                                LIMIT 1
+                            )
+                        )
+                    )
+                    FROM jsonb_array_elements(o.items) AS item
+                ) as enriched_items
+            FROM orders o 
+            WHERE o.id = $1
+        `;
         const result = await this.pool.query(query, [id]);
 
         if (result.rows.length === 0) {
             return null;
         }
 
-        return this.mapRowToOrder(result.rows[0]);
+        const row = result.rows[0];
+        if (row.enriched_items) {
+            row.items = row.enriched_items;
+        }
+
+        return this.mapRowToOrder(row);
     }
 
-   
+
     async findByPhoneNumber(phoneNumber: string): Promise<Order[]> {
         const query = `
-            SELECT * FROM orders 
-            WHERE phone_number = $1 
-            ORDER BY created_at DESC
+            SELECT 
+                o.*,
+                (
+                    SELECT jsonb_agg(
+                        item || jsonb_build_object(
+                            'product', (
+                                SELECT jsonb_build_object(
+                                    'id', p.id,
+                                    'name', p.name,
+                                    'description', p.description,
+                                    'images', p.images,
+                                    'status', p.status,
+                                    'colors', p.colors,
+                                    'sizes', p.sizes
+                                )
+                                FROM products p
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'category', (
+                                SELECT row_to_json(c) 
+                                FROM categories c 
+                                JOIN products p ON c.id = p.category_id 
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'offer', (
+                                SELECT row_to_json(off) 
+                                FROM offers off 
+                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
+                                AND off.status = 'VISIBLE' 
+                                LIMIT 1
+                            )
+                        )
+                    )
+                    FROM jsonb_array_elements(o.items) AS item
+                ) as enriched_items
+            FROM orders o 
+            WHERE o.phone_number = $1 
+            ORDER BY o.created_at DESC
         `;
         const result = await this.pool.query(query, [phoneNumber]);
-        return result.rows.map(row => this.mapRowToOrder(row));
+        return result.rows.map(row => {
+            if (row.enriched_items) {
+                row.items = row.enriched_items;
+            }
+            return this.mapRowToOrder(row);
+        });
     }
 
-   
+
     async findAll(limit?: number, offset?: number): Promise<Order[]> {
-        let query = `SELECT * FROM orders ORDER BY created_at DESC`;
+        let query = `
+            SELECT 
+                o.*,
+                (
+                    SELECT jsonb_agg(
+                        item || jsonb_build_object(
+                            'product', (
+                                SELECT jsonb_build_object(
+                                    'id', p.id,
+                                    'name', p.name,
+                                    'description', p.description,
+                                    'images', p.images,
+                                    'status', p.status,
+                                    'colors', p.colors,
+                                    'sizes', p.sizes
+                                )
+                                FROM products p
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'category', (
+                                SELECT row_to_json(c) 
+                                FROM categories c 
+                                JOIN products p ON c.id = p.category_id 
+                                WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
+                            ),
+                            'offer', (
+                                SELECT row_to_json(off) 
+                                FROM offers off 
+                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
+                                AND off.status = 'VISIBLE' 
+                                LIMIT 1
+                            )
+                        )
+                    )
+                    FROM jsonb_array_elements(o.items) AS item
+                ) as enriched_items
+            FROM orders o 
+            ORDER BY o.created_at DESC
+        `;
         const values: any[] = [];
 
         if (limit !== undefined) {
@@ -88,7 +209,12 @@ export class OrderRepository implements IOrderRepository {
         }
 
         const result = await this.pool.query(query, values);
-        return result.rows.map(row => this.mapRowToOrder(row));
+        return result.rows.map(row => {
+            if (row.enriched_items) {
+                row.items = row.enriched_items;
+            }
+            return this.mapRowToOrder(row);
+        });
     }
 
     async updateStatus(id: string, status: OrderStatus): Promise<Order> {
@@ -107,7 +233,7 @@ export class OrderRepository implements IOrderRepository {
         return this.mapRowToOrder(result.rows[0]);
     }
 
-    
+
     async delete(id: string): Promise<void> {
         const query = `DELETE FROM orders WHERE id = $1`;
         const result = await this.pool.query(query, [id]);
@@ -123,14 +249,14 @@ export class OrderRepository implements IOrderRepository {
         return parseInt(result.rows[0].count, 10);
     }
 
-   
+
     async countByPhoneNumber(phoneNumber: string): Promise<number> {
         const query = `SELECT COUNT(*) as count FROM orders WHERE phone_number = $1`;
         const result = await this.pool.query(query, [phoneNumber]);
         return parseInt(result.rows[0].count, 10);
     }
 
-   
+
     private mapRowToOrder(row: any): Order {
         return {
             id: row.id,
@@ -150,7 +276,7 @@ export class OrderRepository implements IOrderRepository {
         };
     }
 
-   
+
     private mapJsonbToOrderItems(jsonbItems: any): OrderItem[] {
         if (!jsonbItems || !Array.isArray(jsonbItems)) {
             return [];
@@ -159,9 +285,12 @@ export class OrderRepository implements IOrderRepository {
         return jsonbItems.map(item => ({
             id: item.id,
             order_id: item.order_id,
-            product_id: item.product_id,
+            product_id: item.product_id || item.productId,
             quantity: item.quantity,
             price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+            product: item.product || undefined,
+            category: item.category || undefined,
+            offer: item.offer || undefined,
             createdAt: new Date(item.createdAt),
             updatedAt: new Date(item.updatedAt)
         }));
