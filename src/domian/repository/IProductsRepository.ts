@@ -26,6 +26,7 @@ export interface IProductsRepository {
     findById(id: string): Promise<Product | null>;
     findAll(): Promise<Product[]>;
     findAllPaginated(options?: PaginationOptions): Promise<PaginatedResult<Product>>;
+    findVisiblePaginated(options?: PaginationOptions): Promise<PaginatedResult<Product>>;
     searchByName(name: string): Promise<Product[]>;
     searchByNamePaginated(name: string, options?: PaginationOptions): Promise<PaginatedResult<Product>>;
     filterProducts(options: ProductFilterOptions): Promise<Product[]>;

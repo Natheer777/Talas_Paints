@@ -5,7 +5,8 @@ import {
     DeleteOfferUseCase,
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
-    GetAllOffersWithDetailsPaginatedUseCase
+    GetAllOffersWithDetailsPaginatedUseCase,
+    GetVisibleOffersWithDetailsPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 
 
@@ -16,7 +17,8 @@ export class OffersController {
         private deleteOfferUseCase: DeleteOfferUseCase,
         private getAllOffersUseCase: GetAllOffersUseCase,
         private getOfferByIdUseCase: GetOfferByIdUseCase,
-        private getAllOffersWithDetailsPaginatedUseCase: GetAllOffersWithDetailsPaginatedUseCase
+        private getAllOffersWithDetailsPaginatedUseCase: GetAllOffersWithDetailsPaginatedUseCase,
+        private getVisibleOffersWithDetailsPaginatedUseCase: GetVisibleOffersWithDetailsPaginatedUseCase
     ) { }
 
     async create(req: Request, res: Response) {
@@ -134,6 +136,45 @@ export class OffersController {
             return res.status(500).json({
                 success: false,
                 message: error.message || 'Could not retrieve offers'
+            });
+        }
+    }
+
+    async getVisibleWithDetailsPaginated(req: Request, res: Response) {
+        try {
+            // Parse and validate pagination parameters
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+            // Validate pagination parameters
+            if (page < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Page must be greater than 0'
+                });
+            }
+
+            if (limit < 1 || limit > 1000) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Limit must be between 1 and 1000'
+                });
+            }
+
+            const result = await this.getVisibleOffersWithDetailsPaginatedUseCase.execute({
+                page,
+                limit
+            });
+
+            return res.status(200).json({
+                success: true,
+                ...result
+            });
+        } catch (error: any) {
+            console.error('Get Visible Offers With Details Paginated Error:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Could not retrieve visible offers'
             });
         }
     }

@@ -27,7 +27,8 @@ import {
     GetProductsWithActiveOffersUseCase,
     GetProductsWithMostOrdersPaginatedUseCase,
     SearchProductsUseCase,
-    FilterProductsUseCase
+    FilterProductsUseCase,
+    GetVisibleProductsPaginatedUseCase
 } from '@/application/use-cases/Products/index';
 import {
     CreateCategoryUseCase,
@@ -51,7 +52,8 @@ import {
     DeleteOfferUseCase,
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
-    GetAllOffersWithDetailsPaginatedUseCase
+    GetAllOffersWithDetailsPaginatedUseCase,
+    GetVisibleOffersWithDetailsPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 import {
     CreateAdsCardUseCase,
@@ -161,6 +163,10 @@ class Container {
         Container.productsRepository
     );
 
+    private static getVisibleProductsPaginatedUseCase = new GetVisibleProductsPaginatedUseCase(
+        Container.productsRepository
+    );
+
     // Application layer - Category Use Cases
     private static createCategoryUseCase = new CreateCategoryUseCase(
         Container.categoriesRepository,
@@ -227,6 +233,10 @@ class Container {
     );
 
     private static getAllOffersWithDetailsPaginatedUseCase = new GetAllOffersWithDetailsPaginatedUseCase(
+        Container.offerRepository
+    );
+
+    private static getVisibleOffersWithDetailsPaginatedUseCase = new GetVisibleOffersWithDetailsPaginatedUseCase(
         Container.offerRepository
     );
 
@@ -326,7 +336,8 @@ class Container {
         Container.deleteProductUseCase,
         Container.searchProductsUseCase,
         Container.filterProductsUseCase,
-        Container.categoriesRepository
+        Container.categoriesRepository,
+        Container.getVisibleProductsPaginatedUseCase
     );
 
     private static categoriesController = new CategoriesController(
@@ -346,7 +357,8 @@ class Container {
         Container.deleteOfferUseCase,
         Container.getAllOffersUseCase,
         Container.getOfferByIdUseCase,
-        Container.getAllOffersWithDetailsPaginatedUseCase
+        Container.getAllOffersWithDetailsPaginatedUseCase,
+        Container.getVisibleOffersWithDetailsPaginatedUseCase
     );
 
     private static adsCardController = new AdsCardController(

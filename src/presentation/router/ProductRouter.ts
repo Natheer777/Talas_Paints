@@ -62,6 +62,17 @@ export function createProductRouter(productsController: ProductsController) {
     );
 
     router.get(
+        "/products/visible",
+        (req: Request, res: Response) => productsController.getVisible(req, res)
+    );
+
+    router.get(
+        "/admin/products",
+        authMiddleware.handle(), // Only admins can see all products
+        (req: Request, res: Response) => productsController.getAdminProducts(req, res)
+    );
+
+    router.get(
         "/products/all",
         (req: Request, res: Response) => productsController.getAllWithoutPagination(req, res)
     );
