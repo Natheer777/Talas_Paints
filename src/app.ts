@@ -87,8 +87,22 @@ export class App {
   }
 
   private setupErrorHandling(): void {
-    this.app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((error: any, req: Request, res: Response, next: NextFunction) => {
       console.error('Global Error Handler:', error);
+
+      // Handle Multer errors or specific file type errors
+      if (error.message && (
+        error.message.includes('Invalid file type') ||
+        error.code === 'LIMIT_FILE_SIZE' ||
+        error.code === 'LIMIT_UNEXPECTED_FILE'
+      )) {
+        return res.status(400).json({
+          success: false,
+          message: error.message || 'File upload error',
+          code: error.code
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Internal server error',
