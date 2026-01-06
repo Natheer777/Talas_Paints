@@ -5,6 +5,7 @@ export enum PaymentMethodType {
 
 export enum OrderStatus {
     PENDING = 'pending',
+    ORDERED = 'ordered',
     ACCEPTED = 'accepted',
     REJECTED = 'rejected',
     IN_PROGRESS = 'in_progress'
@@ -16,6 +17,8 @@ export interface OrderItem {
     product_id: string;
     quantity: number;
     price: number;
+    color?: string;
+    size?: string;
     product?: any;
     category?: any;
     offer?: any;

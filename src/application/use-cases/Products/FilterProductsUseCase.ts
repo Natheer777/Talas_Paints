@@ -5,13 +5,14 @@ export interface FilterProductsDTO {
     categories?: string[];
     minPrice?: number;
     maxPrice?: number;
+    onlyVisible?: boolean;
 }
 
 export class FilterProductsUseCase {
     constructor(private productsRepository: IProductsRepository) { }
 
     async execute(data: FilterProductsDTO): Promise<Product[]> {
-        const { categories, minPrice, maxPrice } = data;
+        const { categories, minPrice, maxPrice, onlyVisible } = data;
 
         // Validate price range
         if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
@@ -21,7 +22,8 @@ export class FilterProductsUseCase {
         const filterOptions: ProductFilterOptions = {
             categories,
             minPrice,
-            maxPrice
+            maxPrice,
+            onlyVisible
         };
 
         return await this.productsRepository.filterProducts(filterOptions);

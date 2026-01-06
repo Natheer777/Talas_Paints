@@ -198,7 +198,7 @@ paths:
                 status:
                   type: string
                   format: text
-                  enum: [pending, accepted, rejected, in_progress]
+                  enum: [pending, ordered, accepted, rejected, in_progress]
                   description: New order status
                   example: "accepted"
       responses:
@@ -395,6 +395,14 @@ components:
           format: float
           description: Price snapshot at time of order creation
           example: 45.99
+        color:
+          type: string
+          description: Selected color of the product
+          example: "Red"
+        size:
+          type: string
+          description: Selected size of the product
+          example: "1L"
         createdAt:
           type: string
           format: date-time
@@ -416,11 +424,12 @@ components:
 
     OrderStatus:
       type: string
-      enum: [pending, accepted, rejected, in_progress]
+      enum: [pending, ordered, accepted, rejected, in_progress]
       description: Order status
       example: "pending"
       x-enum-descriptions:
         pending: Order is pending approval
+        ordered: Order has been placed
         accepted: Order has been accepted
         rejected: Order has been rejected
         in_progress: Order is being processed
@@ -505,6 +514,29 @@ components:
           description: |
             List of quantities corresponding to the productIds.
             Example: [2, 1]
+        color:
+          type: array
+          items:
+            type: string
+          description: |
+            List of colors corresponding to the productIds.
+            Example: ["Red", "Blue"]
+        size:
+          type: array
+          items:
+            type: string
+          description: |
+            List of sizes corresponding to the productIds.
+            Example: ["1L", "5L"]
+        price:
+          type: array
+          items:
+            type: number
+            format: float
+          description: |
+            List of prices corresponding to the productIds.
+            Used for validation against database prices.
+            Example: [45.99, 149.99]
 
     Error:
       type: object

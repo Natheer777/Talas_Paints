@@ -4,6 +4,9 @@ export interface ProductFilterOptions {
     categories?: string[];
     minPrice?: number;
     maxPrice?: number;
+    onlyVisible?: boolean;
+
+
 }
 
 export interface PaginationOptions {
@@ -27,8 +30,8 @@ export interface IProductsRepository {
     findAll(): Promise<Product[]>;
     findAllPaginated(options?: PaginationOptions): Promise<PaginatedResult<Product>>;
     findVisiblePaginated(options?: PaginationOptions): Promise<PaginatedResult<Product>>;
-    searchByName(name: string): Promise<Product[]>;
-    searchByNamePaginated(name: string, options?: PaginationOptions): Promise<PaginatedResult<Product>>;
+    searchByName(name: string, onlyVisible?: boolean): Promise<Product[]>;
+    searchByNamePaginated(name: string, options?: PaginationOptions, onlyVisible?: boolean): Promise<PaginatedResult<Product>>;
     filterProducts(options: ProductFilterOptions): Promise<Product[]>;
     filterProductsPaginated(filterOptions: ProductFilterOptions, paginationOptions?: PaginationOptions): Promise<PaginatedResult<Product>>;
     findProductsWithActiveOffers(): Promise<Product[]>;

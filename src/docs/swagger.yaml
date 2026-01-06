@@ -858,6 +858,16 @@ paths:
           schema:
             type: string
           example: paint
+        - name: test
+          in: query
+          required: false
+          description: 'If set to ''true'', only returns visible products. Defaults to ''false'' (returns all products).'
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          example: 'true'
       responses:
         '200':
           description: Products found
@@ -926,6 +936,16 @@ paths:
           required: false
           example: 100
           description: Maximum price filter (matches products with at least one size price <= maxPrice)
+        - name: test
+          in: query
+          required: false
+          description: 'If set to ''true'', only returns visible products. Defaults to ''false'' (returns all products).'
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          example: 'true'
       responses:
         '200':
           description: Filtered products retrieved successfully
@@ -1627,6 +1647,7 @@ paths:
                   format: text
                   enum:
                     - pending
+                    - ordered
                     - accepted
                     - rejected
                     - in_progress
@@ -3178,6 +3199,14 @@ components:
           format: float
           description: Price snapshot at time of order creation
           example: 45.99
+        color:
+          type: string
+          description: Selected color of the product
+          example: Red
+        size:
+          type: string
+          description: Selected size of the product
+          example: 1L
         createdAt:
           type: string
           format: date-time
@@ -3200,6 +3229,7 @@ components:
       type: string
       enum:
         - pending
+        - ordered
         - accepted
         - rejected
         - in_progress
@@ -3207,6 +3237,7 @@ components:
       example: pending
       x-enum-descriptions:
         pending: Order is pending approval
+        ordered: Order has been placed
         accepted: Order has been accepted
         rejected: Order has been rejected
         in_progress: Order is being processed
@@ -3298,6 +3329,29 @@ components:
           description: |
             List of quantities corresponding to the productIds.
             Example: [2, 1]
+        color:
+          type: array
+          items:
+            type: string
+          description: |
+            List of colors corresponding to the productIds.
+            Example: ["Red", "Blue"]
+        size:
+          type: array
+          items:
+            type: string
+          description: |
+            List of sizes corresponding to the productIds.
+            Example: ["1L", "5L"]
+        price:
+          type: array
+          items:
+            type: number
+            format: float
+          description: |
+            List of prices corresponding to the productIds.
+            Used for validation against database prices.
+            Example: [45.99, 149.99]
     Offer:
       type: object
       properties:
