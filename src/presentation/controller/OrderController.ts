@@ -31,6 +31,9 @@ export class OrderController {
                 paymentMethod,
                 productId,
                 quantity,
+                color,
+                size,
+                price,
                 items
             } = req.body;
 
@@ -43,27 +46,51 @@ export class OrderController {
                 // Convert productId and quantity arrays/values to items array
                 let productIds = productId;
                 let quantities = quantity;
+                let colors = color;
+                let sizes = size;
+                let prices = price;
 
-                // Handle comma-separated strings (e.g. from Swagger UI or some form submissions)
+                // Handle comma-separated strings
                 if (typeof productIds === 'string' && productIds.includes(',')) {
                     productIds = productIds.split(',').map((id: string) => id.trim());
                 }
-                
-                // Handle comma-separated quantities
                 if (typeof quantities === 'string' && quantities.includes(',')) {
                     quantities = quantities.split(',').map((q: string) => q.trim());
+                }
+                if (typeof colors === 'string' && colors.includes(',')) {
+                    colors = colors.split(',').map((c: string) => c.trim());
+                }
+                if (typeof sizes === 'string' && sizes.includes(',')) {
+                    sizes = sizes.split(',').map((s: string) => s.trim());
+                }
+                if (typeof prices === 'string' && prices.includes(',')) {
+                    prices = prices.split(',').map((p: string) => p.trim());
                 }
 
                 productIds = Array.isArray(productIds) ? productIds : [productIds];
                 quantities = Array.isArray(quantities) ? quantities : [quantities];
-                
+
+                // Ensure colors, sizes and prices are arrays if they exist
+                if (colors) {
+                    colors = Array.isArray(colors) ? colors : [colors];
+                }
+                if (sizes) {
+                    sizes = Array.isArray(sizes) ? sizes : [sizes];
+                }
+                if (prices) {
+                    prices = Array.isArray(prices) ? prices : [prices];
+                }
+
                 if (productIds.length !== quantities.length) {
                     throw new Error('productId and quantity arrays must have the same length');
                 }
 
                 orderItems = productIds.map((pid: string, index: number) => ({
                     productId: pid,
-                    quantity: parseInt(quantities[index], 10)
+                    quantity: parseInt(quantities[index], 10),
+                    color: colors ? colors[index] : undefined,
+                    size: sizes ? sizes[index] : undefined,
+                    price: prices ? parseFloat(prices[index]) : undefined
                 }));
             } else {
                 throw new Error('Either items array or productId/quantity must be provided');

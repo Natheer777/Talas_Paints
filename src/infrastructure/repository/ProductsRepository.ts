@@ -109,36 +109,43 @@ export class ProductsRepository implements IProductsRepository {
         };
     }
 
-    async searchByName(name: string): Promise<Product[]> {
-        const query = `
+    async searchByName(name: string, onlyVisible: boolean = false): Promise<Product[]> {
+        let query = `
             SELECT * FROM products
             WHERE LOWER(name) LIKE LOWER($1)
-            ORDER BY created_at DESC
         `;
+        if (onlyVisible) {
+            query += ` AND status = 'visible'`;
+        }
+        query += ` ORDER BY created_at DESC`;
+
         const searchPattern = `%${name}%`;
         const result = await this.db.query(query, [searchPattern]);
 
         return result.rows.map(row => this.mapToProduct(row));
     }
 
-    async searchByNamePaginated(name: string, options: PaginationOptions = {}): Promise<PaginatedResult<Product>> {
+    async searchByNamePaginated(name: string, options: PaginationOptions = {}, onlyVisible: boolean = false): Promise<PaginatedResult<Product>> {
         const page = Math.max(1, options.page || 1);
         const limit = Math.min(100, Math.max(1, options.limit || 10));
         const offset = (page - 1) * limit;
         const searchPattern = `%${name}%`;
 
+        let countQuery = `SELECT COUNT(*) as total FROM products WHERE LOWER(name) LIKE LOWER($1)`;
+        let dataQuery = `SELECT * FROM products WHERE LOWER(name) LIKE LOWER($1)`;
+
+        if (onlyVisible) {
+            countQuery += ` AND status = 'visible'`;
+            dataQuery += ` AND status = 'visible'`;
+        }
+
+        dataQuery += ` ORDER BY created_at DESC LIMIT $2 OFFSET $3`;
+
         // Get total count for filtered results
-        const countQuery = `SELECT COUNT(*) as total FROM products WHERE LOWER(name) LIKE LOWER($1)`;
         const countResult = await this.db.query(countQuery, [searchPattern]);
         const total = parseInt(countResult.rows[0].total);
 
         // Get paginated filtered data
-        const dataQuery = `
-            SELECT * FROM products
-            WHERE LOWER(name) LIKE LOWER($1)
-            ORDER BY created_at DESC
-            LIMIT $2 OFFSET $3
-        `;
         const dataResult = await this.db.query(dataQuery, [searchPattern, limit, offset]);
 
         const totalPages = Math.ceil(total / limit);
@@ -156,6 +163,9 @@ export class ProductsRepository implements IProductsRepository {
 
     async filterProducts(options: ProductFilterOptions): Promise<Product[]> {
         let query = `SELECT * FROM products WHERE 1=1`;
+        if (options.onlyVisible) {
+            query += ` AND status = 'visible'`;
+        }
         const values: any[] = [];
         let paramCounter = 1;
 
@@ -197,7 +207,16 @@ export class ProductsRepository implements IProductsRepository {
             }
         }
 
-        query += ` ORDER BY created_at DESC`;
+        // Internal smart sorting: price ASC if price filter is applied, otherwise createdAt DESC
+        const isPriceFilterApplied = options.minPrice !== undefined || options.maxPrice !== undefined;
+        const sortBy = isPriceFilterApplied ? 'price' : 'createdAt';
+        const sortOrder = isPriceFilterApplied ? 'ASC' : 'DESC';
+
+        if (sortBy === 'price') {
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ${sortOrder}`;
+        } else {
+            query += ` ORDER BY created_at ${sortOrder}`;
+        }
 
         const result = await this.db.query(query, values);
         return result.rows.map(row => this.mapToProduct(row));
@@ -210,6 +229,11 @@ export class ProductsRepository implements IProductsRepository {
 
         let countQuery = `SELECT COUNT(*) as total FROM products WHERE 1=1`;
         let dataQuery = `SELECT * FROM products WHERE 1=1`;
+
+        if (filterOptions.onlyVisible) {
+            countQuery += ` AND status = 'visible'`;
+            dataQuery += ` AND status = 'visible'`;
+        }
         const values: any[] = [];
         let paramCounter = 1;
 
@@ -266,7 +290,17 @@ export class ProductsRepository implements IProductsRepository {
         const total = parseInt(countResult.rows[0].total);
 
         // Add pagination to data query
-        dataQuery += ` ORDER BY created_at DESC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
+        // Internal smart sorting: price ASC if price filter is applied, otherwise createdAt DESC
+        const isPriceFilterApplied = filterOptions.minPrice !== undefined || filterOptions.maxPrice !== undefined;
+        const sortBy = isPriceFilterApplied ? 'price' : 'createdAt';
+        const sortOrder = isPriceFilterApplied ? 'ASC' : 'DESC';
+
+        if (sortBy === 'price') {
+            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ${sortOrder}`;
+        } else {
+            dataQuery += ` ORDER BY created_at ${sortOrder}`;
+        }
+        dataQuery += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
         values.push(limit, offset);
 
         const dataResult = await this.db.query(dataQuery, values);

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Product } from "@/domian/entities/Products";
 import {
     CreateProductUseCase,
     DeleteProductUseCase,
@@ -546,19 +547,26 @@ export class ProductsController {
 
     async search(req: Request, res: Response) {
         try {
-            const { name } = req.query;
+            const { name, test } = req.query;
             if (!name || typeof name !== 'string') {
                 return res.status(400).json({
                     success: false,
                     message: "Search term is required",
                 });
             }
-            const result = await this.searchProductsUseCase.execute({ name });
-            return res.status(200).json({
-                success: true,
-                data: result,
-                count: result.length,
+            const result = await this.searchProductsUseCase.execute({
+                name,
+                onlyVisible: test === 'true'
             });
+            const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
+                const cat = await this.categoriesRepository.findById(prod.category_id);
+                const { category_id, ...rest } = prod;
+                return {
+                    ...rest,
+                    category: cat ? { id: cat.id, name: cat.name } : null,
+                };
+            }));
+            return res.status(200).json(productsWithCategory);
         } catch (error: any) {
             return res.status(500).json({
                 success: false,
@@ -569,17 +577,22 @@ export class ProductsController {
 
     async filter(req: Request, res: Response) {
         try {
-            const { categories, minPrice, maxPrice } = req.query;
+            const { categories, minPrice, maxPrice, test } = req.query;
             const result = await this.filterProductsUseCase.execute({
                 categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
                 minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                 maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+                onlyVisible: test === 'true'
             });
-            return res.status(200).json({
-                success: true,
-                data: result,
-                count: result.length,
-            });
+            const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
+                const cat = await this.categoriesRepository.findById(prod.category_id);
+                const { category_id, ...rest } = prod;
+                return {
+                    ...rest,
+                    category: cat ? { id: cat.id, name: cat.name } : null,
+                };
+            }));
+            return res.status(200).json(productsWithCategory);
         } catch (error: any) {
             return res.status(500).json({
                 success: false,

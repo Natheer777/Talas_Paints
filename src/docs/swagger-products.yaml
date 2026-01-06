@@ -369,6 +369,14 @@ paths:
           schema:
             type: string
           example: paint
+        - name: test
+          in: query
+          required: false
+          description: If set to 'true', only returns visible products. Defaults to 'false' (returns all products).
+          schema:
+            type: string
+            enum: ["true", "false"]
+          example: "true"
       responses:
         '200':
           description: Products found
@@ -435,6 +443,14 @@ paths:
           required: false
           example: 100.0
           description: Maximum price filter (matches products with at least one size price <= maxPrice)
+        - name: test
+          in: query
+          required: false
+          description: If set to 'true', only returns visible products. Defaults to 'false' (returns all products).
+          schema:
+            type: string
+            enum: ["true", "false"]
+          example: "true"
       responses:
         '200':
           description: Filtered products retrieved successfully

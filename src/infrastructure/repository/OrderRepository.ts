@@ -7,7 +7,7 @@ export class OrderRepository implements IOrderRepository {
     constructor(private readonly pool: Pool) { }
 
     async create(
-        order: Omit<Order, 'createdAt' | 'up   datedAt' | 'items'>,
+        order: Omit<Order, 'createdAt' | 'updatedAt' | 'items'>,
         items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]
     ): Promise<Order> {
         const now = new Date();
@@ -17,6 +17,8 @@ export class OrderRepository implements IOrderRepository {
             product_id: item.product_id || item.productId,
             quantity: item.quantity,
             price: item.price,
+            color: item.color,
+            size: item.size,
             createdAt: now,
             updatedAt: now
         }));
@@ -66,13 +68,18 @@ export class OrderRepository implements IOrderRepository {
                                     'images', p.images,
                                     'status', p.status,
                                     'colors', p.colors,
-                                    'sizes', p.sizes
+                                    'sizes', p.sizes,
+                                    'category', (
+                                        SELECT jsonb_build_object('id', c.id, 'name', c.name)
+                                        FROM categories c
+                                        WHERE c.id = p.category_id
+                                    )
                                 )
                                 FROM products p
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
                             ),
                             'category', (
-                                SELECT row_to_json(c) 
+                                SELECT jsonb_build_object('id', c.id, 'name', c.name)
                                 FROM categories c 
                                 JOIN products p ON c.id = p.category_id 
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
@@ -121,13 +128,18 @@ export class OrderRepository implements IOrderRepository {
                                     'images', p.images,
                                     'status', p.status,
                                     'colors', p.colors,
-                                    'sizes', p.sizes
+                                    'sizes', p.sizes,
+                                    'category', (
+                                        SELECT jsonb_build_object('id', c.id, 'name', c.name)
+                                        FROM categories c
+                                        WHERE c.id = p.category_id
+                                    )
                                 )
                                 FROM products p
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
                             ),
                             'category', (
-                                SELECT row_to_json(c) 
+                                SELECT jsonb_build_object('id', c.id, 'name', c.name)
                                 FROM categories c 
                                 JOIN products p ON c.id = p.category_id 
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
@@ -172,13 +184,18 @@ export class OrderRepository implements IOrderRepository {
                                     'images', p.images,
                                     'status', p.status,
                                     'colors', p.colors,
-                                    'sizes', p.sizes
+                                    'sizes', p.sizes,
+                                    'category', (
+                                        SELECT jsonb_build_object('id', c.id, 'name', c.name)
+                                        FROM categories c
+                                        WHERE c.id = p.category_id
+                                    )
                                 )
                                 FROM products p
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
                             ),
                             'category', (
-                                SELECT row_to_json(c) 
+                                SELECT jsonb_build_object('id', c.id, 'name', c.name)
                                 FROM categories c 
                                 JOIN products p ON c.id = p.category_id 
                                 WHERE p.id::text = COALESCE(item->>'product_id', item->>'productId')
@@ -288,6 +305,8 @@ export class OrderRepository implements IOrderRepository {
             product_id: item.product_id || item.productId,
             quantity: item.quantity,
             price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+            color: item.color,
+            size: item.size,
             product: item.product || undefined,
             category: item.category || undefined,
             offer: item.offer || undefined,

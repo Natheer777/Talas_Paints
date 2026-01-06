@@ -59,6 +59,20 @@ export const validateCreateOrder: ValidationChain[] = [
         .optional()
         .isInt({ min: 1 })
         .withMessage('Each item must have a quantity greater than 0'),
+    body('items.*.color')
+        .optional()
+        .isString()
+        .trim()
+        .withMessage('Color must be a string'),
+    body('items.*.size')
+        .optional()
+        .isString()
+        .trim()
+        .withMessage('Size must be a string'),
+    body('items.*.price')
+        .optional()
+        .isFloat({ gt: 0 })
+        .withMessage('Price must be a positive number'),
     // Validate productId and quantity arrays (for multipart/form-data format)
     body('productId')
         .optional()
@@ -92,12 +106,36 @@ export const validateCreateOrder: ValidationChain[] = [
         .optional()
         .isInt({ min: 1 })
         .withMessage('Each quantity must be greater than 0'),
+    body('color')
+        .optional()
+        .custom((value) => {
+            if (value && !Array.isArray(value) && typeof value !== 'string') {
+                throw new Error('color must be an array or a comma-separated string');
+            }
+            return true;
+        }),
+    body('size')
+        .optional()
+        .custom((value) => {
+            if (value && !Array.isArray(value) && typeof value !== 'string') {
+                throw new Error('size must be an array or a comma-separated string');
+            }
+            return true;
+        }),
+    body('price')
+        .optional()
+        .custom((value) => {
+            if (value && !Array.isArray(value) && typeof value !== 'string') {
+                throw new Error('price must be an array or a comma-separated string');
+            }
+            return true;
+        }),
     // Ensure at least one format is provided
     body()
         .custom((value) => {
             const hasItems = value.items && Array.isArray(value.items) && value.items.length > 0;
             const hasProductIdQuantity = value.productId && value.quantity;
-            
+
             if (!hasItems && !hasProductIdQuantity) {
                 throw new Error('Either items array or productId/quantity must be provided');
             }

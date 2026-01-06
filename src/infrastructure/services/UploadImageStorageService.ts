@@ -38,7 +38,7 @@ export class FileStorageService implements IFileStorageService {
   }
 
   private async convertToJPGIfNeeded(file: Express.Multer.File): Promise<Buffer> {
-    if (file.mimetype === 'image/jpeg') {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') {
       return file.buffer;
     }
 
