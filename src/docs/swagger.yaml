@@ -858,7 +858,7 @@ paths:
           schema:
             type: string
           example: paint
-        - name: test
+        - name: status
           in: query
           required: false
           description: 'If set to ''true'', only returns visible products. Defaults to ''false'' (returns all products).'
@@ -936,7 +936,7 @@ paths:
           required: false
           example: 100
           description: Maximum price filter (matches products with at least one size price <= maxPrice)
-        - name: test
+        - name: status
           in: query
           required: false
           description: 'If set to ''true'', only returns visible products. Defaults to ''false'' (returns all products).'

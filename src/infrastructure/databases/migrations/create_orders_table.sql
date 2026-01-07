@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS orders (
 
     -- Order status
     status VARCHAR(20) NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending', 'accepted', 'rejected', 'in_progress')),
+        CHECK (status IN ('pending', 'accepted', 'ordered' ,'rejected', 'in_progress')),
 
     -- Financial
     total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
