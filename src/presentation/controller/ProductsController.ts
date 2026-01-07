@@ -547,7 +547,7 @@ export class ProductsController {
 
     async search(req: Request, res: Response) {
         try {
-            const { name, test } = req.query;
+            const { name, status } = req.query;
             if (!name || typeof name !== 'string') {
                 return res.status(400).json({
                     success: false,
@@ -556,7 +556,7 @@ export class ProductsController {
             }
             const result = await this.searchProductsUseCase.execute({
                 name,
-                onlyVisible: test === 'true'
+                onlyVisible: status === 'true'
             });
             const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
                 const cat = await this.categoriesRepository.findById(prod.category_id);
@@ -577,12 +577,12 @@ export class ProductsController {
 
     async filter(req: Request, res: Response) {
         try {
-            const { categories, minPrice, maxPrice, test } = req.query;
+            const { categories, minPrice, maxPrice, status } = req.query;
             const result = await this.filterProductsUseCase.execute({
                 categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
                 minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                 maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
-                onlyVisible: test === 'true'
+                onlyVisible: status === 'true'
             });
             const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
                 const cat = await this.categoriesRepository.findById(prod.category_id);
