@@ -11,6 +11,7 @@ import {
     UpdateProductUseCase,
     SearchProductsUseCase,
     FilterProductsUseCase,
+    FilterProductsPaginatedUseCase,
     GetVisibleProductsPaginatedUseCase
 } from "@/application/use-cases/Products/index";
 
@@ -29,6 +30,7 @@ export class ProductsController {
         private deleteProductUseCase: DeleteProductUseCase,
         private searchProductsUseCase: SearchProductsUseCase,
         private filterProductsUseCase: FilterProductsUseCase,
+        private filterProductsPaginatedUseCase: FilterProductsPaginatedUseCase,
         private categoriesRepository: ICategoriesRepository,
         private getVisibleProductsPaginatedUseCase: GetVisibleProductsPaginatedUseCase
     ) { }
@@ -547,7 +549,7 @@ export class ProductsController {
 
     async search(req: Request, res: Response) {
         try {
-            const { name, status } = req.query;
+            const { name, test } = req.query;
             if (!name || typeof name !== 'string') {
                 return res.status(400).json({
                     success: false,
@@ -556,7 +558,7 @@ export class ProductsController {
             }
             const result = await this.searchProductsUseCase.execute({
                 name,
-                onlyVisible: status === 'true'
+                onlyVisible: test === 'true'
             });
             const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
                 const cat = await this.categoriesRepository.findById(prod.category_id);
@@ -577,22 +579,77 @@ export class ProductsController {
 
     async filter(req: Request, res: Response) {
         try {
-            const { categories, minPrice, maxPrice, status } = req.query;
-            const result = await this.filterProductsUseCase.execute({
-                categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
-                minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
-                maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
-                onlyVisible: status === 'true'
-            });
-            const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
-                const cat = await this.categoriesRepository.findById(prod.category_id);
-                const { category_id, ...rest } = prod;
-                return {
-                    ...rest,
-                    category: cat ? { id: cat.id, name: cat.name } : null,
-                };
-            }));
-            return res.status(200).json(productsWithCategory);
+            const { categories, minPrice, maxPrice, status, page, limit } = req.query;
+
+            const hasPagination = page !== undefined || limit !== undefined;
+
+            if (hasPagination) {
+                const pageNum = page ? parseInt(page as string, 10) : undefined;
+                const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+                if (pageNum !== undefined && (isNaN(pageNum) || pageNum < 1)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Page must be a positive integer",
+                    });
+                }
+
+                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 1000)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Limit must be a positive integer between 1 and 1000",
+                    });
+                }
+
+                const result = await this.filterProductsPaginatedUseCase.execute({
+                    categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
+                    minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
+                    maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+                    onlyVisible: status === 'true',
+                    page: pageNum,
+                    limit: limitNum
+                });
+                const productsWithCategory = await Promise.all(result.data.map(async (prod) => {
+                    const cat = await this.categoriesRepository.findById(prod.category_id);
+                    const { category_id, ...rest } = prod;
+                    return {
+                        ...rest,
+                        category: cat ? { id: cat.id, name: cat.name } : null,
+                    };
+                }));
+                return res.status(200).json({
+                    success: true,
+                    data: productsWithCategory,
+                    pagination: {
+                        page: result.page,
+                        limit: result.limit,
+                        total: result.total,
+                        totalPages: result.totalPages,
+                        hasNextPage: result.hasNextPage,
+                        hasPrevPage: result.hasPrevPage
+                    }
+                });
+            } else {
+                const result = await this.filterProductsUseCase.execute({
+                    categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
+                    minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
+                    maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+                    onlyVisible: status === 'true'
+                });
+                const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
+                    const cat = await this.categoriesRepository.findById(prod.category_id);
+                    const { category_id, ...rest } = prod;
+                    return {
+                        ...rest,
+                        category: cat ? { id: cat.id, name: cat.name } : null,
+                    };
+                }));
+                return res.status(200).json({
+                    success: true,
+                    data: productsWithCategory,
+                    count: productsWithCategory.length,
+                });
+            }
         } catch (error: any) {
             return res.status(500).json({
                 success: false,
