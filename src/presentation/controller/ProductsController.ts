@@ -579,7 +579,7 @@ export class ProductsController {
 
     async filter(req: Request, res: Response) {
         try {
-            const { categories, minPrice, maxPrice, test, page, limit } = req.query;
+            const { categories, minPrice, maxPrice, status, page, limit } = req.query;
 
             const hasPagination = page !== undefined || limit !== undefined;
 
@@ -605,7 +605,7 @@ export class ProductsController {
                     categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
                     minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                     maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
-                    onlyVisible: test === 'true',
+                    onlyVisible: status === 'true',
                     page: pageNum,
                     limit: limitNum
                 });
@@ -634,7 +634,7 @@ export class ProductsController {
                     categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
                     minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                     maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
-                    onlyVisible: test === 'true'
+                    onlyVisible: status === 'true'
                 });
                 const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
                     const cat = await this.categoriesRepository.findById(prod.category_id);
