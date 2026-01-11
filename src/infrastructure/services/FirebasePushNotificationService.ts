@@ -117,14 +117,17 @@ export class FirebasePushNotificationService {
                 });
 
                 // Remove invalid tokens from database
-                for (const token of failedTokens) {
-                    try {
-                        await this.fcmTokenRepository.delete(token);
-                        console.log(`🗑️  Removed invalid FCM token: ${token.substring(0, 20)}...`);
-                    } catch (error) {
-                        console.error(`❌ Failed to remove invalid token: ${token.substring(0, 20)}...`, error);
+                response.responses.forEach(async (resp: admin.messaging.SendResponse, idx: number) => {
+                    if (!resp.success) {
+                        const failedToken = fcmTokens[idx];
+                        try {
+                            await this.fcmTokenRepository.delete(failedToken);
+                            console.log(`🗑️  Removed invalid FCM token: ${failedToken.substring(0, 20)}...`);
+                        } catch (error) {
+                            console.error(`❌ Failed to remove invalid token: ${failedToken.substring(0, 20)}...`, error);
+                        }
                     }
-                }
+                });
             }
 
             console.log(`✅ Push notification sent successfully:`);
