@@ -33,6 +33,8 @@ tags:
     description: Video card management operations (CRUD)
   - name: Payment Methods
     description: Payment method management with QR code images
+  - name: Notifications
+    description: Push notification token registration for Firebase Cloud Messaging
 
 paths:
   # Health Check
@@ -136,6 +138,10 @@ paths:
   /api/payment-methods/{id}:
     $ref: "./swagger-payment-methods.yaml#/paths/~1payment-methods~1{id}"
 
+  # Notifications
+  /api/notifications/register-token:
+    $ref: "./swagger-notifications.yaml#/paths/~1notifications~1register-token"
+
 components:
   schemas:
     # Product schemas
@@ -216,6 +222,13 @@ components:
 
     PaymentMethodStatus:
       $ref: "./swagger-payment-methods.yaml#/components/schemas/PaymentMethodStatus"
+
+    # Notification schemas
+    FcmToken:
+      $ref: "./swagger-notifications.yaml#/components/schemas/FcmToken"
+
+    RegisterFcmTokenRequest:
+      $ref: "./swagger-notifications.yaml#/components/schemas/RegisterFcmTokenRequest"
 
     # Common schemas
     Error:

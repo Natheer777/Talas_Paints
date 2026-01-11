@@ -6,7 +6,9 @@ import { OfferRepository } from '../repository/OfferRepository';
 import { AdsCardRepository } from '../repository/AdsCardRepository';
 import { VideoCardRepository } from '../repository/VideoCardRepository';
 import { PaymentMethodRepository } from '../repository/PaymentMethodRepository';
+import { FcmTokenRepository } from '../repository/FcmTokenRepository';
 import { FileStorageService } from '../services/UploadImageStorageService';
+import { FirebasePushNotificationService } from '../services/FirebasePushNotificationService';
 import { InMemoryRateLimitStore } from '../services/InMemoryRateLimitStore';
 import { RateLimitService } from '@/application/services/RateLimitService';
 import { NotificationService } from '@/application/services/NotificationService';
@@ -87,6 +89,8 @@ import { OffersController } from '@/presentation/controller/OffersController';
 import { AdsCardController } from '@/presentation/controller/AdsCardController';
 import { VideoCardController } from '@/presentation/controller/VideoCardController';
 import { PaymentMethodController } from '@/presentation/controller/PaymentMethodController';
+import { NotificationController } from '@/presentation/controller/NotificationController';
+import { RegisterFcmTokenUseCase } from '@/application/use-cases/Notification/index';
 
 class Container {
     // Infrastructure layer
@@ -99,7 +103,9 @@ class Container {
     private static videoCardRepository = new VideoCardRepository(Container.db.getPool());
     private static paymentMethodRepository = new PaymentMethodRepository(Container.db.getPool());
     private static adminRepository = new AdminRepository(Container.db.getPool());
+    private static fcmTokenRepository = new FcmTokenRepository(Container.db.getPool());
     private static fileStorageService = new FileStorageService();
+    private static firebasePushService = new FirebasePushNotificationService(Container.fcmTokenRepository);
 
     // Rate Limiting Infrastructure
     private static rateLimitStore = new InMemoryRateLimitStore();
@@ -398,6 +404,16 @@ class Container {
         Container.loginAdminUseCase
     );
 
+    // Application layer - Notification Use Cases
+    private static registerFcmTokenUseCase = new RegisterFcmTokenUseCase(
+        Container.fcmTokenRepository
+    );
+
+    // Presentation layer - Controllers
+    private static notificationController = new NotificationController(
+        Container.registerFcmTokenUseCase
+    );
+
     static getProductsController(): ProductsController {
         return Container.productsController;
     }
@@ -436,7 +452,7 @@ class Container {
 
     static initializeSocketIO(io: SocketIOServer): void {
         Container.io = io;
-        Container.notificationService = new NotificationService(io);
+        Container.notificationService = new NotificationService(io, Container.firebasePushService);
         // Reinitialize order use cases with notification service
         Container.createOrderUseCase = new CreateOrderUseCase(
             Container.orderRepository,
@@ -464,9 +480,13 @@ class Container {
         if (!Container.notificationService) {
             // Create a notification service with null io - it will handle gracefully
             // This allows the app to start, but notifications won't work until Socket.IO is ready
-            Container.notificationService = new NotificationService(null);
+            Container.notificationService = new NotificationService(null, Container.firebasePushService);
         }
         return Container.notificationService;
+    }
+
+    static getNotificationController(): NotificationController {
+        return Container.notificationController;
     }
 
     static getOffersController(): OffersController {

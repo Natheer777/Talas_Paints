@@ -141,6 +141,7 @@ export class CreateOrderUseCase {
         );
 
         // Notify admin about new order
+        console.log(`🚀 Triggering admin notification for new order: ${order.id}`);
         this.notificationService.notifyAdminNewOrder(order);
 
         return order;
