@@ -1,0 +1,131 @@
+paths:
+  /notifications/register-token:
+    post:
+      tags:
+        - Notifications
+      summary: Register Firebase Cloud Messaging (FCM) token
+      description: |
+        Register or update a Firebase Cloud Messaging token for push notifications.
+        
+        This endpoint allows clients to register their FCM token associated with a phone number.
+        When an order status changes, push notifications will be sent to all registered tokens
+        for that phone number.
+        
+        **Important Notes:**
+        - Tokens are automatically updated if the same phone_number and token combination already exists
+        - Multiple tokens can be registered per phone number (for multiple devices)
+        - Invalid tokens are automatically removed from the database
+        - Push notifications work alongside Socket.IO notifications
+      operationId: registerFcmToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterFcmTokenRequest'
+      responses:
+        '200':
+          description: FCM token registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/FcmToken'
+                  message:
+                    type: string
+                    example: "FCM token registered successfully"
+        '400':
+          description: Validation error or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    RegisterFcmTokenRequest:
+      type: object
+      required:
+        - phone_number
+        - token
+      properties:
+        phone_number:
+          type: string
+          minLength: 7
+          maxLength: 20
+          description: User's phone number
+          example: "+1234567890"
+        token:
+          type: string
+          description: Firebase Cloud Messaging registration token
+          example: "dGhpcyBpcyBhIGZha2UgZmlyZWJhc2UgdG9rZW4gZm9yIGRlbW9uc3RyYXRpb24="
+        device_type:
+          type: string
+          enum: [android, ios, web, other]
+          description: Optional device type identifier
+          example: "android"
+    
+    FcmToken:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the FCM token record
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        phone_number:
+          type: string
+          description: User's phone number
+          example: "+1234567890"
+        token:
+          type: string
+          description: Firebase Cloud Messaging registration token
+          example: "dGhpcyBpcyBhIGZha2UgdG9rZW4="
+        device_type:
+          type: string
+          nullable: true
+          description: Device type identifier
+          example: "android"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the token was first registered
+          example: "2025-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the token was last updated
+          example: "2025-01-15T10:30:00Z"
+    
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation error or invalid data"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+              param:
+                type: string
+              location:
+                type: string
+

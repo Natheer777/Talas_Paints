@@ -13,9 +13,11 @@ paths:
         - For multiple items, use indexed notation: `productId[0]=uuid1&quantity[0]=2&productId[1]=uuid2&quantity[1]=1`
         - Each productId must have a corresponding quantity with the same index
 
-        **Socket.IO Events:**
-        - When an order is created, admins connected to the 'admin' room will receive a 'new_order' event.
-        - Users should connect to Socket.IO and join the 'user_{phoneNumber}' room to receive order status updates.
+        **Notifications:**
+        - When an order is created, admins connected to the 'admin' room will receive a 'new_order' event via Socket.IO.
+        - Users should connect to Socket.IO and join the 'user_{phoneNumber}' room to receive real-time order status updates.
+        - Push notifications are also sent via Firebase Cloud Messaging (FCM) when order status changes.
+        - To receive push notifications, users must register their FCM token using the `/api/notifications/register-token` endpoint.
       operationId: createOrder
       requestBody:
         required: true
@@ -170,12 +172,15 @@ paths:
         - Orders
       summary: Update order status
       description: |
-        Update the status of an order. When status changes, a notification will be sent
-        to the order owner via Socket.IO. Valid statuses: pending, accepted, rejected, in_progress
+        Update the status of an order. When status changes, notifications will be sent
+        to the order owner via Socket.IO and Firebase Cloud Messaging (FCM). Valid statuses: pending, accepted, rejected, in_progress
 
-        **Socket.IO Events:**
-        - When order status is updated, the order owner (connected to 'user_{phoneNumber}' room)
+        **Notifications:**
+        - Socket.IO: When order status is updated, the order owner (connected to 'user_{phoneNumber}' room)
           will receive an 'order_status_changed' event with the new status.
+        - Push Notifications: Firebase Cloud Messaging (FCM) push notifications are also sent to all registered
+          FCM tokens for the order owner's phone number. Users must register their FCM token using
+          `/api/notifications/register-token` endpoint to receive push notifications.
       operationId: updateOrderStatus
       parameters:
         - name: orderId

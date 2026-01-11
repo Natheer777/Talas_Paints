@@ -12,6 +12,7 @@ import { createAdsCardRouter } from './presentation/router/AdsCardRouter';
 import { createVideoCardRouter } from './presentation/router/VideoCardRouter';
 import { createPaymentMethodRouter } from './presentation/router/PaymentMethodRouter';
 import { createAuthRouter } from './presentation/router/AuthRouter';
+import { createNotificationRouter } from './presentation/router/NotificationRouter';
 import Container from './infrastructure/di/container';
 import { RateLimitMiddleware } from './presentation/middleware/RateLimitMiddleware';
 import { HmacMiddleware } from './presentation/middleware/HmacMiddleware';
@@ -48,6 +49,7 @@ export class App {
     const videoCardController = Container.getVideoCardController();
     const paymentMethodController = Container.getPaymentMethodController();
     const authController = Container.getAuthController();
+    const notificationController = Container.getNotificationController();
 
     this.app.use('/api', createAuthRouter(authController));
     this.app.use('/api', createProductRouter(productsController));
@@ -57,6 +59,7 @@ export class App {
     this.app.use('/api', createAdsCardRouter(adsCardController));
     this.app.use('/api', createVideoCardRouter(videoCardController));
     this.app.use('/api', createPaymentMethodRouter(paymentMethodController));
+    this.app.use('/api', createNotificationRouter(notificationController));
 
     const swaggerOptions = {
       swaggerOptions: {

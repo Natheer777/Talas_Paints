@@ -31,8 +31,11 @@ export class UpdateOrderStatusUseCase {
         // Update order status
         const updatedOrder = await this.orderRepository.updateStatus(orderId, status);
 
-        // Notify user about status change
-        this.notificationService.notifyUserOrderStatusChange(updatedOrder.phone_number, updatedOrder);
+        // Notify user about status change (fire and forget - don't await to avoid blocking)
+        console.log(`🚀 Triggering notifications for order ${updatedOrder.id} status change to ${updatedOrder.status}`);
+        this.notificationService.notifyUserOrderStatusChange(updatedOrder.phone_number, updatedOrder).catch(error => {
+            console.error('❌ Error in notification process:', error);
+        });
 
         return updatedOrder;
     }
