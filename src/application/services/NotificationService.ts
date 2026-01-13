@@ -3,7 +3,7 @@ import { Order, OrderStatus } from '@/domian/entities/Order';
 import { FirebasePushNotificationService } from '@/infrastructure/services/FirebasePushNotificationService';
 
 export interface INotificationService {
-    notifyAdminNewOrder(order: Order): void;
+    notifyAdminNewOrder(order: Order, adminEmails?: string[]): Promise<void>;
     notifyUserOrderStatusChange(phoneNumber: string, order: Order): Promise<void>;
 }
 
@@ -13,30 +13,88 @@ export class NotificationService implements INotificationService {
         private firebasePushService?: FirebasePushNotificationService
     ) { }
 
-    notifyAdminNewOrder(order: Order): void {
+    async notifyAdminNewOrder(order: Order, adminEmails?: string[]): Promise<void> {
         console.log(`🔔 Sending admin notification for new order: ${order.id}`);
 
-        if (!this.io) {
-            console.warn('⚠️  Socket.IO not initialized, skipping admin notification');
-            return;
+        // Send Socket.IO notification
+        if (this.io) {
+            try {
+                this.io.to('admin').emit('new_order', {
+                    order: {
+                        id: order.id,
+                        phone_number: order.phone_number,
+                        customer_name: order.customer_name,
+                        area_name: order.area_name,
+                        total_amount: order.total_amount,
+                        status: order.status,
+                        payment_method: order.payment_method,
+                        createdAt: order.createdAt
+                    }
+                });
+                console.log(`📡 Admin notification sent via Socket.IO for order: ${order.id}`);
+            } catch (error) {
+                console.error('❌ Error sending admin socket notification:', error);
+            }
+        } else {
+            console.warn('⚠️  Socket.IO not available, skipping socket notification');
         }
 
-        try {
-            this.io.to('admin').emit('new_order', {
-                order: {
-                    id: order.id,
-                    phone_number: order.phone_number,
-                    customer_name: order.customer_name,
-                    area_name: order.area_name,
-                    total_amount: order.total_amount,
-                    status: order.status,
-                    payment_method: order.payment_method,
-                    createdAt: order.createdAt
+        // Send Firebase Push notification
+        if (this.firebasePushService && this.firebasePushService.isInitialized()) {
+            try {
+                const targetEmails = adminEmails || [];
+
+                // If specific emails provided, send to those admins only
+                if (targetEmails.length > 0) {
+                    console.log(`📱 Sending targeted push notifications to ${targetEmails.length} admin(s)`);
+                    for (const adminEmail of targetEmails) {
+                        try {
+                            console.log(`📱 Sending Firebase push notification to admin: ${adminEmail}`);
+                            await this.firebasePushService.sendToAdminEmail(adminEmail, {
+                                title: 'طلب جديد 🆕',
+                                body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
+                                data: {
+                                    type: 'new_order',
+                                    orderId: order.id,
+                                    customerName: order.customer_name,
+                                    totalAmount: order.total_amount.toString(),
+                                    area: order.area_name,
+                                    phoneNumber: order.phone_number
+                                }
+                            });
+                        } catch (error) {
+                            console.error(`❌ Error sending push notification to admin ${adminEmail}:`, error);
+                            // Continue with other admins
+                        }
+                    }
+                } else {
+                    // If no specific emails provided, send to default admin email from env
+                    const defaultAdminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'test@gmail.com'; // Default for testing
+                    console.log(`📱 No specific admin emails provided, sending to default admin: ${defaultAdminEmail}`);
+
+                    try {
+                        await this.firebasePushService.sendToAdminEmail(defaultAdminEmail, {
+                            title: 'طلب جديد 🆕',
+                            body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
+                            data: {
+                                type: 'new_order',
+                                orderId: order.id,
+                                customerName: order.customer_name,
+                                totalAmount: order.total_amount.toString(),
+                                area: order.area_name,
+                                phoneNumber: order.phone_number
+                            }
+                        });
+                        console.log(`✅ Push notification sent to default admin: ${defaultAdminEmail}`);
+                    } catch (error) {
+                        console.error(`❌ Error sending push notification to default admin ${defaultAdminEmail}:`, error);
+                    }
                 }
-            });
-            console.log(`📡 Admin notification sent via Socket.IO for order: ${order.id}`);
-        } catch (error) {
-            console.error('❌ Error sending admin notification:', error);
+            } catch (error) {
+                console.error('❌ Error in admin push notification process:', error);
+            }
+        } else {
+            console.warn('⚠️  Firebase not available, skipping push notification');
         }
     }
 
@@ -89,4 +147,3 @@ export class NotificationService implements INotificationService {
         }
     }
 }
-

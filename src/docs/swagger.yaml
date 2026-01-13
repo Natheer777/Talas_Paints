@@ -32,7 +32,7 @@ tags:
   - name: Payment Methods
     description: Payment method management with QR code images
   - name: Notifications
-    description: Push notification token registration for Firebase Cloud Messaging
+    description: Firebase Cloud Messaging token registration for customers and admins
 paths:
   /api/health:
     get:
@@ -3083,15 +3083,24 @@ paths:
       description: |
         Register or update a Firebase Cloud Messaging token for push notifications.
 
-        This endpoint allows clients to register their FCM token associated with a phone number.
-        When an order status changes, push notifications will be sent to all registered tokens
-        for that phone number.
+        This endpoint allows both customers and admins to register their FCM tokens.
+        When an order is created (for admins) or order status changes (for customers),
+        push notifications will be sent to all registered tokens.
+
+        **For Customers:**
+        - Register with `phone_number` to receive order status updates
+        - Notifications sent when order status changes (pending → accepted → ordered, etc.)
+
+        **For Admins:**
+        - Register with `admin_email` to receive new order notifications
+        - Notifications sent when new orders are created
 
         **Important Notes:**
-        - Tokens are automatically updated if the same phone_number and token combination already exists
-        - Multiple tokens can be registered per phone number (for multiple devices)
+        - Tokens are automatically updated if the same user and token combination already exists
+        - Multiple tokens can be registered per user (for multiple devices)
         - Invalid tokens are automatically removed from the database
         - Push notifications work alongside Socket.IO notifications
+        - Either `phone_number` OR `admin_email` must be provided, but not both
       operationId: registerFcmToken
       requestBody:
         required: true
@@ -3099,6 +3108,21 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RegisterFcmTokenRequest'
+            examples:
+              customer_registration:
+                summary: Customer FCM token registration
+                description: Register FCM token for a customer to receive order status updates
+                value:
+                  phone_number: '+1234567890'
+                  token: dGhpcyBpcyBhIGZha2UgZmlyZWJhc2UgdG9rZW4gZm9yIGRlbW9uc3RyYXRpb24=
+                  device_type: android
+              admin_registration:
+                summary: Admin FCM token registration
+                description: Register FCM token for an admin to receive new order notifications
+                value:
+                  admin_email: admin@company.com
+                  token: dGhpcyBpcyBhIGZha2UgZmlyZWJhc2UgdG9rZW4gZm9yIGRlbW9uc3RyYXRpb24=
+                  device_type: web
       responses:
         '200':
           description: FCM token registered successfully
@@ -3114,7 +3138,9 @@ paths:
                     $ref: '#/components/schemas/FcmToken'
                   message:
                     type: string
-                    example: FCM token registered successfully
+                    examples:
+                      customer: Customer FCM token registered successfully for +1234567890
+                      admin: Admin FCM token registered successfully for admin@company.com
         '400':
           description: Validation error or invalid data
           content:
@@ -3127,24 +3153,45 @@ paths:
                     example: false
                   message:
                     type: string
-                    example: Validation error or invalid data
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        msg:
-                          type: string
-                        param:
-                          type: string
-                        location:
-                          type: string
+                    examples:
+                      missing_user: Either phone_number (for customers) or admin_email (for admins) must be provided
+                      both_provided: Cannot provide both phone_number and admin_email. Choose one based on user type
+                      invalid_phone: Invalid phone number format - must be 7-20 characters
+                      invalid_email: Invalid admin email format
+                      invalid_token: FCM token is required
+                      invalid_device: 'Invalid device type. Must be one of: android, ios, web, other'
         '500':
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/paths/~1api~1notifications~1register-token/post/responses/400/content/application~1json/schema'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    description: Error message describing what went wrong
+                    example: Either phone_number (for customers) or admin_email (for admins) must be provided
+                  errors:
+                    type: array
+                    description: Detailed validation errors (when applicable)
+                    items:
+                      type: object
+                      properties:
+                        msg:
+                          type: string
+                          description: Validation error message
+                          example: Phone number must be between 7 and 20 characters
+                        param:
+                          type: string
+                          description: Parameter name that failed validation
+                          example: phone_number
+                        location:
+                          type: string
+                          description: 'Location of the parameter (body, query, etc.)'
+                          example: body
 components:
   schemas:
     Product:
