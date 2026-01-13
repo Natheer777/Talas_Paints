@@ -34,7 +34,7 @@ tags:
   - name: Payment Methods
     description: Payment method management with QR code images
   - name: Notifications
-    description: Push notification token registration for Firebase Cloud Messaging
+    description: Firebase Cloud Messaging token registration for customers and admins
 
 paths:
   # Health Check

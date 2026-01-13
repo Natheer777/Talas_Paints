@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { IFcmTokenRepository } from '@/domian/repository/IFcmTokenRepository';
+import { FcmToken } from '@/domian/entities/FcmToken';
 
 export interface PushNotificationPayload {
     title: string;
@@ -138,6 +139,65 @@ export class FirebasePushNotificationService {
             console.log(`   📝 Body: ${payload.body}`);
         } catch (error) {
             console.error(`Error sending push notification to ${phoneNumber}:`, error);
+            throw error;
+        }
+    }
+
+    async sendToAdminEmail(
+        adminEmail: string,
+        payload: PushNotificationPayload
+    ): Promise<void> {
+        if (!this.app) {
+            console.warn('⚠️  Firebase not initialized, skipping admin push notification');
+            return;
+        }
+
+        try {
+            const adminTokens = await this.fcmTokenRepository.findByAdminEmail(adminEmail);
+
+            if (adminTokens.length === 0) {
+                console.log(`No FCM tokens found for admin: ${adminEmail}`);
+                return;
+            }
+
+            const fcmTokens = adminTokens.map((t: FcmToken) => t.token);
+            const message: admin.messaging.MulticastMessage = {
+                notification: {
+                    title: payload.title,
+                    body: payload.body
+                },
+                data: payload.data ? this.convertDataToString(payload.data) : undefined,
+                tokens: fcmTokens
+            };
+
+            const response = await admin.messaging().sendEachForMulticast(message);
+
+            if (response.failureCount > 0) {
+                response.responses.forEach(async (resp: admin.messaging.SendResponse, idx: number) => {
+                    if (!resp.success) {
+                        const failedToken = fcmTokens[idx];
+                        console.error(`❌ Failed to send notification to admin token: ${failedToken.substring(0, 20)}...`, resp.error);
+                        // Remove invalid tokens from database
+                        if (resp.error && (resp.error.code === 'messaging/invalid-registration-token' || resp.error.code === 'messaging/registration-token-not-registered')) {
+                            try {
+                                await this.fcmTokenRepository.deleteByToken(failedToken);
+                                console.log(`🗑️  Removed invalid FCM token for admin: ${adminEmail}`);
+                            } catch (deleteError) {
+                                console.error('❌ Error removing invalid admin FCM token:', deleteError);
+                            }
+                        }
+                    }
+                });
+            }
+
+            console.log(`✅ Push notification sent successfully to admin (${adminEmail}):`);
+            console.log(`   📊 Success: ${response.successCount} device(s)`);
+            console.log(`   ❌ Failed: ${response.failureCount} device(s)`);
+            console.log(`   📝 Title: ${payload.title}`);
+            console.log(`   📝 Body: ${payload.body}`);
+
+        } catch (error: any) {
+            console.error(`❌ Failed to send push notification to admin:`, error);
             throw error;
         }
     }

@@ -8,10 +8,10 @@ export class FcmTokenRepository implements IFcmTokenRepository {
 
     async save(token: Omit<FcmToken, 'id' | 'createdAt' | 'updatedAt'>): Promise<FcmToken> {
         const query = `
-            INSERT INTO fcm_tokens (id, phone_number, token, device_type, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            ON CONFLICT (phone_number, token) 
-            DO UPDATE SET 
+            INSERT INTO fcm_tokens (id, phone_number, admin_email, token, device_type, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (COALESCE(phone_number, ''), COALESCE(admin_email, ''), token)
+            DO UPDATE SET
                 device_type = EXCLUDED.device_type,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING *
@@ -19,7 +19,8 @@ export class FcmTokenRepository implements IFcmTokenRepository {
 
         const values = [
             uuidv4(),
-            token.phone_number,
+            token.phone_number || null,
+            token.admin_email || null,
             token.token,
             token.device_type || null
         ];
@@ -36,6 +37,17 @@ export class FcmTokenRepository implements IFcmTokenRepository {
         `;
 
         const result = await this.pool.query(query, [phoneNumber]);
+        return result.rows.map(row => this.mapRowToFcmToken(row));
+    }
+
+    async findByAdminEmail(adminEmail: string): Promise<FcmToken[]> {
+        const query = `
+            SELECT * FROM fcm_tokens
+            WHERE admin_email = $1
+            ORDER BY updated_at DESC
+        `;
+
+        const result = await this.pool.query(query, [adminEmail]);
         return result.rows.map(row => this.mapRowToFcmToken(row));
     }
 
@@ -63,6 +75,15 @@ export class FcmTokenRepository implements IFcmTokenRepository {
         await this.pool.query(query, [token]);
     }
 
+    async deleteByToken(token: string): Promise<void> {
+        const query = `
+            DELETE FROM fcm_tokens
+            WHERE token = $1
+        `;
+
+        await this.pool.query(query, [token]);
+    }
+
     async deleteByPhoneNumber(phoneNumber: string): Promise<void> {
         const query = `
             DELETE FROM fcm_tokens
@@ -76,6 +97,7 @@ export class FcmTokenRepository implements IFcmTokenRepository {
         return {
             id: row.id,
             phone_number: row.phone_number,
+            admin_email: row.admin_email,
             token: row.token,
             device_type: row.device_type,
             createdAt: row.created_at,

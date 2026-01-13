@@ -59,43 +59,38 @@ export class CreateOrderUseCase {
 
             const product = await this.productsRepository.findById(item.productId);
             if (!product) {
-                throw new Error(`Product with ID ${item.productId} not found.`);
+                throw new Error(`Product ${item.productId} not found`);
             }
 
+            // Check if product is visible
             if (product.status !== 'visible') {
-                throw new Error(`Product '${product.name}' is currently not available for ordering.`);
+                throw new Error(`Product ${product.name} is not available for ordering`);
             }
 
-            // Validate and get price based on size
+            // Validate color if provided
+            if (item.color && product.colors && !product.colors.includes(item.color)) {
+                throw new Error(`Color ${item.color} is not available for product ${product.name}`);
+            }
+
+            // Get price from size if provided, otherwise use first size price
             let dbPrice = 0;
-            if (item.size) {
-                const selectedSize = product.sizes.find(s => s.size === item.size);
-                if (!selectedSize) {
-                    const availableSizes = product.sizes.map(s => s.size).join(', ');
-                    throw new Error(`Size '${item.size}' is not available for product '${product.name}'. Available sizes: ${availableSizes}`);
+            if (item.size && product.sizes && Array.isArray(product.sizes)) {
+                const sizeInfo = product.sizes.find(s => typeof s === 'object' && s.size === item.size);
+                if (sizeInfo && typeof sizeInfo === 'object' && 'price' in sizeInfo) {
+                    dbPrice = sizeInfo.price;
+                } else {
+                    throw new Error(`Size ${item.size} not found for product ${product.name}`);
                 }
-                dbPrice = selectedSize.price;
-            } else {
-                // If no size is provided, check if the product has multiple sizes
-                if (product.sizes && product.sizes.length > 1) {
-                    throw new Error(`Please specify a size for product '${product.name}'.`);
-                }
-                dbPrice = product.sizes[0]?.price || 0;
-            }
-
-            if (dbPrice <= 0) {
-                throw new Error(`Product '${product.name}' (ID: ${item.productId}) has no valid price for the selected options.`);
-            }
-
-            // Price validation: compare user-sent price with database price
-            if (item.price !== undefined && item.price !== null) {
-                const sentPrice = parseFloat(item.price.toString());
-                if (Math.abs(sentPrice - dbPrice) > 0.01) { // Use small epsilon for float comparison
-                    throw new Error(`Price mismatch for product '${product.name}'. Sent: ${sentPrice}, Actual: ${dbPrice}. Please refresh your data.`);
+            } else if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+                // Use first size price if no size specified
+                const firstSize = product.sizes[0];
+                if (typeof firstSize === 'object' && 'price' in firstSize) {
+                    dbPrice = firstSize.price;
                 }
             }
 
-            const finalPrice = dbPrice;
+            // Use provided price if available, otherwise use database price
+            const finalPrice = item.price !== undefined ? item.price : dbPrice;
 
             // Validate color
             if (item.color) {
@@ -142,9 +137,11 @@ export class CreateOrderUseCase {
 
         // Notify admin about new order
         console.log(`🚀 Triggering admin notification for new order: ${order.id}`);
-        this.notificationService.notifyAdminNewOrder(order);
+
+        // Send notification to default admin email (configured in .env)
+        // If you have multiple admins, you can pass specific email array here
+        await this.notificationService.notifyAdminNewOrder(order);
 
         return order;
     }
 }
-
