@@ -29,6 +29,7 @@ import {
     GetProductsWithActiveOffersUseCase,
     GetProductsWithMostOrdersPaginatedUseCase,
     SearchProductsUseCase,
+    SearchProductsPaginatedUseCase,
     FilterProductsUseCase,
     FilterProductsPaginatedUseCase,
     GetVisibleProductsPaginatedUseCase
@@ -163,6 +164,10 @@ class Container {
     );
 
     private static searchProductsUseCase = new SearchProductsUseCase(
+        Container.productsRepository
+    );
+
+    private static searchProductsPaginatedUseCase = new SearchProductsPaginatedUseCase(
         Container.productsRepository
     );
 
@@ -346,6 +351,7 @@ class Container {
         Container.updateProductUseCase,
         Container.deleteProductUseCase,
         Container.searchProductsUseCase,
+        Container.searchProductsPaginatedUseCase,
         Container.filterProductsUseCase,
         Container.filterProductsPaginatedUseCase,
         Container.categoriesRepository,
