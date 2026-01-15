@@ -20,16 +20,7 @@ export class NotificationService implements INotificationService {
         if (this.io) {
             try {
                 this.io.to('admin').emit('new_order', {
-                    order: {
-                        id: order.id,
-                        phone_number: order.phone_number,
-                        customer_name: order.customer_name,
-                        area_name: order.area_name,
-                        total_amount: order.total_amount,
-                        status: order.status,
-                        payment_method: order.payment_method,
-                        createdAt: order.createdAt
-                    }
+                    order: order
                 });
                 console.log(`📡 Admin notification sent via Socket.IO for order: ${order.id}`);
             } catch (error) {
@@ -55,11 +46,22 @@ export class NotificationService implements INotificationService {
                                 body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
                                 data: {
                                     type: 'new_order',
-                                    orderId: order.id,
-                                    customerName: order.customer_name,
-                                    totalAmount: order.total_amount.toString(),
-                                    area: order.area_name,
-                                    phoneNumber: order.phone_number
+                                    order: JSON.stringify({
+                                        id: order.id,
+                                        phone_number: order.phone_number,
+                                        customer_name: order.customer_name,
+                                        area_name: order.area_name,
+                                        street_name: order.street_name,
+                                        building_number: order.building_number,
+                                        additional_notes: order.additional_notes,
+                                        delivery_agent_name: order.delivery_agent_name,
+                                        payment_method: order.payment_method,
+                                        status: order.status,
+                                        total_amount: order.total_amount,
+                                        items: order.items,
+                                        createdAt: order.createdAt.toISOString(),
+                                        updatedAt: order.updatedAt.toISOString()
+                                    })
                                 }
                             });
                         } catch (error) {
@@ -78,11 +80,22 @@ export class NotificationService implements INotificationService {
                             body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
                             data: {
                                 type: 'new_order',
-                                orderId: order.id,
-                                customerName: order.customer_name,
-                                totalAmount: order.total_amount.toString(),
-                                area: order.area_name,
-                                phoneNumber: order.phone_number
+                                order: JSON.stringify({
+                                    id: order.id,
+                                    phone_number: order.phone_number,
+                                    customer_name: order.customer_name,
+                                    area_name: order.area_name,
+                                    street_name: order.street_name,
+                                    building_number: order.building_number,
+                                    additional_notes: order.additional_notes,
+                                    delivery_agent_name: order.delivery_agent_name,
+                                    payment_method: order.payment_method,
+                                    status: order.status,
+                                    total_amount: order.total_amount,
+                                    items: order.items,
+                                    createdAt: order.createdAt.toISOString(),
+                                    updatedAt: order.updatedAt.toISOString()
+                                })
                             }
                         });
                         console.log(`✅ Push notification sent to default admin: ${defaultAdminEmail}`);
@@ -105,8 +118,7 @@ export class NotificationService implements INotificationService {
         if (this.io) {
             try {
                 this.io.to(`user_${phoneNumber}`).emit('order_status_changed', {
-                    orderId: order.id,
-                    status: order.status,
+                    order: order,
                     message: `Your order #${order.id.substring(0, 8)} status has been updated to ${order.status}`
                 });
                 console.log(`📡 Socket.IO notification sent to user ${phoneNumber} for order: ${order.id}`);
@@ -134,8 +146,22 @@ export class NotificationService implements INotificationService {
                     body: statusMessages[order.status] || `تم تحديث حالة طلبك إلى ${order.status}`,
                     data: {
                         type: 'order_status_changed',
-                        orderId: order.id,
-                        status: order.status
+                        order: JSON.stringify({
+                            id: order.id,
+                            phone_number: order.phone_number,
+                            customer_name: order.customer_name,
+                            area_name: order.area_name,
+                            street_name: order.street_name,
+                            building_number: order.building_number,
+                            additional_notes: order.additional_notes,
+                            delivery_agent_name: order.delivery_agent_name,
+                            payment_method: order.payment_method,
+                            status: order.status,
+                            total_amount: order.total_amount,
+                            items: order.items,
+                            createdAt: order.createdAt.toISOString(),
+                            updatedAt: order.updatedAt.toISOString()
+                        })
                     }
                 });
             } catch (error) {
