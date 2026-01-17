@@ -29,7 +29,13 @@ export class UpdateOrderStatusUseCase {
         }
 
         // Update order status
-        const updatedOrder = await this.orderRepository.updateStatus(orderId, status);
+        await this.orderRepository.updateStatus(orderId, status);
+
+        // Fetch the updated order with product details populated
+        const updatedOrder = await this.orderRepository.findById(orderId);
+        if (!updatedOrder) {
+            throw new Error('Order not found after status update');
+        }
 
         // Notify user about status change (fire and forget - don't await to avoid blocking)
         console.log(`🚀 Triggering notifications for order ${updatedOrder.id} status change to ${updatedOrder.status}`);
