@@ -135,12 +135,18 @@ export class CreateOrderUseCase {
             orderItems
         );
 
+        // Fetch the order with product details populated
+        const orderWithDetails = await this.orderRepository.findById(order.id);
+        if (!orderWithDetails) {
+            throw new Error('Failed to retrieve created order');
+        }
+
         // Notify admin about new order
-        console.log(`🚀 Triggering admin notification for new order: ${order.id}`);
+        console.log(`🚀 Triggering admin notification for new order: ${orderWithDetails.id}`);
 
         // Send notification to default admin email (configured in .env)
         // If you have multiple admins, you can pass specific email array here
-        await this.notificationService.notifyAdminNewOrder(order);
+        await this.notificationService.notifyAdminNewOrder(orderWithDetails);
 
         return order;
     }
