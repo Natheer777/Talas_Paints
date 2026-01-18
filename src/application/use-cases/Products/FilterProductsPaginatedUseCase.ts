@@ -6,6 +6,7 @@ export interface FilterProductsPaginatedDTO {
     minPrice?: number;
     maxPrice?: number;
     onlyVisible?: boolean;
+    sortOrder?: 'asc' | 'desc' | 'random';
     page?: number;
     limit?: number;
 }
@@ -14,7 +15,7 @@ export class FilterProductsPaginatedUseCase {
     constructor(private productsRepository: IProductsRepository) { }
 
     async execute(data: FilterProductsPaginatedDTO): Promise<PaginatedResult<Product>> {
-        const { categories, minPrice, maxPrice, onlyVisible, page, limit } = data;
+        const { categories, minPrice, maxPrice, onlyVisible, sortOrder, page, limit } = data;
 
         // Validate price range
         if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
@@ -25,7 +26,8 @@ export class FilterProductsPaginatedUseCase {
             categories,
             minPrice,
             maxPrice,
-            onlyVisible
+            onlyVisible,
+            sortOrder
         };
 
         const pageNum = Math.max(1, page || 1);

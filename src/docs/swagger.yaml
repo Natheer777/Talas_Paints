@@ -1021,6 +1021,17 @@ paths:
             minimum: 1
             maximum: 1000
             example: 10
+        - name: sortOrder
+          in: query
+          required: false
+          description: 'Sort order for the results. ''asc'' for ascending price, ''desc'' for descending price, ''random'' for random order (default).'
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+              - random
+          example: random
       responses:
         '200':
           description: Filtered products retrieved successfully

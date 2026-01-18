@@ -5,8 +5,7 @@ export interface ProductFilterOptions {
     minPrice?: number;
     maxPrice?: number;
     onlyVisible?: boolean;
-
-
+    sortOrder?: 'asc' | 'desc' | 'random';
 }
 
 export interface PaginationOptions {
