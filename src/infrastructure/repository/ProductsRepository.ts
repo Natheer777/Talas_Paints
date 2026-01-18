@@ -207,15 +207,15 @@ export class ProductsRepository implements IProductsRepository {
             }
         }
 
-        // Internal smart sorting: price ASC if price filter is applied, otherwise createdAt DESC
-        const isPriceFilterApplied = options.minPrice !== undefined || options.maxPrice !== undefined;
-        const sortBy = isPriceFilterApplied ? 'price' : 'createdAt';
-        const sortOrder = isPriceFilterApplied ? 'ASC' : 'DESC';
+        // Handle sorting based on sortOrder parameter
+        const sortOrder = options.sortOrder || 'random';
 
-        if (sortBy === 'price') {
-            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ${sortOrder}`;
-        } else {
-            query += ` ORDER BY created_at ${sortOrder}`;
+        if (sortOrder === 'random') {
+            query += ` ORDER BY RANDOM()`;
+        } else if (sortOrder === 'asc') {
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+        } else if (sortOrder === 'desc') {
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
 
         const result = await this.db.query(query, values);
@@ -289,16 +289,15 @@ export class ProductsRepository implements IProductsRepository {
         const countResult = await this.db.query(countQuery, values);
         const total = parseInt(countResult.rows[0].total);
 
-        // Add pagination to data query
-        // Internal smart sorting: price ASC if price filter is applied, otherwise createdAt DESC
-        const isPriceFilterApplied = filterOptions.minPrice !== undefined || filterOptions.maxPrice !== undefined;
-        const sortBy = isPriceFilterApplied ? 'price' : 'createdAt';
-        const sortOrder = isPriceFilterApplied ? 'ASC' : 'DESC';
+        // Add pagination to data query with sorting
+        const sortOrder = filterOptions.sortOrder || 'random';
 
-        if (sortBy === 'price') {
-            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ${sortOrder}`;
-        } else {
-            dataQuery += ` ORDER BY created_at ${sortOrder}`;
+        if (sortOrder === 'random') {
+            dataQuery += ` ORDER BY RANDOM()`;
+        } else if (sortOrder === 'asc') {
+            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+        } else if (sortOrder === 'desc') {
+            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
         dataQuery += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
         values.push(limit, offset);
