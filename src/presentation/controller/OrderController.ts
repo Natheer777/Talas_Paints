@@ -183,18 +183,21 @@ export class OrderController {
 
     async getOrdersForAdmin(req: Request, res: Response) {
         try {
+            const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
             const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-            const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
 
-            const result = await this.getOrdersForAdminUseCase.execute({ limit, offset });
+            const result = await this.getOrdersForAdminUseCase.execute({ page, limit });
 
             return res.status(200).json({
                 success: true,
                 data: result.orders,
                 pagination: {
                     total: result.total,
+                    page: page || 1,
                     limit: limit || result.total,
-                    offset: offset || 0
+                    totalPages: Math.ceil(result.total / (limit || result.total)),
+                    hasNextPage: page ? (page * (limit || result.total)) < result.total : false,
+                    hasPrevPage: page ? page > 1 : false
                 }
             });
         } catch (error: any) {

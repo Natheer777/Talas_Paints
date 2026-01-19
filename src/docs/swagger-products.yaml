@@ -527,7 +527,7 @@ paths:
         - name: sortOrder
           in: query
           required: false
-          description: Sort order for the results. 'asc' for ascending price, 'desc' for descending price, 'random' for random order (default).
+          description: Sort order for the results. 'asc' for ascending price range (smallest to largest price difference), 'desc' for descending price range (largest to smallest price difference), 'random' for random order (default).
           schema:
             type: string
             enum: ["asc", "desc", "random"]
