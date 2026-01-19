@@ -213,9 +213,9 @@ export class ProductsRepository implements IProductsRepository {
         if (sortOrder === 'random') {
             query += ` ORDER BY RANDOM()`;
         } else if (sortOrder === 'asc') {
-            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+            query += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
-            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+            query += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
 
         const result = await this.db.query(query, values);
@@ -295,9 +295,9 @@ export class ProductsRepository implements IProductsRepository {
         if (sortOrder === 'random') {
             dataQuery += ` ORDER BY RANDOM()`;
         } else if (sortOrder === 'asc') {
-            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+            dataQuery += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
-            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+            dataQuery += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
         dataQuery += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
         values.push(limit, offset);
