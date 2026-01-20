@@ -8,6 +8,7 @@ import {
     GetAllOffersWithDetailsPaginatedUseCase,
     GetVisibleOffersWithDetailsPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
+import Container from '../../infrastructure/di/container';
 
 
 export class OffersController {
@@ -183,7 +184,13 @@ export class OffersController {
     async getById(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const result = await this.getOfferByIdUseCase.execute(id);
+            // Use the repository directly to get offer with full details
+            const offerRepository = Container.getOfferRepository();
+            const result = await offerRepository.getByIdWithDetails(id);
+
+            if (!result) {
+                throw new Error('Offer not found');
+            }
 
             return res.status(200).json({
                 success: true,

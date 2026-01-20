@@ -325,27 +325,51 @@ export class OfferRepository implements IOfferRepository {
         const offer = this.mapToOffer(row);
 
         const parseArrayField = (field: any): any[] => {
-            if (!field) return [];
-            try {
-                return JSON.parse(field);
-            } catch {
-                if (typeof field === 'string' && field.includes(',')) {
-                    return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+            if (field === null || field === undefined) return [];
+
+            // If it's already an array, return it
+            if (Array.isArray(field)) return field;
+
+            // If it's a string, try to parse it
+            if (typeof field === 'string') {
+                try {
+                    const parsed = JSON.parse(field);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch {
+                    // If JSON parsing fails, try comma-separated values
+                    if (field.includes(',')) {
+                        return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                    }
+                    return field.trim() ? [field.trim()] : [];
                 }
-                return typeof field === 'string' && field.trim() ? [field.trim()] : [];
             }
+
+            // For any other type, return empty array
+            return [];
         };
 
         const parseImagesField = (field: any): any[] | null => {
-            if (!field) return null;
-            try {
-                return JSON.parse(field);
-            } catch {
-                if (typeof field === 'string' && field.includes(',')) {
-                    return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+            if (field === null || field === undefined) return null;
+
+            // If it's already an array, return it
+            if (Array.isArray(field)) return field;
+
+            // If it's a string, try to parse it
+            if (typeof field === 'string') {
+                try {
+                    const parsed = JSON.parse(field);
+                    return Array.isArray(parsed) ? parsed : null;
+                } catch {
+                    // If JSON parsing fails, try comma-separated values
+                    if (field.includes(',')) {
+                        return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                    }
+                    return field.trim() ? [field.trim()] : null;
                 }
-                return typeof field === 'string' && field.trim() ? [field.trim()] : null;
             }
+
+            // For any other type, return null
+            return null;
         };
 
         const product: Product = {

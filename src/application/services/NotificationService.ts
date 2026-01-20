@@ -135,7 +135,7 @@ export class NotificationService implements INotificationService {
                 const statusMessages: Record<OrderStatus, string> = {
                     [OrderStatus.PENDING]: 'تم استلام طلبك',
                     [OrderStatus.ACCEPTED]: 'تم قبول طلبك',
-                    [OrderStatus.ORDERED]: 'تم تأكيد طلبك',
+                    [OrderStatus.ORDERED]: 'تم توصيل طلبك',
                     [OrderStatus.REJECTED]: 'تم رفض طلبك',
                     [OrderStatus.IN_PROGRESS]: 'جاري معالجة طلبك'
                 };
