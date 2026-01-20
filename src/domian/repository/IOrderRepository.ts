@@ -1,7 +1,7 @@
 import { Order, OrderItem, OrderStatus } from '../entities/Order';
 
 export interface IOrderRepository {
-    create(order: Omit<Order, 'createdAt' | 'updatedAt' | 'items'>, items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]): Promise<Order>;
+    create(order: Omit<Order, 'createdAt' | 'updatedAt' | 'orderNumber' | 'items'>, items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]): Promise<Order>;
     findById(id: string): Promise<Order | null>;
     findByPhoneNumber(phoneNumber: string): Promise<Order[]>;
     findAll(limit?: number, offset?: number): Promise<Order[]>;
