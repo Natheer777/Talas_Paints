@@ -7,10 +7,12 @@ export class OrderRepository implements IOrderRepository {
     constructor(private readonly pool: Pool) { }
 
     async create(
-        order: Omit<Order, 'createdAt' | 'updatedAt' | 'items'>,
+        order: Omit<Order, 'createdAt' | 'updatedAt' | 'orderNumber' | 'items'>,
         items: Omit<OrderItem, 'id' | 'order_id' | 'createdAt' | 'updatedAt'>[]
     ): Promise<Order> {
+        // Get the current timestamp from database for consistency
         const now = new Date();
+
         const preparedItems = items.map((item: any) => ({
             id: uuidv4(),
             order_id: order.id,
@@ -26,10 +28,10 @@ export class OrderRepository implements IOrderRepository {
         const query = `
             INSERT INTO orders (
                 id, phone_number, customer_name, area_name, street_name,
-                building_number, additional_notes, delivery_agent_name, 
+                building_number, additional_notes, delivery_agent_name,
                 payment_method, status, total_amount, items, created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13)
             RETURNING *
         `;
 
@@ -45,7 +47,8 @@ export class OrderRepository implements IOrderRepository {
             order.payment_method,
             order.status,
             order.total_amount,
-            JSON.stringify(preparedItems)
+            JSON.stringify(preparedItems),
+            now  // Use the same timestamp for both created_at and updated_at
         ];
 
         const result = await this.pool.query(query, values);
@@ -287,6 +290,7 @@ export class OrderRepository implements IOrderRepository {
             payment_method: row.payment_method,
             status: row.status as OrderStatus,
             total_amount: parseFloat(row.total_amount),
+            orderNumber: row.order_number,
             items: this.mapJsonbToOrderItems(row.items),
             createdAt: row.created_at,
             updatedAt: row.updated_at

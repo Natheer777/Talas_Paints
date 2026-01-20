@@ -38,6 +38,7 @@ export interface Order {
     payment_method: PaymentMethodType;
     status: OrderStatus;
     total_amount: number;
+    orderNumber: number;
     items: OrderItem[];
     createdAt: Date;
     updatedAt: Date;
