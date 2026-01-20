@@ -82,7 +82,7 @@ export class OrderController {
                 }
 
                 if (productIds.length !== quantities.length) {
-                    throw new Error('productId and quantity arrays must have the same length');
+                    throw new Error('يجب أن تكون مصفوفات معرف المنتج والكمية بنفس الطول');
                 }
 
                 orderItems = productIds.map((pid: string, index: number) => ({
@@ -93,7 +93,7 @@ export class OrderController {
                     price: prices ? parseFloat(prices[index]) : undefined
                 }));
             } else {
-                throw new Error('Either items array or productId/quantity must be provided');
+                throw new Error('يجب توفير إما مصفوفة العناصر أو معرف المنتج والكمية');
             }
 
             const result = await this.createOrderUseCase.execute({
@@ -111,13 +111,13 @@ export class OrderController {
             return res.status(201).json({
                 success: true,
                 data: result,
-                message: "Order created successfully",
+                message: "تم إنشاء الطلب بنجاح",
             });
         } catch (error: any) {
-            console.error('Create Order Error:', error);
+            console.error('خطأ في إنشاء الطلب:', error);
             return res.status(400).json({
                 success: false,
-                message: error.message || "Could not create order",
+                message: error.message || "لا يمكن إنشاء الطلب",
             });
         }
     }
@@ -135,7 +135,7 @@ export class OrderController {
         } catch (error: any) {
             return res.status(404).json({
                 success: false,
-                message: error.message || "Order not found",
+                message: error.message || "الطلب غير موجود",
             });
         }
     }
@@ -153,7 +153,7 @@ export class OrderController {
         } catch (error: any) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Could not retrieve orders",
+                message: error.message || "لا يمكن استرجاع الطلبات",
             });
         }
     }
@@ -171,12 +171,12 @@ export class OrderController {
             return res.status(200).json({
                 success: true,
                 data: result,
-                message: "Order status updated successfully",
+                message: "تم تحديث حالة الطلب بنجاح",
             });
         } catch (error: any) {
             return res.status(400).json({
                 success: false,
-                message: error.message || "Could not update order status",
+                message: error.message || "لا يمكن تحديث حالة الطلب",
             });
         }
     }
@@ -203,7 +203,7 @@ export class OrderController {
         } catch (error: any) {
             return res.status(500).json({
                 success: false,
-                message: error.message || "Could not retrieve orders",
+                message: error.message || "لا يمكن استرجاع الطلبات",
             });
         }
     }
@@ -216,12 +216,12 @@ export class OrderController {
 
             return res.status(200).json({
                 success: true,
-                message: "Order deleted successfully",
+                message: "تم حذف الطلب بنجاح",
             });
         } catch (error: any) {
             return res.status(400).json({
                 success: false,
-                message: error.message || "Could not delete order",
+                message: error.message || "لا يمكن حذف الطلب",
             });
         }
     }
