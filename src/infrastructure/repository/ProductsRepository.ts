@@ -439,14 +439,62 @@ export class ProductsRepository implements IProductsRepository {
     }
 
     private mapToProduct(row: any): Product {
+        const parseArrayField = (field: any): any[] => {
+            if (field === null || field === undefined) return [];
+
+            // If it's already an array, return it
+            if (Array.isArray(field)) return field;
+
+            // If it's a string, try to parse it
+            if (typeof field === 'string') {
+                try {
+                    const parsed = JSON.parse(field);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch {
+                    // If JSON parsing fails, try comma-separated values
+                    if (field.includes(',')) {
+                        return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                    }
+                    return field.trim() ? [field.trim()] : [];
+                }
+            }
+
+            // For any other type, return empty array
+            return [];
+        };
+
+        const parseImagesField = (field: any): any[] | null => {
+            if (field === null || field === undefined) return null;
+
+            // If it's already an array, return it
+            if (Array.isArray(field)) return field;
+
+            // If it's a string, try to parse it
+            if (typeof field === 'string') {
+                try {
+                    const parsed = JSON.parse(field);
+                    return Array.isArray(parsed) ? parsed : null;
+                } catch {
+                    // If JSON parsing fails, try comma-separated values
+                    if (field.includes(',')) {
+                        return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+                    }
+                    return field.trim() ? [field.trim()] : null;
+                }
+            }
+
+            // For any other type, return null
+            return null;
+        };
+
         return {
             id: row.id,
             name: row.name,
             description: row.description,
-            colors: row.colors || undefined,
-            sizes: row.sizes || [],
+            colors: parseArrayField(row.colors),
+            sizes: parseArrayField(row.sizes),
             status: row.status,
-            images: row.images || null,
+            images: parseImagesField(row.images),
             category_id: row.category_id,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)

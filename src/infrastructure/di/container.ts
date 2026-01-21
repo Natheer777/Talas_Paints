@@ -530,6 +530,10 @@ class Container {
     static getAuthService(): AuthenticationService {
         return Container.authService;
     }
+
+    static getOfferRepository(): OfferRepository {
+        return Container.offerRepository;
+    }
 }
 
 export default Container;

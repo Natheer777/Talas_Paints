@@ -149,6 +149,6 @@ export class CreateOrderUseCase {
         // If you have multiple admins, you can pass specific email array here
         await this.notificationService.notifyAdminNewOrder(orderWithDetails);
 
-        return order;
+        return orderWithDetails;
     }
 }
