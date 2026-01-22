@@ -1,5 +1,5 @@
 import { Offer, OfferStatus } from '@/domian/entities/Offer';
-import { OfferWithDetails } from '@/domian/entities/OfferWithDetails';
+import { OfferWithDetails, ProductWithCategory } from '@/domian/entities/OfferWithDetails';
 import { Product, ProductStatus } from '@/domian/entities/Products';
 import { Category } from '@/domian/entities/Category';
 import { IOfferRepository, PaginationOptions, PaginatedResult } from '@/domian/repository/IOfferRepository';
@@ -372,19 +372,6 @@ export class OfferRepository implements IOfferRepository {
             return null;
         };
 
-        const product: Product = {
-            id: row.product_id,
-            name: row.product_name,
-            description: row.product_description,
-            category_id: row.product_category_id,
-            colors: parseArrayField(row.product_colors),
-            sizes: parseArrayField(row.product_sizes),
-            status: row.product_status as ProductStatus,
-            images: parseImagesField(row.product_images),
-            createdAt: new Date(row.product_created_at),
-            updatedAt: new Date(row.product_updated_at)
-        };
-
         const category: Category = {
             id: row.category_id,
             name: row.category_name,
@@ -393,10 +380,22 @@ export class OfferRepository implements IOfferRepository {
             updatedAt: new Date(row.category_updated_at)
         };
 
+        const product: ProductWithCategory = {
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            colors: parseArrayField(row.product_colors),
+            sizes: parseArrayField(row.product_sizes),
+            status: row.product_status as ProductStatus,
+            images: parseImagesField(row.product_images),
+            createdAt: new Date(row.product_created_at),
+            updatedAt: new Date(row.product_updated_at),
+            category
+        };
+
         return {
             ...offer,
-            product,
-            category
+            product
         };
     }
 }
