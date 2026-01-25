@@ -15,6 +15,7 @@ export interface OrderItem {
     id: string;
     order_id: string;
     product_id: string;
+    offer_id?: string | null;
     quantity: number;
     price: number;
     color?: string;

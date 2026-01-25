@@ -17,6 +17,7 @@ export class OrderRepository implements IOrderRepository {
             id: uuidv4(),
             order_id: order.id,
             product_id: item.product_id || item.productId,
+            offer_id: item.offer_id || item.offerId || null,
             quantity: item.quantity,
             price: item.price,
             color: item.color,
@@ -90,8 +91,11 @@ export class OrderRepository implements IOrderRepository {
                             'offer', (
                                 SELECT row_to_json(off) 
                                 FROM offers off 
-                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
-                                AND off.status = 'VISIBLE' 
+                                WHERE (
+                                    (item->>'offer_id' IS NOT NULL AND off.id::text = item->>'offer_id')
+                                    OR 
+                                    (item->>'offer_id' IS NULL AND off.product_id::text = COALESCE(item->>'product_id', item->>'productId') AND off.status = 'VISIBLE')
+                                )
                                 LIMIT 1
                             )
                         )
@@ -150,8 +154,11 @@ export class OrderRepository implements IOrderRepository {
                             'offer', (
                                 SELECT row_to_json(off) 
                                 FROM offers off 
-                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
-                                AND off.status = 'VISIBLE' 
+                                WHERE (
+                                    (item->>'offer_id' IS NOT NULL AND off.id::text = item->>'offer_id')
+                                    OR 
+                                    (item->>'offer_id' IS NULL AND off.product_id::text = COALESCE(item->>'product_id', item->>'productId') AND off.status = 'VISIBLE')
+                                )
                                 LIMIT 1
                             )
                         )
@@ -206,8 +213,11 @@ export class OrderRepository implements IOrderRepository {
                             'offer', (
                                 SELECT row_to_json(off) 
                                 FROM offers off 
-                                WHERE off.product_id::text = COALESCE(item->>'product_id', item->>'productId')
-                                AND off.status = 'VISIBLE' 
+                                WHERE (
+                                    (item->>'offer_id' IS NOT NULL AND off.id::text = item->>'offer_id')
+                                    OR 
+                                    (item->>'offer_id' IS NULL AND off.product_id::text = COALESCE(item->>'product_id', item->>'productId') AND off.status = 'VISIBLE')
+                                )
                                 LIMIT 1
                             )
                         )
@@ -303,20 +313,38 @@ export class OrderRepository implements IOrderRepository {
             return [];
         }
 
-        return jsonbItems.map(item => ({
-            id: item.id,
-            order_id: item.order_id,
-            product_id: item.product_id || item.productId,
-            quantity: item.quantity,
-            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-            color: item.color,
-            size: item.size,
-            product: item.product || undefined,
-            category: item.category || undefined,
-            offer: item.offer || undefined,
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt)
-        }));
+        return jsonbItems.map(item => {
+            // Create a shallow copy of the product to avoid mutating the original if it's cached
+            const product = item.product ? { ...item.product } : undefined;
+
+            // Filter colors and sizes to only show the selected ones in the response
+            if (product) {
+                if (item.color && Array.isArray(product.colors)) {
+                    product.colors = product.colors.filter((c: string) => c === item.color);
+                    // If for some reason the selected color isn't in the list, keep it as the only option
+                    if (product.colors.length === 0) product.colors = [item.color];
+                }
+                if (item.size && Array.isArray(product.sizes)) {
+                    product.sizes = product.sizes.filter((s: any) => s.size === item.size);
+                }
+            }
+
+            return {
+                id: item.id,
+                order_id: item.order_id,
+                product_id: item.product_id || item.productId,
+                offer_id: item.offer_id || item.offerId || null,
+                quantity: item.quantity,
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                color: item.color,
+                size: item.size,
+                product: product,
+                category: item.category || undefined,
+                offer: item.offer || undefined,
+                createdAt: new Date(item.createdAt),
+                updatedAt: new Date(item.updatedAt)
+            };
+        });
     }
 }
 

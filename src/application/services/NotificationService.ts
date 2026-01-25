@@ -66,6 +66,7 @@ export class NotificationService implements INotificationService {
                                         payment_method: order.payment_method,
                                         status: order.status,
                                         total_amount: order.total_amount,
+                                        order_number: order.orderNumber,
                                         items: order.items,
                                         createdAt: order.createdAt.toISOString(),
                                         updatedAt: order.updatedAt.toISOString()
@@ -100,6 +101,7 @@ export class NotificationService implements INotificationService {
                                     payment_method: order.payment_method,
                                     status: order.status,
                                     total_amount: order.total_amount,
+                                    order_number: order.orderNumber,
                                     items: order.items,
                                     createdAt: order.createdAt.toISOString(),
                                     updatedAt: order.updatedAt.toISOString()
@@ -127,7 +129,7 @@ export class NotificationService implements INotificationService {
             try {
                 this.io.to(`user_${phoneNumber}`).emit('order_status_changed', {
                     order: order,
-                    message: `Your order #${order.id.substring(0, 8)} status has been updated to ${order.status}`
+                    message: `Your order #${order.orderNumber} status has been updated to ${order.status}`
                 });
                 console.log(`📡 Socket.IO notification sent to user ${phoneNumber} for order: ${order.id}`);
             } catch (error) {
@@ -166,6 +168,7 @@ export class NotificationService implements INotificationService {
                             payment_method: order.payment_method,
                             status: order.status,
                             total_amount: order.total_amount,
+                            order_number: order.orderNumber,
                             items: order.items,
                             createdAt: order.createdAt.toISOString(),
                             updatedAt: order.updatedAt.toISOString()

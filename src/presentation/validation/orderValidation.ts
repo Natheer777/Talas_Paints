@@ -93,12 +93,31 @@ export const validateCreateOrder: ValidationChain[] = [
         .optional()
         .isUUID()
         .withMessage('Each productId must be a valid UUID'),
+    body('offerId')
+        .optional()
+        .custom((value, { req }) => {
+            // If offerId is provided, quantity must also be provided
+            if (value && !req.body.quantity) {
+                throw new Error('quantity is required when offerId is provided');
+            }
+            // If both are arrays, they must have same length
+            if (Array.isArray(value) && Array.isArray(req.body.quantity)) {
+                if (value.length !== req.body.quantity.length) {
+                    throw new Error('offerId and quantity arrays must have the same length');
+                }
+            }
+            return true;
+        }),
+    body('offerId.*')
+        .optional()
+        .isUUID()
+        .withMessage('Each offerId must be a valid UUID'),
     body('quantity')
         .optional()
         .custom((value, { req }) => {
-            // If quantity is provided, productId must also be provided
-            if (value && !req.body.productId) {
-                throw new Error('productId is required when quantity is provided');
+            // If quantity is provided, either productId or offerId must also be provided
+            if (value && !req.body.productId && !req.body.offerId) {
+                throw new Error('productId or offerId is required when quantity is provided');
             }
             return true;
         }),
@@ -135,9 +154,10 @@ export const validateCreateOrder: ValidationChain[] = [
         .custom((value) => {
             const hasItems = value.items && Array.isArray(value.items) && value.items.length > 0;
             const hasProductIdQuantity = value.productId && value.quantity;
+            const hasOfferIdQuantity = value.offerId && value.quantity;
 
-            if (!hasItems && !hasProductIdQuantity) {
-                throw new Error('Either items array or productId/quantity must be provided');
+            if (!hasItems && !hasProductIdQuantity && !hasOfferIdQuantity) {
+                throw new Error('Either items array, productId/quantity, or offerId/quantity must be provided');
             }
             return true;
         })

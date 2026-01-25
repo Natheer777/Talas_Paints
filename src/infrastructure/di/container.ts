@@ -436,7 +436,8 @@ class Container {
                     Container.orderRepository,
                     Container.productsRepository,
                     Container.getNotificationService(),
-                    Container.adminRepository
+                    Container.adminRepository,
+                    Container.offerRepository
                 );
             }
             if (!Container.updateOrderStatusUseCase) {
@@ -465,7 +466,8 @@ class Container {
             Container.orderRepository,
             Container.productsRepository,
             Container.getNotificationService(),
-            Container.adminRepository
+            Container.adminRepository,
+            Container.offerRepository
         );
         Container.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
             Container.orderRepository,

@@ -3445,6 +3445,11 @@ components:
           format: uuid
           description: Product identifier
           example: 550e8400-e29b-41d4-a716-446655440000
+        offer_id:
+          type: string
+          format: uuid
+          description: Offer identifier (optional)
+          example: 550e8400-e29b-41d4-a716-446655440001
         quantity:
           type: integer
           minimum: 1
@@ -3576,6 +3581,14 @@ components:
           description: |
             List of Product UUIDs.
             Example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
+        offerId:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: |
+            List of Offer UUIDs (optional).
+            Example: ["550e8400-e29b-41d4-a716-446655440002", null]
         quantity:
           type: array
           items:
