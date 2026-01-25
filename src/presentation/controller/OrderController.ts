@@ -30,6 +30,7 @@ export class OrderController {
                 deliveryAgentName,
                 paymentMethod,
                 productId,
+                offerId,
                 quantity,
                 color,
                 size,
@@ -42,9 +43,10 @@ export class OrderController {
             if (items && Array.isArray(items)) {
                 // If items is already an array (from JSON or parsed form data)
                 orderItems = items;
-            } else if (productId && quantity) {
+            } else if ((productId || offerId) && quantity) {
                 // Convert productId and quantity arrays/values to items array
                 let productIds = productId;
+                let offerIds = offerId;
                 let quantities = quantity;
                 let colors = color;
                 let sizes = size;
@@ -53,6 +55,9 @@ export class OrderController {
                 // Handle comma-separated strings
                 if (typeof productIds === 'string' && productIds.includes(',')) {
                     productIds = productIds.split(',').map((id: string) => id.trim());
+                }
+                if (typeof offerIds === 'string' && offerIds.includes(',')) {
+                    offerIds = offerIds.split(',').map((id: string) => id.trim());
                 }
                 if (typeof quantities === 'string' && quantities.includes(',')) {
                     quantities = quantities.split(',').map((q: string) => q.trim());
@@ -67,7 +72,8 @@ export class OrderController {
                     prices = prices.split(',').map((p: string) => p.trim());
                 }
 
-                productIds = Array.isArray(productIds) ? productIds : [productIds];
+                productIds = productIds ? (Array.isArray(productIds) ? productIds : [productIds]) : [];
+                offerIds = offerIds ? (Array.isArray(offerIds) ? offerIds : [offerIds]) : [];
                 quantities = Array.isArray(quantities) ? quantities : [quantities];
 
                 // Ensure colors, sizes and prices are arrays if they exist
@@ -81,19 +87,16 @@ export class OrderController {
                     prices = Array.isArray(prices) ? prices : [prices];
                 }
 
-                if (productIds.length !== quantities.length) {
-                    throw new Error('يجب أن تكون مصفوفات معرف المنتج والكمية بنفس الطول');
-                }
-
-                orderItems = productIds.map((pid: string, index: number) => ({
-                    productId: pid,
-                    quantity: parseInt(quantities[index], 10),
+                orderItems = quantities.map((q: string, index: number) => ({
+                    productId: (productIds[index] && productIds[index].trim() !== '') ? productIds[index] : undefined,
+                    offerId: (offerIds[index] && offerIds[index].trim() !== '') ? offerIds[index] : undefined,
+                    quantity: parseInt(q, 10),
                     color: colors ? colors[index] : undefined,
                     size: sizes ? sizes[index] : undefined,
                     price: prices ? parseFloat(prices[index]) : undefined
                 }));
             } else {
-                throw new Error('يجب توفير إما مصفوفة العناصر أو معرف المنتج والكمية');
+                throw new Error('يجب توفير إما مصفوفة العناصر أو (معرف المنتج/العرض) والكمية');
             }
 
             const { order, hasFcmToken } = await this.createOrderUseCase.execute({
