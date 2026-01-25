@@ -1,5 +1,6 @@
 import { IOrderRepository } from '@/domian/repository/IOrderRepository';
 import { IProductsRepository } from '@/domian/repository/IProductsRepository';
+import { IAdminRepository } from '@/domian/repository/IAdminRepository';
 import { Order, OrderStatus, PaymentMethodType } from '@/domian/entities/Order';
 import { INotificationService } from '@/application/services/NotificationService';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,7 +29,8 @@ export class CreateOrderUseCase {
     constructor(
         private orderRepository: IOrderRepository,
         private productsRepository: IProductsRepository,
-        private notificationService: INotificationService
+        private notificationService: INotificationService,
+        private adminRepository: IAdminRepository
     ) { }
 
     async execute(dto: CreateOrderDTO): Promise<{ order: Order; hasFcmToken: boolean }> {
@@ -148,9 +150,14 @@ export class CreateOrderUseCase {
         // Notify admin about new order
         console.log(`🚀 Triggering admin notification for new order: ${orderWithDetails.id}`);
 
-        // Send notification to default admin email (configured in .env)
-        // If you have multiple admins, you can pass specific email array here
-        await this.notificationService.notifyAdminNewOrder(orderWithDetails);
+        // Fetch all admin emails to send notifications to all of them
+        const admins = await this.adminRepository.findAll();
+        const adminEmails = admins.map(admin => admin.email);
+
+        console.log(`📱 Sending notifications to ${adminEmails.length} admin(s): ${adminEmails.join(', ')}`);
+
+        // Send notification to all admin emails
+        await this.notificationService.notifyAdminNewOrder(orderWithDetails, adminEmails);
 
         return { order: orderWithDetails, hasFcmToken };
     }
