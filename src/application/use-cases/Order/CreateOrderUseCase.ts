@@ -31,7 +31,7 @@ export class CreateOrderUseCase {
         private notificationService: INotificationService
     ) { }
 
-    async execute(dto: CreateOrderDTO): Promise<Order> {
+    async execute(dto: CreateOrderDTO): Promise<{ order: Order; hasFcmToken: boolean }> {
         const {
             phoneNumber,
             customerName,
@@ -142,6 +142,9 @@ export class CreateOrderUseCase {
             throw new Error('Failed to retrieve created order');
         }
 
+        // Check if user has FCM token
+        const hasFcmToken = await this.notificationService.hasFcmToken(phoneNumber);
+
         // Notify admin about new order
         console.log(`🚀 Triggering admin notification for new order: ${orderWithDetails.id}`);
 
@@ -149,6 +152,6 @@ export class CreateOrderUseCase {
         // If you have multiple admins, you can pass specific email array here
         await this.notificationService.notifyAdminNewOrder(orderWithDetails);
 
-        return orderWithDetails;
+        return { order: orderWithDetails, hasFcmToken };
     }
 }

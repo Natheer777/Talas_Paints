@@ -96,7 +96,7 @@ export class OrderController {
                 throw new Error('يجب توفير إما مصفوفة العناصر أو معرف المنتج والكمية');
             }
 
-            const result = await this.createOrderUseCase.execute({
+            const { order, hasFcmToken } = await this.createOrderUseCase.execute({
                 phoneNumber,
                 customerName,
                 areaName,
@@ -110,7 +110,10 @@ export class OrderController {
 
             return res.status(201).json({
                 success: true,
-                data: result,
+                data: {
+                    ...order,
+                    hasFcmToken
+                },
                 message: "تم إنشاء الطلب بنجاح",
             });
         } catch (error: any) {

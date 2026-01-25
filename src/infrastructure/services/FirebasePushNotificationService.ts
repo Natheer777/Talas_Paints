@@ -24,7 +24,7 @@ export class FirebasePushNotificationService {
             }
 
             const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-            
+
             // Option 2: Using service account JSON file path
             const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
@@ -73,7 +73,7 @@ export class FirebasePushNotificationService {
             console.error('❌ Failed to initialize Firebase Admin SDK:', error);
             console.warn('⚠️  Push notifications will be disabled');
         }
-    } 
+    }
 
     async sendToPhoneNumber(
         phoneNumber: string,
@@ -254,6 +254,16 @@ export class FirebasePushNotificationService {
 
     isInitialized(): boolean {
         return this.app !== null;
+    }
+
+    async hasToken(phoneNumber: string): Promise<boolean> {
+        try {
+            const tokens = await this.fcmTokenRepository.findByPhoneNumber(phoneNumber);
+            return tokens.length > 0;
+        } catch (error) {
+            console.error(`Error checking FCM token for ${phoneNumber}:`, error);
+            return false;
+        }
     }
 }
 
