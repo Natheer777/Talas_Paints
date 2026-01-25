@@ -16,6 +16,12 @@ export class AdminRepository implements IAdminRepository {
         return this.mapToAdmin(result.rows[0]);
     }
 
+    async findAll(): Promise<Admin[]> {
+        const query = `SELECT * FROM admins`;
+        const result = await this.db.query(query);
+        return result.rows.map(row => this.mapToAdmin(row));
+    }
+
     async create(admin: Omit<Admin, 'id'>): Promise<Admin> {
         const query = `
             INSERT INTO admins (email, password, created_at, updated_at)

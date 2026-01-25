@@ -435,7 +435,8 @@ class Container {
                 Container.createOrderUseCase = new CreateOrderUseCase(
                     Container.orderRepository,
                     Container.productsRepository,
-                    Container.getNotificationService()
+                    Container.getNotificationService(),
+                    Container.adminRepository
                 );
             }
             if (!Container.updateOrderStatusUseCase) {
@@ -463,7 +464,8 @@ class Container {
         Container.createOrderUseCase = new CreateOrderUseCase(
             Container.orderRepository,
             Container.productsRepository,
-            Container.getNotificationService()
+            Container.getNotificationService(),
+            Container.adminRepository
         );
         Container.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
             Container.orderRepository,
