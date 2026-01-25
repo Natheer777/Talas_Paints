@@ -5,6 +5,7 @@ import { FirebasePushNotificationService } from '@/infrastructure/services/Fireb
 export interface INotificationService {
     notifyAdminNewOrder(order: Order, adminEmails?: string[]): Promise<void>;
     notifyUserOrderStatusChange(phoneNumber: string, order: Order): Promise<void>;
+    hasFcmToken(phoneNumber: string): Promise<boolean>;
 }
 
 export class NotificationService implements INotificationService {
@@ -12,6 +13,13 @@ export class NotificationService implements INotificationService {
         private io: SocketIOServer | null,
         private firebasePushService?: FirebasePushNotificationService
     ) { }
+
+    async hasFcmToken(phoneNumber: string): Promise<boolean> {
+        if (!this.firebasePushService) {
+            return false;
+        }
+        return this.firebasePushService.hasToken(phoneNumber);
+    }
 
     async notifyAdminNewOrder(order: Order, adminEmails?: string[]): Promise<void> {
         console.log(`🔔 Sending admin notification for new order: ${order.id}`);

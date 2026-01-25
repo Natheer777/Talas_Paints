@@ -27,7 +27,7 @@ export class SecurityService {
         return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
     }
 
-    public verifyTimestamp(timestamp: string, toleranceSeconds: number = 300): boolean {
+    public verifyTimestamp(timestamp: string, toleranceSeconds: number = 30000): boolean {
         const reqTimestamp = parseInt(timestamp, 10);
         const now = Date.now();
 
