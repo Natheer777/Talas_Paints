@@ -303,6 +303,21 @@ export class OfferRepository implements IOfferRepository {
         };
     }
 
+    async findActiveByProductId(productId: string): Promise<Offer | null> {
+        const query = `
+            SELECT * FROM offers 
+            WHERE product_id = $1 AND status = 'VISIBLE' 
+            LIMIT 1
+        `;
+        const result = await this.db.query(query, [productId]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return this.mapToOffer(result.rows[0]);
+    }
+
 
     private mapToOffer(row: any): Offer {
         return {

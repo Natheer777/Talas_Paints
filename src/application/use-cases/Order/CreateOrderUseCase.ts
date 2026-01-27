@@ -67,7 +67,7 @@ export class CreateOrderUseCase {
             let appliedOfferId = null;
             let offer = null;
 
-            // Handle offer if provided
+            // Handle offer if provided, or auto-discover active offer
             if (item.offerId) {
                 offer = await this.offerRepository.getById(item.offerId);
                 if (!offer) {
@@ -85,6 +85,13 @@ export class CreateOrderUseCase {
                     currentProductId = offer.product_id;
                 } else if (offer.product_id !== currentProductId) {
                     throw new Error(`Offer ${offer.name} is not valid for the specified product`);
+                }
+            } else if (currentProductId) {
+                // Auto-discover active offer for this product if none specified
+                offer = await this.offerRepository.findActiveByProductId(currentProductId);
+                if (offer) {
+                    appliedOfferId = offer.id;
+                    console.log(`💡 Automatically applied offer '${offer.name}' to product ${currentProductId}`);
                 }
             }
 
@@ -107,42 +114,56 @@ export class CreateOrderUseCase {
                 throw new Error(`Color ${item.color} is not available for product ${product.name}`);
             }
 
-            // Get base price from size if provided, otherwise use first size price
+            // Get base price from size
             let basePrice = 0;
-            if (item.size && product.sizes && Array.isArray(product.sizes)) {
-                const sizeInfo = product.sizes.find(s => typeof s === 'object' && s.size === item.size);
-                if (sizeInfo && typeof sizeInfo === 'object' && 'price' in sizeInfo) {
-                    basePrice = sizeInfo.price;
+            const hasSizes = product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0;
+
+            if (hasSizes) {
+                if (item.size) {
+                    // Find specific size (trimming to avoid whitespace issues)
+                    const sizeInfo = product.sizes.find(s =>
+                        typeof s === 'object' && s.size.trim() === item.size?.trim()
+                    );
+
+                    if (sizeInfo && typeof sizeInfo === 'object' && 'price' in sizeInfo) {
+                        basePrice = sizeInfo.price;
+                    } else {
+                        throw new Error(`Size '${item.size}' not found for product '${product.name}'`);
+                    }
                 } else {
-                    throw new Error(`Size ${item.size} not found for product ${product.name}`);
-                }
-            } else if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
-                // Use first size price if no size specified
-                const firstSize = product.sizes[0];
-                if (typeof firstSize === 'object' && 'price' in firstSize) {
-                    basePrice = firstSize.price;
+                    // If product has multiple sizes but none specified, we can't guess the price
+                    if (product.sizes.length > 1) {
+                        throw new Error(`Please specify a size for product '${product.name}'. Available sizes: ${product.sizes.map((s: any) => s.size).join(', ')}`);
+                    }
+                    // If only one size exists, we can safely use it
+                    const firstSize = product.sizes[0];
+                    if (typeof firstSize === 'object' && 'price' in firstSize) {
+                        basePrice = firstSize.price;
+                    }
                 }
             }
 
-            let finalPrice = basePrice;
+            let lineTotal = basePrice * item.quantity;
 
             if (offer) {
                 if (offer.type === OfferType.PERCENTAGE_DISCOUNT && offer.discount_percentage) {
-                    finalPrice = basePrice * (1 - offer.discount_percentage / 100);
+                    lineTotal = (basePrice * item.quantity) * (1 - offer.discount_percentage / 100);
                 } else if (offer.type === OfferType.BUY_X_GET_Y_FREE && offer.buy_quantity && offer.get_quantity) {
                     const buy = offer.buy_quantity;
                     const get = offer.get_quantity;
                     const totalCycle = buy + get;
                     const payableQuantity = Math.floor(item.quantity / totalCycle) * buy + (item.quantity % totalCycle);
 
-                    // Calculate average price per item to reach the correct total
-                    finalPrice = (payableQuantity * basePrice) / item.quantity;
+                    lineTotal = payableQuantity * basePrice;
                 }
             }
 
-            // Use provided price if available (might be used by admin or for custom pricing), 
-            // otherwise use calculated finalPrice
-            const priceToStore = item.price !== undefined ? item.price : finalPrice;
+            // Round line total and calculate a clean unit price for storage
+            lineTotal = Math.round(lineTotal * 100) / 100;
+            const finalPrice = Math.round((lineTotal / item.quantity) * 100) / 100;
+
+            // Server-side price calculation is mandatory to prevent price manipulation.
+            const priceToStore = finalPrice;
 
             // Validate color
             if (item.color) {
@@ -158,7 +179,7 @@ export class CreateOrderUseCase {
                 throw new Error(`Please specify a color for product '${product.name}'.`);
             }
 
-            totalAmount += priceToStore * item.quantity;
+            totalAmount += lineTotal;
             orderItems.push({
                 product_id: currentProductId,
                 offer_id: appliedOfferId,
