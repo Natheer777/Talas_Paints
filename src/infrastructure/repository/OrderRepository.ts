@@ -334,6 +334,7 @@ export class OrderRepository implements IOrderRepository {
                 order_id: item.order_id,
                 product_id: item.product_id || item.productId,
                 offer_id: item.offer_id || item.offerId || null,
+                offerType: item.offer ? item.offer.type : null,
                 quantity: item.quantity,
                 price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
                 color: item.color,
