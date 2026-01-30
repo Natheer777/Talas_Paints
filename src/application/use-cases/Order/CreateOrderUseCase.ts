@@ -160,7 +160,12 @@ export class CreateOrderUseCase {
 
             // Round line total and calculate a clean unit price for storage
             lineTotal = Math.round(lineTotal * 100) / 100;
-            const finalPrice = Math.round((lineTotal / item.quantity) * 100) / 100;
+            let finalPrice: number;
+            if (offer && offer.type === OfferType.BUY_X_GET_Y_FREE) {
+                finalPrice = Math.round(basePrice * 100) / 100;
+            } else {
+                finalPrice = Math.round((lineTotal / item.quantity) * 100) / 100;
+            }
 
             // Server-side price calculation is mandatory to prevent price manipulation.
             const priceToStore = finalPrice;

@@ -26,6 +26,9 @@ export function createOrderRouter(orderController: OrderController) {
         RateLimitConfigurations.ORDER_OPERATIONS
     );
 
+    // Get auth middleware from container (used for admin routes)
+    const authMiddleware = Container.getAuthMiddleware();
+
     // Create order
     router.post(
         "/orders",
@@ -67,6 +70,7 @@ export function createOrderRouter(orderController: OrderController) {
     // Get all orders for admin
     router.get(
         "/admin/orders",
+        authMiddleware.handle(),
         orderLimit.handle(),
         validateGetOrdersForAdmin,
         handleValidationResult,

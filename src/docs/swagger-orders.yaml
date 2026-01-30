@@ -243,6 +243,11 @@ paths:
       description: |
         Retrieve all orders with pagination. This endpoint is for admin use to view all orders.
       operationId: getOrdersForAdmin
+      security:
+        - AdminEmail: []
+          AdminPassword: []
+          HmacSignature: []
+          HmacTimestamp: []
       parameters:
         - name: page
           in: query
