@@ -82,6 +82,9 @@ paths:
     $ref: "./swagger-categories.yaml#/paths/~1categories~1{id}"
 
   # Order operations
+  /api/orders/calculate:
+    $ref: "./swagger-orders.yaml#/paths/~1orders~1calculate"
+
   /api/orders:
     $ref: "./swagger-orders.yaml#/paths/~1orders"
 
@@ -163,6 +166,15 @@ components:
     
     CreateOrderRequest:
       $ref: "./swagger-orders.yaml#/components/schemas/CreateOrderRequest"
+
+    CartCalculationItem:
+      $ref: "./swagger-orders.yaml#/components/schemas/CartCalculationItem"
+
+    CalculationResult:
+      $ref: "./swagger-orders.yaml#/components/schemas/CalculationResult"
+
+    CalculatedItem:
+      $ref: "./swagger-orders.yaml#/components/schemas/CalculatedItem"
     
     # Offer schemas
     Offer:

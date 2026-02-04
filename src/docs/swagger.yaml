@@ -1555,6 +1555,50 @@ paths:
           $ref: '#/paths/~1api~1categories/post/responses/400'
         '404':
           $ref: '#/paths/~1api~1categories~1%7Bid%7D/get/responses/404'
+  /api/orders/calculate:
+    post:
+      tags:
+        - Orders
+      summary: Calculate cart (Preview)
+      description: |
+        Calculate the total amount of a cart and apply any active offers.
+        This endpoint is used for previewing the cart total before creating an order.
+      operationId: calculateCart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CartCalculationItem'
+      responses:
+        '200':
+          description: Cart calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CalculationResult'
+                  message:
+                    type: string
+                    example: Cart calculated successfully
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1api~1orders/get/responses/500/content/application~1json/schema'
   /api/orders:
     post:
       tags:
@@ -3631,6 +3675,71 @@ components:
             List of prices corresponding to the productIds.
             Used for validation against database prices.
             Example: [45.99, 149.99]
+    CartCalculationItem:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        offerId:
+          type: string
+          format: uuid
+          nullable: true
+          example: 550e8400-e29b-41d4-a716-446655440001
+        quantity:
+          type: integer
+          minimum: 1
+          example: 5
+        color:
+          type: string
+          example: Red
+        size:
+          type: string
+          example: 1L
+    CalculationResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculatedItem'
+        totalAmount:
+          type: number
+          example: 450
+    CalculatedItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        quantity:
+          type: integer
+        basePrice:
+          type: number
+        finalPrice:
+          type: number
+        lineTotal:
+          type: number
+        appliedOfferId:
+          type: string
+          format: uuid
+          nullable: true
+        appliedOfferName:
+          type: string
+          nullable: true
+        color:
+          type: string
+        size:
+          type: string
+        error:
+          type: string
+          nullable: true
     Offer:
       type: object
       properties:

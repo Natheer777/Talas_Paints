@@ -4,4 +4,5 @@ export { GetOrdersByPhoneNumberUseCase } from './GetOrdersByPhoneNumberUseCase';
 export { UpdateOrderStatusUseCase } from './UpdateOrderStatusUseCase';
 export { GetOrdersForAdminUseCase } from './GetOrdersForAdminUseCase';
 export { DeleteOrderUseCase } from './DeleteOrderUseCase';
+export { CalculateCartUseCase } from './CalculateCartUseCase';
 
