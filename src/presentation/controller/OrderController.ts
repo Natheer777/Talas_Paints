@@ -5,7 +5,8 @@ import {
     GetOrdersByPhoneNumberUseCase,
     UpdateOrderStatusUseCase,
     GetOrdersForAdminUseCase,
-    DeleteOrderUseCase
+    DeleteOrderUseCase,
+    CalculateCartUseCase
 } from "@/application/use-cases/Order/index";
 
 export class OrderController {
@@ -15,7 +16,8 @@ export class OrderController {
         private getOrdersByPhoneNumberUseCase: GetOrdersByPhoneNumberUseCase,
         private updateOrderStatusUseCase: UpdateOrderStatusUseCase,
         private getOrdersForAdminUseCase: GetOrdersForAdminUseCase,
-        private deleteOrderUseCase: DeleteOrderUseCase
+        private deleteOrderUseCase: DeleteOrderUseCase,
+        private calculateCartUseCase: CalculateCartUseCase
     ) { }
 
     async createOrder(req: Request, res: Response) {
@@ -228,6 +230,33 @@ export class OrderController {
             return res.status(400).json({
                 success: false,
                 message: error.message || "لا يمكن حذف الطلب",
+            });
+        }
+    }
+
+    async calculateCart(req: Request, res: Response) {
+        try {
+            const { items } = req.body;
+
+            if (!items || !Array.isArray(items)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "يجب توفير مصفوفة العناصر (items)"
+                });
+            }
+
+            const result = await this.calculateCartUseCase.execute(items);
+
+            return res.status(200).json({
+                success: true,
+                data: result,
+                message: "تم حساب السلة بنجاح"
+            });
+        } catch (error: any) {
+            console.error('خطأ في حساب السلة:', error);
+            return res.status(400).json({
+                success: false,
+                message: error.message || "لا يمكن حساب السلة",
             });
         }
     }

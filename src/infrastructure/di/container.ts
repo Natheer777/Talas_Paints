@@ -15,6 +15,7 @@ import { NotificationService } from '@/application/services/NotificationService'
 import { SecurityService } from '../services/SecurityService';
 import { AdminRepository } from '../repository/AdminRepository';
 import { AuthenticationService } from '../services/AuthenticationService';
+import { PriceCalculatorService } from '@/application/services/PriceCalculatorService';
 import { LoginAdminUseCase } from '@/application/use-cases/Admin/index';
 import { AuthController } from '@/presentation/controller/AuthController';
 import { AuthMiddleware } from '@/presentation/middleware/AuthMiddleware';
@@ -48,7 +49,8 @@ import {
     GetOrdersByPhoneNumberUseCase,
     UpdateOrderStatusUseCase,
     GetOrdersForAdminUseCase,
-    DeleteOrderUseCase
+    DeleteOrderUseCase,
+    CalculateCartUseCase
 } from '@/application/use-cases/Order/index';
 import {
     CreateOfferUseCase,
@@ -114,6 +116,7 @@ class Container {
     private static securityService = new SecurityService();
     private static authService = new AuthenticationService();
     private static authMiddleware = new AuthMiddleware(Container.adminRepository, Container.authService);
+    private static priceCalculatorService = new PriceCalculatorService(Container.productsRepository, Container.offerRepository);
 
     // Socket.IO and Notification Service (will be initialized when server starts)
     private static io: SocketIOServer | null = null;
@@ -225,6 +228,9 @@ class Container {
     );
     private static deleteOrderUseCase = new DeleteOrderUseCase(
         Container.orderRepository
+    );
+    private static calculateCartUseCase = new CalculateCartUseCase(
+        Container.priceCalculatorService
     );
 
     // Application layer - Offer Use Cases
@@ -437,7 +443,8 @@ class Container {
                     Container.productsRepository,
                     Container.getNotificationService(),
                     Container.adminRepository,
-                    Container.offerRepository
+                    Container.offerRepository,
+                    Container.priceCalculatorService
                 );
             }
             if (!Container.updateOrderStatusUseCase) {
@@ -452,7 +459,8 @@ class Container {
                 Container.getOrdersByPhoneNumberUseCase,
                 Container.updateOrderStatusUseCase,
                 Container.getOrdersForAdminUseCase,
-                Container.deleteOrderUseCase
+                Container.deleteOrderUseCase,
+                Container.calculateCartUseCase
             );
         }
         return Container.orderController;
@@ -467,7 +475,8 @@ class Container {
             Container.productsRepository,
             Container.getNotificationService(),
             Container.adminRepository,
-            Container.offerRepository
+            Container.offerRepository,
+            Container.priceCalculatorService
         );
         Container.updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
             Container.orderRepository,
@@ -481,7 +490,8 @@ class Container {
                 Container.getOrdersByPhoneNumberUseCase,
                 Container.updateOrderStatusUseCase,
                 Container.getOrdersForAdminUseCase,
-                Container.deleteOrderUseCase
+                Container.deleteOrderUseCase,
+                Container.calculateCartUseCase
             );
         }
     }

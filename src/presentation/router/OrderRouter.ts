@@ -29,6 +29,14 @@ export function createOrderRouter(orderController: OrderController) {
     // Get auth middleware from container (used for admin routes)
     const authMiddleware = Container.getAuthMiddleware();
 
+    // Calculate cart (Preview)
+    router.post(
+        "/orders/calculate",
+        orderLimit.handle(),
+        uploadNone,
+        (req: Request, res: Response) => orderController.calculateCart(req, res)
+    );
+
     // Create order
     router.post(
         "/orders",

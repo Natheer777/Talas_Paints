@@ -5,6 +5,7 @@ import { IAdminRepository } from '@/domian/repository/IAdminRepository';
 import { Order, OrderStatus, PaymentMethodType } from '@/domian/entities/Order';
 import { INotificationService } from '@/application/services/NotificationService';
 import { OfferType } from '@/domian/entities/Offer';
+import { PriceCalculatorService } from '@/application/services/PriceCalculatorService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface OrderItemDTO {
@@ -34,7 +35,8 @@ export class CreateOrderUseCase {
         private productsRepository: IProductsRepository,
         private notificationService: INotificationService,
         private adminRepository: IAdminRepository,
-        private offerRepository: IOfferRepository
+        private offerRepository: IOfferRepository,
+        private priceCalculatorService: PriceCalculatorService
     ) { }
 
     async execute(dto: CreateOrderDTO): Promise<{ order: Order; hasFcmToken: boolean }> {
@@ -54,146 +56,32 @@ export class CreateOrderUseCase {
             throw new Error('Order must contain at least one item.');
         }
 
-        // Validate and calculate total amount
-        let totalAmount = 0;
-        const orderItems = [];
+        // Validate and calculate total amount using PriceCalculatorService
+        const calculation = await this.priceCalculatorService.calculate(items.map(item => ({
+            productId: item.productId,
+            offerId: item.offerId,
+            quantity: item.quantity,
+            color: item.color,
+            size: item.size
+        })));
 
-        for (const item of items) {
-            if (item.quantity <= 0) {
-                throw new Error(`Invalid quantity for item. Quantity must be greater than 0.`);
-            }
-
-            let currentProductId = item.productId;
-            let appliedOfferId = null;
-            let offer = null;
-
-            // Handle offer if provided, or auto-discover active offer
-            if (item.offerId) {
-                offer = await this.offerRepository.getById(item.offerId);
-                if (!offer) {
-                    throw new Error(`Offer ${item.offerId} not found`);
-                }
-
-                if (offer.status !== 'VISIBLE') {
-                    throw new Error(`Offer ${offer.name} is no longer available`);
-                }
-
-                appliedOfferId = offer.id;
-
-                // If productId was not provided, use the one from the offer
-                if (!currentProductId) {
-                    currentProductId = offer.product_id;
-                } else if (offer.product_id !== currentProductId) {
-                    throw new Error(`Offer ${offer.name} is not valid for the specified product`);
-                }
-            } else if (currentProductId) {
-                // Auto-discover active offer for this product if none specified
-                offer = await this.offerRepository.findActiveByProductId(currentProductId);
-                if (offer) {
-                    appliedOfferId = offer.id;
-                    console.log(`💡 Automatically applied offer '${offer.name}' to product ${currentProductId}`);
-                }
-            }
-
-            if (!currentProductId) {
-                throw new Error('Product ID is required for each item (either directly or via an offer)');
-            }
-
-            const product = await this.productsRepository.findById(currentProductId);
-            if (!product) {
-                throw new Error(`Product ${currentProductId} not found`);
-            }
-
-            // Check if product is visible
-            if (product.status !== 'visible') {
-                throw new Error(`Product ${product.name} is not available for ordering`);
-            }
-
-            // Validate color if provided
-            if (item.color && product.colors && !product.colors.includes(item.color)) {
-                throw new Error(`Color ${item.color} is not available for product ${product.name}`);
-            }
-
-            // Get base price from size
-            let basePrice = 0;
-            const hasSizes = product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0;
-
-            if (hasSizes) {
-                if (item.size) {
-                    // Find specific size (trimming to avoid whitespace issues)
-                    const sizeInfo = product.sizes.find(s =>
-                        typeof s === 'object' && s.size.trim() === item.size?.trim()
-                    );
-
-                    if (sizeInfo && typeof sizeInfo === 'object' && 'price' in sizeInfo) {
-                        basePrice = sizeInfo.price;
-                    } else {
-                        throw new Error(`Size '${item.size}' not found for product '${product.name}'`);
-                    }
-                } else {
-                    // If product has multiple sizes but none specified, we can't guess the price
-                    if (product.sizes.length > 1) {
-                        throw new Error(`Please specify a size for product '${product.name}'. Available sizes: ${product.sizes.map((s: any) => s.size).join(', ')}`);
-                    }
-                    // If only one size exists, we can safely use it
-                    const firstSize = product.sizes[0];
-                    if (typeof firstSize === 'object' && 'price' in firstSize) {
-                        basePrice = firstSize.price;
-                    }
-                }
-            }
-
-            let lineTotal = basePrice * item.quantity;
-
-            if (offer) {
-                if (offer.type === OfferType.PERCENTAGE_DISCOUNT && offer.discount_percentage) {
-                    lineTotal = (basePrice * item.quantity) * (1 - offer.discount_percentage / 100);
-                } else if (offer.type === OfferType.BUY_X_GET_Y_FREE && offer.buy_quantity && offer.get_quantity) {
-                    const buy = offer.buy_quantity;
-                    const get = offer.get_quantity;
-                    const totalCycle = buy + get;
-                    const payableQuantity = Math.floor(item.quantity / totalCycle) * buy + (item.quantity % totalCycle);
-
-                    lineTotal = payableQuantity * basePrice;
-                }
-            }
-
-            // Round line total and calculate a clean unit price for storage
-            lineTotal = Math.round(lineTotal * 100) / 100;
-            let finalPrice: number;
-            if (offer && offer.type === OfferType.BUY_X_GET_Y_FREE) {
-                finalPrice = Math.round(basePrice * 100) / 100;
-            } else {
-                finalPrice = Math.round((lineTotal / item.quantity) * 100) / 100;
-            }
-
-            // Server-side price calculation is mandatory to prevent price manipulation.
-            const priceToStore = finalPrice;
-
-            // Validate color
-            if (item.color) {
-                if (!product.colors || product.colors.length === 0) {
-                    throw new Error(`Product '${product.name}' does not support color selection.`);
-                }
-                if (!product.colors.includes(item.color)) {
-                    const availableColors = product.colors.join(', ');
-                    throw new Error(`Color '${item.color}' is not available for product '${product.name}'. Available colors: ${availableColors}`);
-                }
-            } else if (product.colors && product.colors.length > 0) {
-                // If the product has colors, one must be selected
-                throw new Error(`Please specify a color for product '${product.name}'.`);
-            }
-
-            totalAmount += lineTotal;
-            orderItems.push({
-                product_id: currentProductId,
-                offer_id: appliedOfferId,
-                quantity: item.quantity,
-                price: priceToStore,
-                color: item.color,
-                size: item.size
-            });
+        // Check if any items had errors during calculation
+        const errorItem = calculation.items.find(item => item.error);
+        if (errorItem) {
+            throw new Error(errorItem.error);
         }
+
+        const orderItems = calculation.items.map(item => ({
+            product_id: item.productId,
+            offer_id: item.appliedOfferId,
+            quantity: item.quantity,
+            price: item.finalPrice,
+            color: item.color,
+            size: item.size
+        }));
+
+        const totalAmount = calculation.totalAmount;
+
 
         // Create order
         const orderId = uuidv4();
