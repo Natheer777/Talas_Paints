@@ -1,4 +1,4 @@
-import { AdsCard, AdsCardStatus } from '@/domian/entities/AdsCard';
+import { AdsCard, AdsCardStatus, MediaType } from '@/domian/entities/AdsCard';
 import { IAdsCardRepository } from '@/domian/repository/IAdsCardRepository';
 import { Pool } from 'pg';
 
@@ -8,9 +8,9 @@ export class AdsCardRepository implements IAdsCardRepository {
     async create(adsCard: AdsCard): Promise<AdsCard> {
         const query = `
             INSERT INTO ads_cards (
-                id, title, text, image_url, status, created_at, updated_at
+                id, title, text, media_url, media_type, status, created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
         `;
 
@@ -18,7 +18,8 @@ export class AdsCardRepository implements IAdsCardRepository {
             adsCard.id,
             adsCard.title,
             adsCard.text,
-            adsCard.imageUrl,
+            adsCard.mediaUrl,
+            adsCard.mediaType,
             adsCard.status,
             adsCard.createdAt,
             adsCard.updatedAt
@@ -44,9 +45,14 @@ export class AdsCardRepository implements IAdsCardRepository {
             values.push(adsCard.text);
         }
 
-        if (adsCard.imageUrl !== undefined) {
-            updateFields.push(`image_url = $${paramCounter++}`);
-            values.push(adsCard.imageUrl);
+        if (adsCard.mediaUrl !== undefined) {
+            updateFields.push(`media_url = $${paramCounter++}`);
+            values.push(adsCard.mediaUrl);
+        }
+
+        if (adsCard.mediaType !== undefined) {
+            updateFields.push(`media_type = $${paramCounter++}`);
+            values.push(adsCard.mediaType);
         }
 
         if (adsCard.status !== undefined) {
@@ -114,7 +120,8 @@ export class AdsCardRepository implements IAdsCardRepository {
             id: row.id,
             title: row.title,
             text: row.text,
-            imageUrl: row.image_url,
+            mediaUrl: row.media_url,
+            mediaType: row.media_type,
             status: row.status,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)

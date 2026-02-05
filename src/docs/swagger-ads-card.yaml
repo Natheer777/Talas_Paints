@@ -13,7 +13,7 @@ paths:
     post:
       tags: [Ads Cards]
       summary: Create a new ads card
-      description: Create a new advertisement card with title, text, and image upload.
+      description: Create a new advertisement card with title, text, and media (image/video) upload.
       operationId: createAdsCard
       security:
         - AdminEmail: []
@@ -29,7 +29,7 @@ paths:
               required:
                 - title
                 - text
-                - image
+                - media
               properties:
                 title:
                   type: string
@@ -41,10 +41,10 @@ paths:
                   minLength: 10
                   maxLength: 1000
                   example: "Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home."
-                image:
+                media:
                   type: string
                   format: binary
-                  description: "Ads card image (JPEG, PNG, or WebP, max 5MB)"
+                  description: "Ads card media (image: JPEG, PNG, WebP max 5MB; video: MP4, MPEG, MOV, AVI, WEBM max 100MB)"
                 status:
                   $ref: '#/components/schemas/AdsCardStatus'
       responses:
@@ -180,7 +180,7 @@ paths:
     put:
       tags: [Ads Cards]
       summary: Update ads card
-      description: Update an existing ads card. All fields optional.
+      description: Update an existing ads card with new media (image/video). All fields optional.
       operationId: updateAdsCard
       security:
         - AdminEmail: []
@@ -213,10 +213,10 @@ paths:
                   minLength: 10
                   maxLength: 1000
                   example: "Updated offer: Get 25% off on all interior paints this weekend!"
-                image:
+                media:
                   type: string
                   format: binary
-                  description: "New ads card image (JPEG, PNG, or WebP, max 5MB)"
+                  description: "New ads card media (image: JPEG, PNG, WebP max 5MB; video: MP4, MPEG, MOV, AVI, WEBM max 100MB)"
                 status:
                   $ref: '#/components/schemas/AdsCardStatus'
                 keepExistingImage:
@@ -329,11 +329,16 @@ components:
           type: string
           description: Ads card description text
           example: "Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home."
-        imageUrl:
+        mediaUrl:
           type: string
           format: uri
-          description: URL of the ads card image
+          description: URL of the ads card media (image or video)
           example: "https://example.com/ads/special-offer.jpg"
+        mediaType:
+          type: string
+          enum: [IMAGE, VIDEO]
+          description: Type of media content
+          example: IMAGE
         status:
           $ref: '#/components/schemas/AdsCardStatus'
         createdAt:
@@ -350,7 +355,8 @@ components:
         - id
         - title
         - text
-        - imageUrl
+        - mediaUrl
+        - mediaType
         - status
         - createdAt
         - updatedAt
@@ -366,7 +372,7 @@ components:
       required:
         - title
         - text
-        - imageUrl
+        - media
       properties:
         title:
           type: string
@@ -378,10 +384,10 @@ components:
           minLength: 10
           maxLength: 1000
           example: "Get 20% off on all interior paints this weekend! High-quality latex paint perfect for your home."
-        imageUrl:
+        media:
           type: string
-          format: uri
-          example: "https://example.com/ads/special-offer.jpg"
+          format: binary
+          description: "Ads card media file (image or video)"
         status:
           $ref: '#/components/schemas/AdsCardStatus'
 
@@ -398,9 +404,10 @@ components:
           minLength: 10
           maxLength: 1000
           example: "Updated offer: Get 25% off on all interior paints this weekend!"
-        imageUrl:
+        mediaUrl:
           type: string
           format: uri
+          description: "URL of the updated ads card media"
           example: "https://example.com/ads/updated-special-offer.jpg"
         status:
           $ref: '#/components/schemas/AdsCardStatus'
