@@ -8,7 +8,7 @@ import {
     handleValidationResult
 } from '../validation/adsCardValidation';
 import { ValidationMiddleware } from '../middleware/ValidationMiddleware';
-import { uploadSingle } from '../middleware/UploadMiddleware';
+import { uploadMedia } from '../middleware/UploadMiddleware';
 import { RateLimitMiddleware } from '../middleware/RateLimitMiddleware';
 import { RateLimitConfigurations } from '../../infrastructure/config/RateLimitConfigurations';
 import Container from '../../infrastructure/di/container';
@@ -42,7 +42,7 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
         '/ads-cards',
         authMiddleware.handle(), // Only admins can create ads cards
         fileUploadLimit.handle(),
-        uploadSingle,
+        uploadMedia,
         validateCreateAdsCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),
@@ -71,7 +71,7 @@ export function createAdsCardRouter(adsCardController: AdsCardController) {
         '/ads-cards/:id',
         authMiddleware.handle(), // Only admins can update ads cards
         writeLimit.handle(),
-        uploadSingle,
+        uploadMedia,
         validateUpdateAdsCard,
         handleValidationResult,
         ValidationMiddleware.handleValidationErrors(),

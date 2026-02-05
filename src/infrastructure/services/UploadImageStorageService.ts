@@ -151,6 +151,46 @@ export class FileStorageService implements IFileStorageService {
     }
   }
 
+  async UploadMediaAdsCard(
+    file: Express.Multer.File,
+    id: string,
+    folder: string
+  ): Promise<string> {
+    const isImage = file.mimetype.startsWith('image/');
+    const isVideo = file.mimetype.startsWith('video/');
+
+    if (!isImage && !isVideo) {
+      throw new Error('Unsupported media type. Only images and videos are allowed.');
+    }
+
+    if (isImage) {
+      return this.UploadProductImage(file, id, folder);
+    } else {
+      return this.UploadVideo(file, id, folder);
+    }
+  }
+
+  async DeleteOldMedia(fileUrl: string): Promise<void> {
+    // Since we can't determine from the URL whether it was an image or video,
+    // we'll use a generic delete method. Both images and videos use the same
+    // delete logic in S3.
+    const { key, isValid } = this.extractKeyFromS3Url(fileUrl);
+    if (!isValid) {
+      throw new Error('Invalid S3 URL format');
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      await this.s3Client.send(command);
+    } catch (error: any) {
+      throw new Error(`Failed to delete media from S3: ${error.message}`);
+    }
+  }
+
   async UploadQRCode(
     file: Express.Multer.File,
     paymentMethodId: string

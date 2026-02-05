@@ -20,14 +20,16 @@ async function seedAdsCards() {
             const id = uuidv4();
             const title = faker.commerce.productAdjective() + ' ' + faker.commerce.productName();
             const text = faker.lorem.sentence();
-            const imageUrl = faker.image.url({ width: 1200, height: 400 });
+            const mediaUrl = faker.image.url({ width: 1200, height: 400 });
+            const mediaType = faker.helpers.arrayElement(['IMAGE', 'VIDEO']);
             const status = faker.helpers.arrayElement(['ACTIVE', 'INACTIVE']);
 
             cards.push([
                 id,
                 title,
                 text,
-                imageUrl,
+                mediaUrl,
+                mediaType,
                 status,
                 new Date(),
                 new Date()
@@ -37,7 +39,7 @@ async function seedAdsCards() {
         console.log(`📝 Inserting ${count} AdsCards...`);
 
         for (const card of cards) {
-            const query = 'INSERT INTO ads_cards (id, title, text, image_url, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+            const query = 'INSERT INTO ads_cards (id, title, text, media_url, media_type, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
             await pool.query(query, card);
         }
 

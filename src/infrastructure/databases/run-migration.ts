@@ -20,6 +20,7 @@ class MigrationRunner {
     'create_payment_methods_table.sql',
     'create_admins_table.sql',
     'create_fcm_tokens_table.sql',
+    'update_ads_cards_table_for_media_support.sql',
   ].map(file => path.join(__dirname, 'migrations', file));
 
   private readonly dangerousKeywords = [

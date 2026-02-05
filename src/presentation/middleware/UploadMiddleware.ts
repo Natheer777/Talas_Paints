@@ -66,6 +66,42 @@ export const uploadMultiple = upload.array('images');
 
 export const uploadVideo = videoUpload.single('video');
 
+// Combined media file filter (images and videos)
+const mediaFileFilter = (
+    req: Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+) => {
+    const allowedImageMimeTypes = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/x-citrix-pjpeg', 'image/png', 'image/webp'];
+    const allowedVideoMimeTypes = [
+        'video/mp4',
+        'video/mpeg',
+        'video/quicktime',
+        'video/x-msvideo',
+        'video/webm'
+    ];
+
+    const allAllowedMimeTypes = [...allowedImageMimeTypes, ...allowedVideoMimeTypes];
+
+    if (allAllowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG, WebP images and MP4, MPEG, MOV, AVI, WEBM videos are allowed.'));
+    }
+};
+
+// Combined media upload configuration
+const mediaUpload = multer({
+    storage: storage,
+    fileFilter: mediaFileFilter,
+    limits: {
+        fileSize: 100 * 1024 * 1024, // 100MB max file size (covers both images and videos)
+        files: 1, // Maximum 1 media file
+    },
+});
+
+export const uploadMedia = mediaUpload.single('media');
+
 export const uploadQRCode = upload.single('qrCode');
 
 export const uploadNone = upload.none();

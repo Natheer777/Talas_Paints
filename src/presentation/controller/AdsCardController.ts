@@ -22,12 +22,12 @@ export class AdsCardController {
     async create(req: Request, res: Response) {
         try {
             const { title, text, status } = req.body;
-            const imageFile = req.file as Express.Multer.File;
+            const mediaFile = req.file as Express.Multer.File;
 
-            if (!imageFile) {
+            if (!mediaFile) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Image file is required'
+                    message: 'Media file (image or video) is required'
                 });
             }
 
@@ -35,7 +35,7 @@ export class AdsCardController {
                 title,
                 text,
                 status,
-                imageFile
+                mediaFile
             });
 
             return res.status(201).json({
@@ -56,13 +56,13 @@ export class AdsCardController {
         try {
             const { id } = req.params;
             const { title, text, status } = req.body;
-            const imageFile = req.file as Express.Multer.File | undefined;
+            const mediaFile = req.file as Express.Multer.File | undefined;
 
             const result = await this.updateAdsCardUseCase.execute(id, {
                 title,
                 text,
                 status,
-                imageFile
+                mediaFile
             });
 
             if (!result) {

@@ -16,11 +16,11 @@ export class DeleteAdsCardUseCase {
 
         const deleted = await this.adsCardRepository.delete(id);
 
-        if (deleted && adsCard.imageUrl) {
+        if (deleted && adsCard.mediaUrl) {
             try {
-                await this.fileStorageService.DeleteOldImage(adsCard.imageUrl);
+                await this.fileStorageService.DeleteOldMedia(adsCard.mediaUrl);
             } catch (error) {
-                console.error('Failed to delete image from S3:', error);
+                console.error('Failed to delete media from S3:', error);
             }
         }
 
