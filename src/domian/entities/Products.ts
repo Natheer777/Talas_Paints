@@ -11,7 +11,7 @@ export interface ProductSize {
 export interface Product {
     id?: string;
     name: string;
-    description: string;
+    description?: string;
     category_id: string;
     colors?: string[];
     sizes: ProductSize[];

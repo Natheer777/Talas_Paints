@@ -119,7 +119,7 @@ export class OrderController {
                     ...order,
                     hasFcmToken
                 },
-                message: "تم إنشاء الطلب بنجاح",
+                message: `تم إنشاء الطلب بنجاح رقم #${order.orderNumber}`,
             });
         } catch (error: any) {
             console.error('خطأ في إنشاء الطلب:', error);

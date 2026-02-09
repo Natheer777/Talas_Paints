@@ -39,8 +39,7 @@ export const validateCreateProduct: ValidationChain[] = [
 
     body('description')
         .isString()
-        .notEmpty()
-        .withMessage('الوصف مطلوب ويجب أن يكون نصاً')
+        .optional()
         .trim(),
 
     body('category')

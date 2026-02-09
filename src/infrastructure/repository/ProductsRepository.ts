@@ -14,7 +14,7 @@ export class ProductsRepository implements IProductsRepository {
         const values = [
             product.id,
             product.name,
-            product.description,
+            product.description || null,
             product.category_id,
             JSON.stringify(product.colors || []),
             JSON.stringify(product.sizes),
@@ -332,7 +332,7 @@ export class ProductsRepository implements IProductsRepository {
         `;
         const values = [
             product.name,
-            product.description,
+            product.description || null,
             product.category_id,
             JSON.stringify(product.colors || []),
             JSON.stringify(product.sizes || []),

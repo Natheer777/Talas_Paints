@@ -51,7 +51,7 @@ export class NotificationService implements INotificationService {
                             console.log(`📱 Sending Firebase push notification to admin: ${adminEmail}`);
                             await this.firebasePushService.sendToAdminEmail(adminEmail, {
                                 title: 'طلب جديد 🆕',
-                                body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
+                                body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
                                 data: {
                                     type: 'new_order',
                                     order: JSON.stringify({
@@ -86,7 +86,7 @@ export class NotificationService implements INotificationService {
                     try {
                         await this.firebasePushService.sendToAdminEmail(defaultAdminEmail, {
                             title: 'طلب جديد 🆕',
-                            body: `طلب جديد من ${order.customer_name} - ${order.area_name}`,
+                            body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
                             data: {
                                 type: 'new_order',
                                 order: JSON.stringify({
@@ -153,7 +153,7 @@ export class NotificationService implements INotificationService {
                 console.log(`📱 Sending Firebase push notification to phone: ${phoneNumber}`);
                 await this.firebasePushService.sendToPhoneNumber(phoneNumber, {
                     title: 'تحديث حالة الطلب',
-                    body: statusMessages[order.status] || `تم تحديث حالة طلبك إلى ${order.status}`,
+                    body: `${statusMessages[order.status] || 'تم تحديث حالة طلبك'} للطلب رقم #${order.orderNumber}`,
                     data: {
                         type: 'order_status_changed',
                         order: JSON.stringify({

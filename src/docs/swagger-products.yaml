@@ -53,7 +53,6 @@ paths:
               type: object
               required:
                 - name
-                - description
                 - category
                 - sizes
                 - status
@@ -65,7 +64,6 @@ paths:
                   example: "Premium Interior Paint"
                 description:
                   type: string
-                  minLength: 10
                   example: "High-quality latex paint perfect for interior walls and ceilings"
                 category:
                   type: string
@@ -1126,7 +1124,6 @@ components:
       required:
         - id
         - name
-        - description
         - category_id
         - sizes
         - status
