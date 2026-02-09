@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface CreateProductDTO {
     name: string;
-    description: string;
+    description?: string;
     category: string;
     colors?: string[];
     sizes: ProductSize[];
@@ -48,7 +48,7 @@ export class CreateProductUseCase {
             name,
             description,
             category_id,
-           
+
             colors,
             sizes,
             status,
