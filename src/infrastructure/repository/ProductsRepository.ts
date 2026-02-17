@@ -211,11 +211,11 @@ export class ProductsRepository implements IProductsRepository {
         const sortOrder = options.sortOrder || 'random';
 
         if (sortOrder === 'random') {
-            query += ` ORDER BY RANDOM()`;
+            query += ` ORDER BY MD5(id::text || EXTRACT(EPOCH FROM CURRENT_DATE)::text)`;
         } else if (sortOrder === 'asc') {
-            query += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
-            query += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
 
         const result = await this.db.query(query, values);
@@ -293,11 +293,15 @@ export class ProductsRepository implements IProductsRepository {
         const sortOrder = filterOptions.sortOrder || 'random';
 
         if (sortOrder === 'random') {
-            dataQuery += ` ORDER BY RANDOM()`;
+            // Use seeded random to ensure consistent ordering across paginated requests
+            // Seed is based on current date to provide daily variation while maintaining consistency within a day
+            dataQuery += ` ORDER BY MD5(id::text || EXTRACT(EPOCH FROM CURRENT_DATE)::text)`;
         } else if (sortOrder === 'asc') {
-            dataQuery += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
+            // Sort by minimum price (cheapest products first)
+            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
-            dataQuery += ` ORDER BY (SELECT (MAX((s->>'price')::numeric) - MIN((s->>'price')::numeric)) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+            // Sort by minimum price (most expensive products first)
+            dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
         }
         dataQuery += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
         values.push(limit, offset);
