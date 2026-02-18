@@ -662,7 +662,7 @@ export class ProductsController {
                     minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                     maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
                     onlyVisible: status === 'true',
-                    sortOrder: sortOrder as 'asc' | 'desc' | 'random' | undefined,
+                    sortOrder: sortOrder as 'asc' | 'desc' | undefined,
                     page: pageNum,
                     limit: limitNum
                 });
@@ -692,7 +692,7 @@ export class ProductsController {
                     minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
                     maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
                     onlyVisible: status === 'true',
-                    sortOrder: sortOrder as 'asc' | 'desc' | 'random' | undefined
+                    sortOrder: sortOrder as 'asc' | 'desc' | undefined
                 });
                 const productsWithCategory = await Promise.all(result.map(async (prod: Product) => {
                     const cat = await this.categoriesRepository.findById(prod.category_id);

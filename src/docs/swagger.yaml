@@ -960,7 +960,7 @@ paths:
       tags:
         - Products
       summary: Filter products
-      description: Filter by categories and/or price range (filters products where at least one size price is within the range)
+      description: Filter by categories and/or price range (filters products where at least one size price is within the range). Results are ordered by creation date (newest first) by default.
       operationId: filterProducts
       parameters:
         - name: categories
@@ -1022,14 +1022,13 @@ paths:
         - name: sortOrder
           in: query
           required: false
-          description: 'Sort order for the results. ''asc'' for ascending price range (smallest to largest price difference), ''desc'' for descending price range (largest to smallest price difference), ''random'' for random order (default).'
+          description: 'Sort order for the results. ''asc'' sorts by minimum price ascending (cheapest first), ''desc'' sorts by minimum price descending (most expensive first). If omitted, products are returned newest to oldest (by creation date).'
           schema:
             type: string
             enum:
               - asc
               - desc
-              - random
-          example: random
+          example: asc
       responses:
         '200':
           description: Filtered products retrieved successfully

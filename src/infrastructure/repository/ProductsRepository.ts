@@ -208,14 +208,14 @@ export class ProductsRepository implements IProductsRepository {
         }
 
         // Handle sorting based on sortOrder parameter
-        const sortOrder = options.sortOrder || 'random';
+        const sortOrder = options.sortOrder || 'newest';
 
-        if (sortOrder === 'random') {
-            query += ` ORDER BY MD5(id::text || EXTRACT(EPOCH FROM CURRENT_DATE)::text)`;
-        } else if (sortOrder === 'asc') {
+        if (sortOrder === 'asc') {
             query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
             query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+        } else {
+            query += ` ORDER BY created_at DESC`;
         }
 
         const result = await this.db.query(query, values);
@@ -290,18 +290,17 @@ export class ProductsRepository implements IProductsRepository {
         const total = parseInt(countResult.rows[0].total);
 
         // Add pagination to data query with sorting
-        const sortOrder = filterOptions.sortOrder || 'random';
+        const sortOrder = filterOptions.sortOrder || 'newest';
 
-        if (sortOrder === 'random') {
-            // Use seeded random to ensure consistent ordering across paginated requests
-            // Seed is based on current date to provide daily variation while maintaining consistency within a day
-            dataQuery += ` ORDER BY MD5(id::text || EXTRACT(EPOCH FROM CURRENT_DATE)::text)`;
-        } else if (sortOrder === 'asc') {
+        if (sortOrder === 'asc') {
             // Sort by minimum price (cheapest products first)
             dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) ASC`;
         } else if (sortOrder === 'desc') {
             // Sort by minimum price (most expensive products first)
             dataQuery += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(sizes::jsonb) s) DESC`;
+        } else {
+            // Default: newest to oldest
+            dataQuery += ` ORDER BY created_at DESC`;
         }
         dataQuery += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
         values.push(limit, offset);

@@ -6,7 +6,7 @@ export interface FilterProductsPaginatedDTO {
     minPrice?: number;
     maxPrice?: number;
     onlyVisible?: boolean;
-    sortOrder?: 'asc' | 'desc' | 'random';
+    sortOrder?: 'asc' | 'desc';
     page?: number;
     limit?: number;
 }
