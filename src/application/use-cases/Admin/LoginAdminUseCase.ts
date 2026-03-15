@@ -9,8 +9,10 @@ export interface LoginAdminDTO {
 export interface LoginAdminResponse {
     success: boolean;
     admin?: {
-        id: number;
+        id: string;
+        userName: string;
         email: string;
+        isAdmin: boolean;
     };
     message?: string;
 }
@@ -54,7 +56,9 @@ export class LoginAdminUseCase {
             success: true,
             admin: {
                 id: admin.id,
-                email: admin.email
+                userName: admin.userName,
+                email: admin.email,
+                isAdmin: admin.isAdmin
             }
         };
     }

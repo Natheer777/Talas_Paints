@@ -5,10 +5,23 @@ ALTER TABLE ads_cards
 ADD COLUMN IF NOT EXISTS media_url VARCHAR(500);
 
 
-UPDATE ads_cards
-SET media_url = image_url,
-    media_type = 'IMAGE'
-WHERE media_url IS NULL AND image_url IS NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_schema='public' 
+          AND table_name='ads_cards' 
+          AND column_name='image_url'
+    ) THEN
+        EXECUTE '
+            UPDATE ads_cards
+            SET media_url = image_url,
+                media_type = ''IMAGE''
+            WHERE media_url IS NULL AND image_url IS NOT NULL;
+        ';
+    END IF;
+END $$;
 
 
 ALTER TABLE ads_cards

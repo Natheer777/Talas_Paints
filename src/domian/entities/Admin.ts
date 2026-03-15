@@ -1,7 +1,9 @@
 export interface Admin {
-    id: number;
+    id: string;
+    userName: string;
     email: string;
     password: string;
+    isAdmin: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

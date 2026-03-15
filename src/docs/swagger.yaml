@@ -104,8 +104,12 @@ paths:
                           id:
                             type: string
                             format: uuid
+                          userName:
+                            type: string
                           email:
                             type: string
+                          isAdmin:
+                            type: boolean
         '401':
           description: Invalid credentials
   /api/products:
