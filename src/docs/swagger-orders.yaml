@@ -251,6 +251,11 @@ paths:
                   enum: [pending, ordered, accepted, rejected, in_progress]
                   description: New order status
                   example: "accepted"
+                acceptedAdminName:
+                  type: string
+                  format: text
+                  description: Name of the admin who accepted/updated the order (optional, free text)
+                  example: "محمد"
       responses:
         '200':
           description: Order status updated successfully
@@ -393,7 +398,12 @@ components:
         delivery_agent_name:
           type: string
           description: Name of the delivery agent assigned to the order
-          example: "John Smith"
+          example: "ابو بسام"
+        accepted_admin_name:
+          type: string
+          nullable: true
+          description: Name of the admin who accepted/updated the order status
+          example: "أحمد"
         payment_method:
           $ref: '#/components/schemas/PaymentMethodType'
         status:

@@ -5,6 +5,7 @@ import { INotificationService } from '@/application/services/NotificationService
 interface UpdateOrderStatusDTO {
     orderId: string;
     status: OrderStatus;
+    acceptedAdminName?: string;
 }
 
 export class UpdateOrderStatusUseCase {
@@ -14,7 +15,7 @@ export class UpdateOrderStatusUseCase {
     ) { }
 
     async execute(dto: UpdateOrderStatusDTO): Promise<Order> {
-        const { orderId, status } = dto;
+        const { orderId, status, acceptedAdminName } = dto;
 
         // Validate status
         const validStatuses = Object.values(OrderStatus);
@@ -29,7 +30,7 @@ export class UpdateOrderStatusUseCase {
         }
 
         // Update order status
-        await this.orderRepository.updateStatus(orderId, status);
+        await this.orderRepository.updateStatus(orderId, status, acceptedAdminName);
 
         // Fetch the updated order with product details populated
         const updatedOrder = await this.orderRepository.findById(orderId);

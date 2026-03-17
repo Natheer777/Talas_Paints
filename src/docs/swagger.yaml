@@ -1828,6 +1828,11 @@ paths:
                     - in_progress
                   description: New order status
                   example: accepted
+                acceptedAdminName:
+                  type: string
+                  format: text
+                  description: 'Name of the admin who accepted/updated the order (optional, free text)'
+                  example: محمد
       responses:
         '200':
           description: Order status updated successfully
@@ -3439,7 +3444,17 @@ components:
         delivery_agent_name:
           type: string
           description: Name of the delivery agent assigned to the order
-          example: John Smith
+          example: ابو بسام
+        assigned_admin_name:
+          type: string
+          nullable: true
+          description: Name of the admin assigned to receive this order (set at order creation)
+          example: محمد
+        accepted_admin_name:
+          type: string
+          nullable: true
+          description: Name of the admin who accepted/updated the order status
+          example: أحمد
         payment_method:
           $ref: '#/components/schemas/PaymentMethodType'
         status:
@@ -3619,6 +3634,10 @@ components:
             - مؤسسة طلس
           description: Name of the delivery agent assigned to the order
           example: ابو بسام
+        assignedAdminName:
+          type: string
+          description: 'Name of the admin assigned to receive this order (free text, optional)'
+          example: محمد
         paymentMethod:
           type: string
           format: text

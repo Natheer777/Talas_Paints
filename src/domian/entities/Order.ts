@@ -37,6 +37,7 @@ export interface Order {
     building_number?: string;
     additional_notes?: string;
     delivery_agent_name: string;
+    accepted_admin_name?: string;
     payment_method: PaymentMethodType;
     status: OrderStatus;
     total_amount: number;

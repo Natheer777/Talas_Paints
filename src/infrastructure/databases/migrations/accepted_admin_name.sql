@@ -1,0 +1,2 @@
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS accepted_admin_name VARCHAR(255);
