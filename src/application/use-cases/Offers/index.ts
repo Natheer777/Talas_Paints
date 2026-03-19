@@ -5,4 +5,6 @@ export { GetAllOffersUseCase } from './GetAllOffersUseCase';
 export { GetOfferByIdUseCase } from './GetOfferByIdUseCase';
 export { GetAllOffersWithDetailsPaginatedUseCase } from './GetAllOffersWithDetailsPaginatedUseCase';
 export { GetVisibleOffersWithDetailsPaginatedUseCase } from './GetVisibleOffersWithDetailsPaginatedUseCase';
+export { FilterOffersUseCase } from './FilterOffersUseCase';
+export { FilterOffersPaginatedUseCase } from './FilterOffersPaginatedUseCase';
 

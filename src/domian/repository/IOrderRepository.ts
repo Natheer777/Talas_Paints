@@ -5,7 +5,7 @@ export interface IOrderRepository {
     findById(id: string): Promise<Order | null>;
     findByPhoneNumber(phoneNumber: string): Promise<Order[]>;
     findAll(limit?: number, offset?: number): Promise<Order[]>;
-    updateStatus(id: string, status: OrderStatus): Promise<Order>;
+    updateStatus(id: string, status: OrderStatus, acceptedAdminName?: string): Promise<Order>;
     delete(id: string): Promise<void>;
     count(): Promise<number>;
     countByPhoneNumber(phoneNumber: string): Promise<number>;

@@ -24,13 +24,15 @@ export class AdminRepository implements IAdminRepository {
 
     async create(admin: Omit<Admin, 'id'>): Promise<Admin> {
         const query = `
-            INSERT INTO admins (email, password, created_at, updated_at)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO admins (user_name, email, password, is_admin, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         `;
         const values = [
+            admin.userName,
             admin.email,
             admin.password,
+            admin.isAdmin ?? false,
             admin.createdAt || new Date(),
             admin.updatedAt || new Date(),
         ];
@@ -41,9 +43,11 @@ export class AdminRepository implements IAdminRepository {
 
     private mapToAdmin(row: any): Admin {
         return {
-            id: Number(row.id),
+            id: row.id,
+            userName: row.user_name,
             email: row.email,
             password: row.password,
+            isAdmin: row.is_admin,
             createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)
         };

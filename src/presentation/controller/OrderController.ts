@@ -169,11 +169,13 @@ export class OrderController {
     async updateOrderStatus(req: Request, res: Response) {
         try {
             const { orderId } = req.params;
-            const { status } = req.body;
+            const { status, acceptedAdminName } = req.body;
+            const adminUserName = acceptedAdminName || (req as any).admin?.userName;
 
             const result = await this.updateOrderStatusUseCase.execute({
                 orderId,
-                status
+                status,
+                acceptedAdminName: adminUserName
             });
 
             return res.status(200).json({

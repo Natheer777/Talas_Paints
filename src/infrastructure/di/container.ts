@@ -59,7 +59,9 @@ import {
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
     GetAllOffersWithDetailsPaginatedUseCase,
-    GetVisibleOffersWithDetailsPaginatedUseCase
+    GetVisibleOffersWithDetailsPaginatedUseCase,
+    FilterOffersUseCase,
+    FilterOffersPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 import {
     CreateAdsCardUseCase,
@@ -262,6 +264,14 @@ class Container {
         Container.offerRepository
     );
 
+    private static filterOffersUseCase = new FilterOffersUseCase(
+        Container.offerRepository
+    );
+
+    private static filterOffersPaginatedUseCase = new FilterOffersPaginatedUseCase(
+        Container.offerRepository
+    );
+
     private static createAdsCardUseCase = new CreateAdsCardUseCase(
         Container.adsCardRepository,
         Container.fileStorageService
@@ -382,7 +392,9 @@ class Container {
         Container.getAllOffersUseCase,
         Container.getOfferByIdUseCase,
         Container.getAllOffersWithDetailsPaginatedUseCase,
-        Container.getVisibleOffersWithDetailsPaginatedUseCase
+        Container.getVisibleOffersWithDetailsPaginatedUseCase,
+        Container.filterOffersUseCase,
+        Container.filterOffersPaginatedUseCase
     );
 
     private static adsCardController = new AdsCardController(

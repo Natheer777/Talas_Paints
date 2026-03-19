@@ -107,6 +107,9 @@ paths:
   /api/offers/visible:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1visible"
 
+  /api/offers/filter:
+    $ref: "./swagger-offers.yaml#/paths/~1offers~1filter"
+
   /api/offers/{id}:
     $ref: "./swagger-offers.yaml#/paths/~1offers~1{id}"
 

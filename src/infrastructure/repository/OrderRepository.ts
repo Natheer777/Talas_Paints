@@ -247,14 +247,27 @@ export class OrderRepository implements IOrderRepository {
         });
     }
 
-    async updateStatus(id: string, status: OrderStatus): Promise<Order> {
-        const query = `
-            UPDATE orders 
-            SET status = $1, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = $2 
-            RETURNING *
-        `;
-        const result = await this.pool.query(query, [status, id]);
+    async updateStatus(id: string, status: OrderStatus, acceptedAdminName?: string): Promise<Order> {
+        let query;
+        let params;
+        if (acceptedAdminName) {
+            query = `
+                UPDATE orders 
+                SET status = $1, accepted_admin_name = $2, updated_at = CURRENT_TIMESTAMP 
+                WHERE id = $3 
+                RETURNING *
+            `;
+            params = [status, acceptedAdminName, id];
+        } else {
+            query = `
+                UPDATE orders 
+                SET status = $1, updated_at = CURRENT_TIMESTAMP 
+                WHERE id = $2 
+                RETURNING *
+            `;
+            params = [status, id];
+        }
+        const result = await this.pool.query(query, params);
 
         if (result.rows.length === 0) {
             throw new Error('Order not found');
@@ -297,6 +310,7 @@ export class OrderRepository implements IOrderRepository {
             building_number: row.building_number,
             additional_notes: row.additional_notes,
             delivery_agent_name: row.delivery_agent_name,
+            accepted_admin_name: row.accepted_admin_name,
             payment_method: row.payment_method,
             status: row.status as OrderStatus,
             total_amount: parseFloat(row.total_amount),

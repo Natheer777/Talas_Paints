@@ -35,6 +35,7 @@ export class AuthMiddleware {
                 // Attach admin info to request
                 (req as any).admin = {
                     id: admin.id,
+                    userName: admin.userName,
                     email: admin.email
                 };
 

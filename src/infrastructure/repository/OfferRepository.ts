@@ -2,7 +2,7 @@ import { Offer, OfferStatus } from '@/domian/entities/Offer';
 import { OfferWithDetails, ProductWithCategory } from '@/domian/entities/OfferWithDetails';
 import { Product, ProductStatus } from '@/domian/entities/Products';
 import { Category } from '@/domian/entities/Category';
-import { IOfferRepository, PaginationOptions, PaginatedResult } from '@/domian/repository/IOfferRepository';
+import { IOfferRepository, PaginationOptions, PaginatedResult, OfferFilterOptions } from '@/domian/repository/IOfferRepository';
 import { Pool } from 'pg';
 
 
@@ -318,6 +318,186 @@ export class OfferRepository implements IOfferRepository {
         return this.mapToOffer(result.rows[0]);
     }
 
+    async filterOffers(options: OfferFilterOptions): Promise<OfferWithDetails[]> {
+        let query = `
+            SELECT 
+                o.*,
+                p.id as product_id, p.name as product_name, p.description as product_description,
+                p.category_id as product_category_id, p.colors as product_colors, p.sizes as product_sizes,
+                p.status as product_status, p.images as product_images,
+                p.created_at as product_created_at, p.updated_at as product_updated_at,
+                c.id as category_id, c.name as category_name, c.images as category_images,
+                c.created_at as category_created_at, c.updated_at as category_updated_at
+            FROM offers o
+            INNER JOIN products p ON o.product_id = p.id
+            INNER JOIN categories c ON p.category_id = c.id
+            WHERE 1=1
+        `;
+
+        const values: any[] = [];
+        let paramCounter = 1;
+
+        if (options.status) {
+            query += ` AND o.status = $${paramCounter++}`;
+            values.push(options.status);
+        }
+
+        if (options.categories && options.categories.length > 0) {
+            query += ` AND p.category_id = ANY($${paramCounter++})`;
+            values.push(options.categories);
+        }
+
+        if (options.types && options.types.length > 0) {
+            query += ` AND o.type = ANY($${paramCounter++})`;
+            values.push(options.types);
+        }
+
+        // Filter by price range in product sizes JSON
+        if (options.minPrice !== undefined || options.maxPrice !== undefined) {
+            if (options.minPrice !== undefined && options.maxPrice !== undefined) {
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter} 
+                    AND (size->>'price')::numeric <= $${paramCounter + 1}
+                )`;
+                values.push(options.minPrice, options.maxPrice);
+                paramCounter += 2;
+            } else if (options.minPrice !== undefined) {
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                )`;
+                values.push(options.minPrice);
+                paramCounter++;
+            } else if (options.maxPrice !== undefined) {
+                query += ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric <= $${paramCounter}
+                )`;
+                values.push(options.maxPrice);
+                paramCounter++;
+            }
+        }
+
+        // Handle sorting
+        const sortOrder = options.sortOrder;
+        if (sortOrder === 'asc') {
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(p.sizes::jsonb) s) ASC`;
+        } else if (sortOrder === 'desc') {
+            query += ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(p.sizes::jsonb) s) DESC`;
+        } else {
+            query += ` ORDER BY o.created_at DESC`;
+        }
+
+        const result = await this.db.query(query, values);
+        return result.rows.map(row => this.mapToOfferWithDetails(row));
+    }
+
+    async filterOffersPaginated(filterOptions: OfferFilterOptions, paginationOptions: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>> {
+        const page = Math.max(1, paginationOptions.page || 1);
+        const limit = Math.min(100, Math.max(1, paginationOptions.limit || 10));
+        const offset = (page - 1) * limit;
+
+        let baseQuery = `
+            FROM offers o
+            INNER JOIN products p ON o.product_id = p.id
+            INNER JOIN categories c ON p.category_id = c.id
+            WHERE 1=1
+        `;
+
+        const values: any[] = [];
+        let paramCounter = 1;
+
+        if (filterOptions.status) {
+            baseQuery += ` AND o.status = $${paramCounter++}`;
+            values.push(filterOptions.status);
+        }
+
+        if (filterOptions.categories && filterOptions.categories.length > 0) {
+            baseQuery += ` AND p.category_id = ANY($${paramCounter++})`;
+            values.push(filterOptions.categories);
+        }
+
+        if (filterOptions.types && filterOptions.types.length > 0) {
+            baseQuery += ` AND o.type = ANY($${paramCounter++})`;
+            values.push(filterOptions.types);
+        }
+
+        // Filter by price range in product sizes JSON
+        if (filterOptions.minPrice !== undefined || filterOptions.maxPrice !== undefined) {
+            if (filterOptions.minPrice !== undefined && filterOptions.maxPrice !== undefined) {
+                const clause = ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                    AND (size->>'price')::numeric <= $${paramCounter + 1}
+                )`;
+                baseQuery += clause;
+                values.push(filterOptions.minPrice, filterOptions.maxPrice);
+                paramCounter += 2;
+            } else if (filterOptions.minPrice !== undefined) {
+                const clause = ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric >= $${paramCounter}
+                )`;
+                baseQuery += clause;
+                values.push(filterOptions.minPrice);
+                paramCounter++;
+            } else if (filterOptions.maxPrice !== undefined) {
+                const clause = ` AND EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(p.sizes::jsonb) AS size
+                    WHERE (size->>'price')::numeric <= $${paramCounter}
+                )`;
+                baseQuery += clause;
+                values.push(filterOptions.maxPrice);
+                paramCounter++;
+            }
+        }
+
+        // Count query
+        const countResult = await this.db.query(`SELECT COUNT(*) as total ${baseQuery}`, values);
+        const total = parseInt(countResult.rows[0].total);
+
+        // Data query
+        let sortClause = '';
+        const sortOrder = filterOptions.sortOrder;
+        if (sortOrder === 'asc') {
+            sortClause = ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(p.sizes::jsonb) s) ASC`;
+        } else if (sortOrder === 'desc') {
+            sortClause = ` ORDER BY (SELECT MIN((s->>'price')::numeric) FROM jsonb_array_elements(p.sizes::jsonb) s) DESC`;
+        } else {
+            sortClause = ` ORDER BY o.created_at DESC`;
+        }
+
+        const dataQuery = `
+            SELECT 
+                o.*,
+                p.id as product_id, p.name as product_name, p.description as product_description,
+                p.category_id as product_category_id, p.colors as product_colors, p.sizes as product_sizes,
+                p.status as product_status, p.images as product_images,
+                p.created_at as product_created_at, p.updated_at as product_updated_at,
+                c.id as category_id, c.name as category_name, c.images as category_images,
+                c.created_at as category_created_at, c.updated_at as category_updated_at
+            ${baseQuery}
+            ${sortClause}
+            LIMIT $${paramCounter++} OFFSET $${paramCounter}
+        `;
+        values.push(limit, offset);
+
+        const dataResult = await this.db.query(dataQuery, values);
+        const data = dataResult.rows.map(row => this.mapToOfferWithDetails(row));
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        };
+    }
 
     private mapToOffer(row: any): Offer {
         return {
