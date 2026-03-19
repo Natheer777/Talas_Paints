@@ -6,7 +6,9 @@ import {
     GetAllOffersUseCase,
     GetOfferByIdUseCase,
     GetAllOffersWithDetailsPaginatedUseCase,
-    GetVisibleOffersWithDetailsPaginatedUseCase
+    GetVisibleOffersWithDetailsPaginatedUseCase,
+    FilterOffersUseCase,
+    FilterOffersPaginatedUseCase
 } from '@/application/use-cases/Offers/index';
 import Container from '../../infrastructure/di/container';
 
@@ -19,7 +21,9 @@ export class OffersController {
         private getAllOffersUseCase: GetAllOffersUseCase,
         private getOfferByIdUseCase: GetOfferByIdUseCase,
         private getAllOffersWithDetailsPaginatedUseCase: GetAllOffersWithDetailsPaginatedUseCase,
-        private getVisibleOffersWithDetailsPaginatedUseCase: GetVisibleOffersWithDetailsPaginatedUseCase
+        private getVisibleOffersWithDetailsPaginatedUseCase: GetVisibleOffersWithDetailsPaginatedUseCase,
+        private filterOffersUseCase: FilterOffersUseCase,
+        private filterOffersPaginatedUseCase: FilterOffersPaginatedUseCase
     ) { }
 
     async create(req: Request, res: Response) {
@@ -205,5 +209,79 @@ export class OffersController {
         }
     }
 
+    async filter(req: Request, res: Response) {
+        try {
+            const { categories, types, status, minPrice, maxPrice, sortOrder, page, limit } = req.query;
+
+            const hasPagination = page !== undefined || limit !== undefined;
+
+            const minPriceNum = minPrice ? parseFloat(minPrice as string) : undefined;
+            const maxPriceNum = maxPrice ? parseFloat(maxPrice as string) : undefined;
+
+            if (hasPagination) {
+                const pageNum = page ? parseInt(page as string, 10) : undefined;
+                const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+                if (pageNum !== undefined && (isNaN(pageNum) || pageNum < 1)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Page must be a positive integer",
+                    });
+                }
+
+                if (limitNum !== undefined && (isNaN(limitNum) || limitNum < 1 || limitNum > 1000)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Limit must be a positive integer between 1 and 1000",
+                    });
+                }
+
+                const result = await this.filterOffersPaginatedUseCase.execute({
+                    categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
+                    types: types ? (Array.isArray(types) ? types as string[] : [types as string]) : undefined,
+                    minPrice: minPriceNum,
+                    maxPrice: maxPriceNum,
+                    status: status as string,
+                    sortOrder: sortOrder as 'asc' | 'desc',
+                    page: pageNum,
+                    limit: limitNum
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: result.data,
+                    pagination: {
+                        page: result.page,
+                        limit: result.limit,
+                        total: result.total,
+                        totalPages: result.totalPages,
+                        hasNextPage: result.hasNextPage,
+                        hasPrevPage: result.hasPrevPage
+                    }
+                });
+            } else {
+                const result = await this.filterOffersUseCase.execute({
+                    categories: categories ? (Array.isArray(categories) ? categories as string[] : [categories as string]) : undefined,
+                    types: types ? (Array.isArray(types) ? types as string[] : [types as string]) : undefined,
+                    minPrice: minPriceNum,
+                    maxPrice: maxPriceNum,
+                    status: status as string,
+                    sortOrder: sortOrder as 'asc' | 'desc'
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: result,
+                    count: result.length,
+                });
+            }
+        } catch (error: any) {
+            console.error('Filter Offers Error:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Could not filter offers",
+            });
+        }
+    }
 }
 

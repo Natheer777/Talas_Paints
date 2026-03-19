@@ -18,6 +18,15 @@ export interface PaginatedResult<T> {
     hasPrevPage: boolean;
 }
 
+export interface OfferFilterOptions {
+    categories?: string[];
+    types?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    status?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
 export interface IOfferRepository {
     create(offer: Offer): Promise<Offer>;
     update(id: string, offer: Partial<Offer>): Promise<Offer | null>;
@@ -29,4 +38,6 @@ export interface IOfferRepository {
     getAllWithDetailsPaginated(options?: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>>;
     getVisibleWithDetailsPaginated(options?: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>>;
     findActiveByProductId(productId: string): Promise<Offer | null>;
+    filterOffers(options: OfferFilterOptions): Promise<OfferWithDetails[]>;
+    filterOffersPaginated(filterOptions: OfferFilterOptions, paginationOptions: PaginationOptions): Promise<PaginatedResult<OfferWithDetails>>;
 }

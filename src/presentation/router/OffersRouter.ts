@@ -31,6 +31,11 @@ export function createOffersRouter(offersController: OffersController) {
         RateLimitConfigurations.DELETE_OPERATIONS
     );
 
+    const searchLimit = RateLimitMiddleware.createCustom(
+        rateLimitService,
+        RateLimitConfigurations.SEARCH
+    );
+
 
     // Get auth middleware from container
     const authMiddleware = Container.getAuthMiddleware();
@@ -55,6 +60,12 @@ export function createOffersRouter(offersController: OffersController) {
     router.get(
         '/offers/visible',
         (req: Request, res: Response) => offersController.getVisibleWithDetailsPaginated(req, res)
+    );
+
+    router.get(
+        '/offers/filter',
+        searchLimit.handle(),
+        (req: Request, res: Response) => offersController.filter(req, res)
     );
 
     router.get(
