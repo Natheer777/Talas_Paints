@@ -13,13 +13,23 @@ async function seedCategories() {
     console.log('🚀 Starting category seeding...');
 
     try {
-        const count = 1000; // 10 categories is usually enough
+        const count = 30;
         const categories = [];
+
+        const categoryNames = [
+            'مكياج الوجه', 'أحمر الشفاه', 'العناية بالبشرة', 'العناية بالشعر', 'العطور',
+            'ملابس رجالية', 'ملابس نسائية', 'ملابس أطفال', 'فساتين', 'قمصان وتيشيرتات',
+            'بناطيل وجينز', 'أحذية رياضية', 'حقائب وإكسسوارات', 'ساعات', 'نظارات شمسية',
+            'أدوات تجميل', 'كريمات مرطبة', 'واقي شمس', 'ملابس رياضية', 'لانجري',
+            'بيجامات', 'معاطف وجواكيت', 'تنانير', 'بليزرات', 'أحذية رسمية',
+            'مستلزمات العناية بالأظافر', 'باليت العيون', 'ماسكارا وآيلاينر', 'فرش مكياج', 'تونر وسيروم'
+        ];
 
         for (let i = 0; i < count; i++) {
             const id = uuidv4();
-            const name = faker.commerce.department() + ' ' + faker.string.alphanumeric(3);
-            const images = [faker.image.url({ width: 640, height: 480 })];
+            const name = categoryNames[i % categoryNames.length];
+            // استخدام صور مرتبطة بالموضة والجمال
+            const images = [`https://loremflickr.com/640/480/fashion,beauty,cosmetics?random=${i}`];
 
             categories.push([
                 id,

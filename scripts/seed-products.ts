@@ -26,25 +26,47 @@ async function seedProducts() {
         console.log(`📂 Found ${categoryIds.length} categories.`);
 
         // 2. Generate 1,000 products
-        const productsCount = 30000;
+        const productsCount = 30;
         const products = [];
+
+        const productTemplates = [
+            { name: 'كريم أساس يدوم طويلا', desc: 'تغطية كاملة ومثالية لجميع أنواع البشرة، يدوم حتى 24 ساعة.', icon: 'beauty' },
+            { name: 'أحمر شفاه مات أحمر', desc: 'لون غني وملمس ناعم لا يجفف الشفاه.', icon: 'beauty' },
+            { name: 'سيروم حمض الهيالورونيك', desc: 'يرطب البشرة بعمق ويقلل من ظهور التجاعيد.', icon: 'beauty' },
+            { name: 'تيشيرت قطن فاخر', desc: 'مصنوع من القطن العضوي 100%، مريح للاستخدام اليومي.', icon: 'clothes' },
+            { name: 'فستان صيفي منقوش', desc: 'تصميم عصري وخفيف الوزن مثالي للأيام الحارة.', icon: 'clothes' },
+            { name: 'باليت ظلال العيون 12 لون', desc: 'درجات متنوعة بين اللامع والمطفي لتناسب جميع الإطلالات.', icon: 'beauty' },
+            { name: 'بنطلون جينز سليم فيت', desc: 'قصة عصرية مريحة وعملية لجميع المناسبات.', icon: 'clothes' },
+            { name: 'عطر نسائي زهري 100مل', desc: 'رائحة جذابة من الياسمين والفانيليا تدوم طويلا.', icon: 'beauty' },
+            { name: 'جاكيت شتوي مبطن', desc: 'يوفر دفئا فائقا وحماية من الرياح.', icon: 'clothes' },
+            { name: 'حذاء رياضي مريح', desc: 'تصميم مرن يدعم القدم أثناء المشي والجري.', icon: 'clothes' },
+        ];
 
         for (let i = 0; i < productsCount; i++) {
             const id = uuidv4();
-            const name = faker.commerce.productName() + ' ' + faker.string.alphanumeric(5);
-            const description = faker.commerce.productDescription();
+            const template = productTemplates[i % productTemplates.length];
+            const name = template.name + ' ' + faker.string.alphanumeric(3);
+            const description = template.desc;
             const category_id = faker.helpers.arrayElement(categoryIds);
-            const colors = [faker.color.human(), faker.color.human()];
+            const colors = template.icon === 'beauty' ?
+                ['Nude', 'Rose', 'Light'] :
+                ['Black', 'White', 'Blue', 'Beige'];
             const status = 'visible';
 
             // Generate random sizes and prices
-            const sizes = [
-                { size: '1L', price: parseFloat(faker.commerce.price({ min: 10, max: 50 })) },
-                { size: '5L', price: parseFloat(faker.commerce.price({ min: 40, max: 200 })) }
+            const sizes = template.icon === 'beauty' ? [
+                { size: '30ml', price: parseFloat(faker.commerce.price({ min: 100, max: 300 })) },
+                { size: '50ml', price: parseFloat(faker.commerce.price({ min: 250, max: 500 })) }
+            ] : [
+                { size: 'S', price: parseFloat(faker.commerce.price({ min: 50, max: 150 })) },
+                { size: 'M', price: parseFloat(faker.commerce.price({ min: 50, max: 150 })) },
+                { size: 'L', price: parseFloat(faker.commerce.price({ min: 50, max: 150 })) },
+                { size: 'XL', price: parseFloat(faker.commerce.price({ min: 50, max: 150 })) }
             ];
 
             // Mock image URLs
-            const images = [faker.image.urlLoremFlickr({ category: 'paint' })];
+            const keyword = template.icon === 'beauty' ? 'makeup,cosmetics' : 'clothing,fashion';
+            const images = [`https://loremflickr.com/800/800/${keyword}?random=${i}`];
 
             products.push([
                 id,
