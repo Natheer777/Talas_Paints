@@ -13,15 +13,23 @@ async function seedAdsCards() {
     console.log('🚀 Starting AdsCard seeding...');
 
     try {
-        const count = 1000;
+        const count = 30;
         const cards = [];
+
+        const adTemplates = [
+            { title: 'وصل حديثاً: مجموعة الربيع', text: 'اكتشفي أحدث تشكيلة من الفساتين الصيفية والأزياء العصرية.' },
+            { title: 'سر الجمال الطبيعي', text: 'استمتعي بشرة نضرة مع مجموعة العناية المتكاملة بالأعشاب الطبيعية.' },
+            { title: 'أناقة لا مثيل لها', text: 'تشكيلة واسعة من الملابس الرجالية والنسائية تناسب جميع الأذواق.' },
+            { title: 'خبير التجميل في منزلك', text: 'أدوات ومستحضرات تجميل احترافية لنتائج مذهلة كل يوم.' }
+        ];
 
         for (let i = 0; i < count; i++) {
             const id = uuidv4();
-            const title = faker.commerce.productAdjective() + ' ' + faker.commerce.productName();
-            const text = faker.lorem.sentence();
-            const mediaUrl = faker.image.url({ width: 1200, height: 400 });
-            const mediaType = faker.helpers.arrayElement(['IMAGE', 'VIDEO']);
+            const template = adTemplates[i % adTemplates.length];
+            const title = template.title;
+            const text = template.text;
+            const mediaUrl = `https://loremflickr.com/1200/400/fashion,promotion?random=${i}`;
+            const mediaType = faker.helpers.arrayElement(['IMAGE', 'IMAGE']); // Use IMAGE for more reliability for now
             const status = faker.helpers.arrayElement(['ACTIVE', 'INACTIVE']);
 
             cards.push([

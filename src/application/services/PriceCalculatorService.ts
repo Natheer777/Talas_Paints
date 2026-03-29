@@ -38,6 +38,7 @@ export class PriceCalculatorService {
     async calculate(items: CartItemDTO[]): Promise<CalculationResult> {
         let totalAmount = 0;
         const calculatedItems: CalculatedItem[] = [];
+        const offerQuantities = new Map<string, number>();
 
         for (const item of items) {
             try {
@@ -125,12 +126,21 @@ export class PriceCalculatorService {
                 if (offer) {
                     if (offer.type === OfferType.PERCENTAGE_DISCOUNT && offer.discount_percentage) {
                         lineTotal = (basePrice * item.quantity) * (1 - offer.discount_percentage / 100);
-                    } else if (offer.type === OfferType.BUY_X_GET_Y_FREE && offer.buy_quantity && offer.get_quantity) {
+                    } else if (offer.type === OfferType.BUY_X_GET_Y_FREE && offer.buy_quantity && offer.get_quantity && appliedOfferId) {
                         const buy = offer.buy_quantity;
                         const get = offer.get_quantity;
                         const totalCycle = buy + get;
-                        const payableQuantity = Math.floor(item.quantity / totalCycle) * buy + (item.quantity % totalCycle);
-                        lineTotal = payableQuantity * basePrice;
+                        
+                        const previousQty = offerQuantities.get(appliedOfferId) || 0;
+                        const currentTotalQty = previousQty + item.quantity;
+
+                        const totalPayableQuantity = Math.floor(currentTotalQty / totalCycle) * buy + (currentTotalQty % totalCycle);
+                        const previousPayableQuantity = Math.floor(previousQty / totalCycle) * buy + (previousQty % totalCycle);
+
+                        const payableQuantityForThisItem = totalPayableQuantity - previousPayableQuantity;
+
+                        lineTotal = payableQuantityForThisItem * basePrice;
+                        offerQuantities.set(appliedOfferId, currentTotalQty);
                     }
                 }
 

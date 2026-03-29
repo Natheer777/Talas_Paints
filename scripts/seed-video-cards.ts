@@ -13,12 +13,18 @@ async function seedVideoCards() {
     console.log('🚀 Starting VideoCard seeding...');
 
     try {
-        const count = 1000;
+        const count = 3;
         const cards = [];
+
+        const titles = [
+            'أحدث صيحات المكياج 2024',
+            'دليل اختيار الملابس الشتوية',
+            'روتين العناية بالبشرة اليومي'
+        ];
 
         for (let i = 0; i < count; i++) {
             const id = uuidv4();
-            const title = faker.commerce.productName() + ' Showcase';
+            const title = titles[i % titles.length];
             // Mock video URL
             const videoUrl = 'https://www.w3schools.com/html/mov_bbb.mp4';
             const status = faker.helpers.arrayElement(['visible', 'hidden']);

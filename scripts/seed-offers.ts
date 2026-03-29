@@ -22,13 +22,19 @@ async function seedOffers() {
             return;
         }
 
-        const count = 4000;
+        const count = 30;
         const offers = [];
+
+        const offerNames = [
+            'خصم العودة للموسم', 'تخفيضات العيد', 'اشتر واحدة واربح الثانية', 'عرض خاص للجمعة البيضاء',
+            'خصم الربيع المذهل', 'تخفيضات نهاية العام', 'هدايا مجانية مع كل طلب', 'خصم حصري لمشتركي التطبيق',
+            'باقة التوفير القصوى', 'عرض الجمال الدائم'
+        ];
 
         for (let i = 0; i < count; i++) {
             const id = uuidv4(); 
-            const name = faker.commerce.productAdjective() + ' Sale';
-            const description = faker.commerce.productDescription();
+            const name = offerNames[i % offerNames.length];
+            const description = 'احصل على أفضل الخصومات على مستحضرات التجميل والملابس العصرية لفترة محدودة.';
             const type = faker.helpers.arrayElement(['PERCENTAGE_DISCOUNT', 'BUY_X_GET_Y_FREE']);
             const product_id = faker.helpers.arrayElement(productIds);
             const status = faker.helpers.arrayElement(['VISIBLE', 'HIDDEN']);
@@ -38,9 +44,9 @@ async function seedOffers() {
             let get_quantity = null;
 
             if (type === 'PERCENTAGE_DISCOUNT') {
-                discount_percentage = faker.number.int({ min: 5, max: 50 });
+                discount_percentage = faker.number.int({ min: 10, max: 70 });
             } else {
-                buy_quantity = faker.number.int({ min: 1, max: 3 });
+                buy_quantity = faker.number.int({ min: 1, max: 2 });
                 get_quantity = 1;
             }
 
