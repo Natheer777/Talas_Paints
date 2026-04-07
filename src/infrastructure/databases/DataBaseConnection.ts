@@ -7,7 +7,6 @@ export class DatabaseConnection {
 
   private constructor() {
     const connectionString = process.env.DATABASE_URL;
-    console.log('Attempting to connect with DATABASE_URL:', connectionString ? connectionString.replace(/:[^:@]+@/, ':****@') : 'undefined');
 
     this.pool = new Pool({
       connectionString,
@@ -16,14 +15,15 @@ export class DatabaseConnection {
       }
     });
 
-    // Test the connection
-    this.pool.on('connect', () => {
-      console.log('Successfully connected to the database');
+    this.pool.on('error', (err) => {
+      console.error('Unexpected error on idle database client', err);
+      process.exit(-1);
     });
 
-    this.pool.on('error', (err) => {
-      console.error('Unexpected error on idle client', err);
-      process.exit(-1);
+    this.pool.query('SELECT 1').then(() => {
+      console.log('✅ Successfully connected to the database');
+    }).catch((err) => {
+      console.error('❌ Failed to connect to the database:', err.message);
     });
   }
 
@@ -87,7 +87,6 @@ export class DatabaseConnection {
     return this.pool;
   }
 
-  // Safety method to check if a table exists
   public async tableExists(tableName: string): Promise<boolean> {
     try {
       const result = await this.query(`
@@ -104,7 +103,6 @@ export class DatabaseConnection {
     }
   }
 
-  // Safety method to get table row count
   public async getTableRowCount(tableName: string): Promise<number> {
     try {
       const result = await this.query(`SELECT COUNT(*) FROM ${tableName}`);
@@ -115,7 +113,6 @@ export class DatabaseConnection {
     }
   }
 
-  // Utility method to generate UUIDs consistently across the app
   public generateUUID(): string {
     return uuidv4();
   }

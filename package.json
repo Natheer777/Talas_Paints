@@ -45,10 +45,8 @@
     "test": "mocha",
     "build": "tsc && tsc-alias && shx cp -r src/docs dist/docs",
     "start": "node dist/index.js",
-    "start:prod": "cross-env NODE_ENV=productions nodemon --watch src --ext ts,json,yaml,yml --exec ts-node -r tsconfig-paths/register src/index.ts",
     "start:dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts,json,yaml,yml --exec ts-node -r tsconfig-paths/register src/index.ts",
     "migrate:dev": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register src/infrastructure/databases/run-migration.ts",
-    "migrate:prod": "cross-env NODE_ENV=productions ts-node -r tsconfig-paths/register src/infrastructure/database/run-migration.ts",
     "swagger:bundle": "swagger-cli bundle src/docs/swagger-root.yaml -o src/docs/swagger.yaml --type yaml"
   },
   "keywords": [],

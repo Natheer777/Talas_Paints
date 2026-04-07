@@ -1,19 +1,37 @@
 import "reflect-metadata";
-import dotenv from 'dotenv';
 
-const nodeEnv = process.env.NODE_ENV || 'development';  
-const envFilePath = `.env.${nodeEnv}`;
+const nodeEnv = process.env.NODE_ENV || 'development';
 
-const result = dotenv.config({ path: envFilePath });
-if (result.error) {
-  dotenv.config(); 
+if (nodeEnv !== 'production') {
+  const dotenv = require('dotenv') as typeof import('dotenv');
+  const envFilePath = `.env.${nodeEnv}`;
+  const result = dotenv.config({ path: envFilePath });
+  if (result.error) {
+    dotenv.config(); 
+  }
+  console.log(`📄 Loaded env from .env.${nodeEnv}`);
+}
+
+const REQUIRED_ENV_VARS = [
+  'DATABASE_URL',
+  'PORT',
+  'HMAC_SECRET_KEY',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_REGION',
+  'AWS_S3_BUCKET_NAME',
+];
+
+const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
 }
 
 import { App } from './app';
-const app = new App();
-const port = parseInt(process.env.PORT || '3000', 10);
 
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
+const app = new App();
+const port = parseInt(process.env.PORT!, 10);
 
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
