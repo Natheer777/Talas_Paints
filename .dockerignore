@@ -1,0 +1,30 @@
+# Dependencies and build artifacts (not needed in Docker context)
+node_modules/
+dist/
+
+# Local env files — NEVER ship these; use fly secrets instead
+.env
+.env.*
+!.env.example
+
+# Secrets directory
+secret/
+
+# Public / uploaded assets (managed separately or via S3)
+public/
+
+# Test and dev tooling
+*.test.ts
+*.spec.ts
+tests/
+examples/
+
+# Editor / OS artifacts
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore

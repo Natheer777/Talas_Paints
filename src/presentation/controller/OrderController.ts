@@ -40,13 +40,10 @@ export class OrderController {
                 items
             } = req.body;
 
-            // Handle multipart/form-data format: productId and quantity can be arrays or single values
             let orderItems;
             if (items && Array.isArray(items)) {
-                // If items is already an array (from JSON or parsed form data)
                 orderItems = items;
             } else if ((productId || offerId) && quantity) {
-                // Convert productId and quantity arrays/values to items array
                 let productIds = productId;
                 let offerIds = offerId;
                 let quantities = quantity;
@@ -54,7 +51,6 @@ export class OrderController {
                 let sizes = size;
                 let prices = price;
 
-                // Handle comma-separated strings
                 if (typeof productIds === 'string' && productIds.includes(',')) {
                     productIds = productIds.split(',').map((id: string) => id.trim());
                 }
@@ -78,7 +74,6 @@ export class OrderController {
                 offerIds = offerIds ? (Array.isArray(offerIds) ? offerIds : [offerIds]) : [];
                 quantities = Array.isArray(quantities) ? quantities : [quantities];
 
-                // Ensure colors, sizes and prices are arrays if they exist
                 if (colors) {
                     colors = Array.isArray(colors) ? colors : [colors];
                 }
@@ -138,12 +133,20 @@ export class OrderController {
 
             return res.status(200).json({
                 success: true,
-                data: result,
+                order: result,
             });
         } catch (error: any) {
-            return res.status(404).json({
+            if (error.message === 'Order not found') {
+                return res.status(404).json({
+                    success: false,
+                    message: "الطلب غير موجود",
+                });
+            }
+            
+            console.error('Error fetching order:', error);
+            return res.status(500).json({
                 success: false,
-                message: error.message || "الطلب غير موجود",
+                message: "خطأ في السيرفر الداخلي",
             });
         }
     }

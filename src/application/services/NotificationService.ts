@@ -24,7 +24,6 @@ export class NotificationService implements INotificationService {
     async notifyAdminNewOrder(order: Order, adminEmails?: string[]): Promise<void> {
         console.log(`🔔 Sending admin notification for new order: ${order.id}`);
 
-        // Send Socket.IO notification
         if (this.io) {
             try {
                 this.io.to('admin').emit('new_order', {
@@ -38,12 +37,10 @@ export class NotificationService implements INotificationService {
             console.warn('⚠️  Socket.IO not available, skipping socket notification');
         }
 
-        // Send Firebase Push notification
         if (this.firebasePushService && this.firebasePushService.isInitialized()) {
             try {
                 const targetEmails = adminEmails || [];
 
-                // If specific emails provided, send to those admins only
                 if (targetEmails.length > 0) {
                     console.log(`📱 Sending targeted push notifications to ${targetEmails.length} admin(s)`);
                     for (const adminEmail of targetEmails) {
@@ -54,33 +51,16 @@ export class NotificationService implements INotificationService {
                                 body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
                                 data: {
                                     type: 'new_order',
-                                    order: JSON.stringify({
-                                        id: order.id,
-                                        phone_number: order.phone_number,
-                                        customer_name: order.customer_name,
-                                        area_name: order.area_name,
-                                        street_name: order.street_name,
-                                        building_number: order.building_number,
-                                        additional_notes: order.additional_notes,
-                                        delivery_agent_name: order.delivery_agent_name,
-                                        payment_method: order.payment_method,
-                                        status: order.status,
-                                        total_amount: order.total_amount,
-                                        order_number: order.orderNumber,
-                                        items: order.items,
-                                        createdAt: order.createdAt.toISOString(),
-                                        updatedAt: order.updatedAt.toISOString()
-                                    })
+                                    orderId: String(order.id)
                                 }
                             });
                         } catch (error) {
                             console.error(`❌ Error sending push notification to admin ${adminEmail}:`, error);
-                            // Continue with other admins
                         }
                     }
                 } else {
-                    // If no specific emails provided, send to default admin email from env
-                    const defaultAdminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'test@gmail.com'; // Default for testing
+
+                    const defaultAdminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'test@gmail.com'; 
                     console.log(`📱 No specific admin emails provided, sending to default admin: ${defaultAdminEmail}`);
 
                     try {
@@ -89,23 +69,7 @@ export class NotificationService implements INotificationService {
                             body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
                             data: {
                                 type: 'new_order',
-                                order: JSON.stringify({
-                                    id: order.id,
-                                    phone_number: order.phone_number,
-                                    customer_name: order.customer_name,
-                                    area_name: order.area_name,
-                                    street_name: order.street_name,
-                                    building_number: order.building_number,
-                                    additional_notes: order.additional_notes,
-                                    delivery_agent_name: order.delivery_agent_name,
-                                    payment_method: order.payment_method,
-                                    status: order.status,
-                                    total_amount: order.total_amount,
-                                    order_number: order.orderNumber,
-                                    items: order.items,
-                                    createdAt: order.createdAt.toISOString(),
-                                    updatedAt: order.updatedAt.toISOString()
-                                })
+                                orderId: String(order.id)
                             }
                         });
                         console.log(`✅ Push notification sent to default admin: ${defaultAdminEmail}`);
@@ -124,7 +88,6 @@ export class NotificationService implements INotificationService {
     async notifyUserOrderStatusChange(phoneNumber: string, order: Order): Promise<void> {
         console.log(`🔔 Sending user notification for order ${order.id} status change to: ${order.status}`);
 
-        // Send Socket.IO notification
         if (this.io) {
             try {
                 this.io.to(`user_${phoneNumber}`).emit('order_status_changed', {
@@ -139,7 +102,6 @@ export class NotificationService implements INotificationService {
             console.warn('⚠️  Socket.IO not available, skipping socket notification');
         }
 
-        // Send Firebase Push notification
         if (this.firebasePushService && this.firebasePushService.isInitialized()) {
             try {
                 const statusMessages: Record<OrderStatus, string> = {
@@ -156,28 +118,11 @@ export class NotificationService implements INotificationService {
                     body: `${statusMessages[order.status] || 'تم تحديث حالة طلبك'} للطلب رقم #${order.orderNumber}`,
                     data: {
                         type: 'order_status_changed',
-                        order: JSON.stringify({
-                            id: order.id,
-                            phone_number: order.phone_number,
-                            customer_name: order.customer_name,
-                            area_name: order.area_name,
-                            street_name: order.street_name,
-                            building_number: order.building_number,
-                            additional_notes: order.additional_notes,
-                            delivery_agent_name: order.delivery_agent_name,
-                            payment_method: order.payment_method,
-                            status: order.status,
-                            total_amount: order.total_amount,
-                            order_number: order.orderNumber,
-                            items: order.items,
-                            createdAt: order.createdAt.toISOString(),
-                            updatedAt: order.updatedAt.toISOString()
-                        })
+                        orderId: String(order.id)
                     }
                 });
             } catch (error) {
                 console.error('❌ Error sending push notification:', error);
-                // Don't throw - we want socket notifications to still work even if push fails
             }
         } else {
             console.warn('⚠️  Firebase not available, skipping push notification');

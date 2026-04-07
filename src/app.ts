@@ -27,23 +27,18 @@ export class App {
     this.app = express();
     this.app.use(express.json());
 
-    // Serve static files from public directory
     this.app.use(express.static(path.join(__dirname, '../public')));
 
-    // Apply global rate limiting
     const rateLimitService = Container.getRateLimitService();
     const globalRateLimit = RateLimitMiddleware.createModerate(rateLimitService);
     this.app.use('/api', globalRateLimit.handle());
 
-    // Apply HMAC security
     const securityService = Container.getSecurityService();
     const hmacMiddleware = new HmacMiddleware(securityService);
-    // Apply to all /api routes
     this.app.use('/api', hmacMiddleware.handle());
 
     const productsController = Container.getProductsController();
     const categoriesController = Container.getCategoriesController();
-    const orderController = Container.getOrderController();
     const offersController = Container.getOffersController();
     const adsCardController = Container.getAdsCardController();
     const videoCardController = Container.getVideoCardController();
@@ -54,7 +49,6 @@ export class App {
     this.app.use('/api', createAuthRouter(authController));
     this.app.use('/api', createProductRouter(productsController));
     this.app.use('/api', createCategoryRouter(categoriesController));
-    this.app.use('/api', createOrderRouter(orderController));
     this.app.use('/api', createOffersRouter(offersController));
     this.app.use('/api', createAdsCardRouter(adsCardController));
     this.app.use('/api', createVideoCardRouter(videoCardController));
@@ -80,9 +74,17 @@ export class App {
   }
 
   private setupRoutes(): void {
+    this.app.get('/health', (req: Request, res: Response) => {
+      res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      });
+    });
+
     this.app.get('/api/health', (req: Request, res: Response) => {
       res.status(200).json({
-        status: 'OK',
+        status: 'ok',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
       });
@@ -93,7 +95,6 @@ export class App {
     this.app.use((error: any, req: Request, res: Response, next: NextFunction) => {
       console.error('Global Error Handler:', error);
 
-      // Handle Multer errors or specific file type errors
       if (error.message && (
         error.message.includes('Invalid file type') ||
         error.code === 'LIMIT_FILE_SIZE' ||
@@ -122,28 +123,25 @@ export class App {
     try {
       this.server = http.createServer(this.app);
 
-      // Initialize Socket.IO
       this.io = new SocketIOServer(this.server, {
         cors: {
-          origin: "*", // Configure this properly for production
           methods: ["GET", "POST"]
         }
       });
 
-      // Initialize Socket.IO in DI container
       Container.initializeSocketIO(this.io);
 
-      // Setup Socket.IO connection handling
+      const orderController = Container.getOrderController();
+      this.app.use('/api', createOrderRouter(orderController));
+
       this.io.on('connection', (socket) => {
         console.log('Client connected:', socket.id);
 
-        // Admin joins admin room
         socket.on('join_admin', () => {
           socket.join('admin');
           console.log('Admin joined:', socket.id);
         });
 
-        // User joins their personal room based on phone number
         socket.on('join_user', (phoneNumber: string) => {
           socket.join(`user_${phoneNumber}`);
           console.log(`User ${phoneNumber} joined room:`, socket.id);
@@ -156,7 +154,6 @@ export class App {
 
       this.server.listen(port, '0.0.0.0', () => {
         const env = process.env.NODE_ENV || 'development';
-        console.log(`🚀 Server is running (env: ${env}) on http://localhost:${port}`);
         console.log(`📡 Socket.IO is ready for real-time notifications`);
       });
     } catch (error) {

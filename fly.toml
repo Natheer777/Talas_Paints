@@ -1,0 +1,45 @@
+# fly.toml — Fly.io deployment configuration for Talas Paints backend
+# Generated: 2026-04-07
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "talas-paints-server"
+primary_region = "iad"      # Change to the closest region to your users
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT     = "3000"
+
+# ── HTTP service ──────────────────────────────────────────────────────────────
+[http_service]
+  internal_port       = 3000
+  force_https         = true
+  auto_stop_machines  = "stop"   # Allowed values: "off", "stop", "suspend"
+  auto_start_machines = true
+
+  # Keep at least one machine running at all times to eliminate cold-start latency.
+  # Set to 0 if you want full autostop (cheaper, but ~3.5 s cold starts).
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type       = "connections"
+    hard_limit = 500
+    soft_limit = 400
+
+# ── Health checks ─────────────────────────────────────────────────────────────
+# Fly.io will hit /health on the internal port to decide if the machine is healthy.
+[[http_service.checks]]
+  grace_period  = "10s"   # Give the app time to boot before first check
+  interval      = "30s"
+  method        = "GET"
+  path          = "/health"
+  protocol      = "http"
+  timeout       = "5s"
+
+# ── VM resources ─────────────────────────────────────────────────────────────
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
