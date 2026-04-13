@@ -51,6 +51,19 @@ export class FcmTokenRepository implements IFcmTokenRepository {
         return result.rows.map(row => this.mapRowToFcmToken(row));
     }
 
+    async findByAdminEmails(adminEmails: string[]): Promise<FcmToken[]> {
+        if (adminEmails.length === 0) return [];
+        
+        const query = `
+            SELECT * FROM fcm_tokens
+            WHERE admin_email = ANY($1)
+            ORDER BY updated_at DESC
+        `;
+
+        const result = await this.pool.query(query, [adminEmails]);
+        return result.rows.map(row => this.mapRowToFcmToken(row));
+    }
+
     async findByToken(token: string): Promise<FcmToken | null> {
         const query = `
             SELECT * FROM fcm_tokens

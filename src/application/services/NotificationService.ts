@@ -39,24 +39,21 @@ export class NotificationService implements INotificationService {
 
         if (this.firebasePushService && this.firebasePushService.isInitialized()) {
             try {
-                const targetEmails = adminEmails || [];
+                const targetEmails = [...new Set(adminEmails || [])].filter(email => !!email);
 
                 if (targetEmails.length > 0) {
                     console.log(`📱 Sending targeted push notifications to ${targetEmails.length} admin(s)`);
-                    for (const adminEmail of targetEmails) {
-                        try {
-                            console.log(`📱 Sending Firebase push notification to admin: ${adminEmail}`);
-                            await this.firebasePushService.sendToAdminEmail(adminEmail, {
-                                title: 'طلب جديد 🆕',
-                                body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
-                                data: {
-                                    type: 'new_order',
-                                    orderId: String(order.id)
-                                }
-                            });
-                        } catch (error) {
-                            console.error(`❌ Error sending push notification to admin ${adminEmail}:`, error);
-                        }
+                    try {
+                        await this.firebasePushService.sendToAdminEmails(targetEmails, {
+                            title: 'طلب جديد 🆕',
+                            body: `طلب جديد رقم #${order.orderNumber} من ${order.customer_name} - ${order.area_name}`,
+                            data: {
+                                type: 'new_order',
+                                orderId: String(order.id)
+                            }
+                        });
+                    } catch (error) {
+                        console.error(`❌ Error sending push notification to admins:`, error);
                     }
                 } else {
 
