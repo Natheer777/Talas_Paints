@@ -1,5 +1,7 @@
 import "reflect-metadata";
 
+process.env.TZ = 'Asia/Damascus';
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 if (nodeEnv !== 'production') {

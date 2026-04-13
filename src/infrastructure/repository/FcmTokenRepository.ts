@@ -9,20 +9,23 @@ export class FcmTokenRepository implements IFcmTokenRepository {
     async save(token: Omit<FcmToken, 'id' | 'createdAt' | 'updatedAt'>): Promise<FcmToken> {
         const query = `
             INSERT INTO fcm_tokens (id, phone_number, admin_email, token, device_type, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (COALESCE(phone_number, ''), COALESCE(admin_email, ''), token)
             DO UPDATE SET
                 device_type = EXCLUDED.device_type,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = EXCLUDED.updated_at
             RETURNING *
         `;
 
+        const now = new Date();
         const values = [
             uuidv4(),
             token.phone_number || null,
             token.admin_email || null,
             token.token,
-            token.device_type || null
+            token.device_type || null,
+            now,
+            now
         ];
 
         const result = await this.pool.query(query, values);

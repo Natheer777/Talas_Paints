@@ -253,19 +253,19 @@ export class OrderRepository implements IOrderRepository {
         if (acceptedAdminName) {
             query = `
                 UPDATE orders 
-                SET status = $1, accepted_admin_name = $2, updated_at = CURRENT_TIMESTAMP 
-                WHERE id = $3 
+                SET status = $1, accepted_admin_name = $2, updated_at = $3 
+                WHERE id = $4 
                 RETURNING *
             `;
-            params = [status, acceptedAdminName, id];
+            params = [status, acceptedAdminName, new Date(), id];
         } else {
             query = `
                 UPDATE orders 
-                SET status = $1, updated_at = CURRENT_TIMESTAMP 
-                WHERE id = $2 
+                SET status = $1, updated_at = $2 
+                WHERE id = $3 
                 RETURNING *
             `;
-            params = [status, id];
+            params = [status, new Date(), id];
         }
         const result = await this.pool.query(query, params);
 
