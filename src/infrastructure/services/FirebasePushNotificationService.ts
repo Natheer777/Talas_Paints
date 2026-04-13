@@ -93,7 +93,7 @@ export class FirebasePushNotificationService {
                 return;
             }
 
-            const fcmTokens = tokens.map(t => t.token);
+            const fcmTokens = [...new Set(tokens.map(t => t.token))];
 
             // Send to multiple tokens (in case user has multiple devices)
             const message: admin.messaging.MulticastMessage = {
@@ -147,20 +147,33 @@ export class FirebasePushNotificationService {
         adminEmail: string,
         payload: PushNotificationPayload
     ): Promise<void> {
+        return this.sendToAdminEmails([adminEmail], payload);
+    }
+
+    async sendToAdminEmails(
+        adminEmails: string[],
+        payload: PushNotificationPayload
+    ): Promise<void> {
         if (!this.app) {
             console.warn('⚠️  Firebase not initialized, skipping admin push notification');
             return;
         }
 
         try {
-            const adminTokens = await this.fcmTokenRepository.findByAdminEmail(adminEmail);
+            // Remove duplicates and empty emails
+            const uniqueEmails = [...new Set(adminEmails)].filter(e => !!e);
+            if (uniqueEmails.length === 0) return;
+
+            const adminTokens = await this.fcmTokenRepository.findByAdminEmails(uniqueEmails);
 
             if (adminTokens.length === 0) {
-                console.log(`No FCM tokens found for admin: ${adminEmail}`);
+                console.log(`No FCM tokens found for admins: ${uniqueEmails.join(', ')}`);
                 return;
             }
 
-            const fcmTokens = adminTokens.map((t: FcmToken) => t.token);
+            // Global de-duplication of tokens across all emails
+            const fcmTokens = [...new Set(adminTokens.map((t: FcmToken) => t.token))];
+            
             const message: admin.messaging.MulticastMessage = {
                 notification: {
                     title: payload.title,
@@ -181,7 +194,7 @@ export class FirebasePushNotificationService {
                         if (resp.error && (resp.error.code === 'messaging/invalid-registration-token' || resp.error.code === 'messaging/registration-token-not-registered')) {
                             try {
                                 await this.fcmTokenRepository.deleteByToken(failedToken);
-                                console.log(`🗑️  Removed invalid FCM token for admin: ${adminEmail}`);
+                                console.log(`🗑️  Removed invalid FCM token`);
                             } catch (deleteError) {
                                 console.error('❌ Error removing invalid admin FCM token:', deleteError);
                             }
@@ -190,14 +203,14 @@ export class FirebasePushNotificationService {
                 });
             }
 
-            console.log(`✅ Push notification sent successfully to admin (${adminEmail}):`);
+            console.log(`✅ Push notification sent successfully to ${uniqueEmails.length} admin(s):`);
             console.log(`   📊 Success: ${response.successCount} device(s)`);
             console.log(`   ❌ Failed: ${response.failureCount} device(s)`);
             console.log(`   📝 Title: ${payload.title}`);
             console.log(`   📝 Body: ${payload.body}`);
 
         } catch (error: any) {
-            console.error(`❌ Failed to send push notification to admin:`, error);
+            console.error(`❌ Failed to send push notification to admins:`, error);
             throw error;
         }
     }
